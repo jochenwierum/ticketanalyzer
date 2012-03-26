@@ -24,8 +24,8 @@ trait Relationship extends Versionable with Properties {
   def initWith(relationship: NeoRelationship) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
-    sourceNode = Converter.neoNode2Node(relationship.getStartNode())(leftTypeManifest)
-    sinkNode = Converter.neoNode2Node(relationship.getEndNode())(rightTypeManifest)
+    sourceNode = Node.wrapNeoNode(relationship.getStartNode())(leftTypeManifest)
+    sinkNode = Node.wrapNeoNode(relationship.getEndNode())(rightTypeManifest)
   }
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)

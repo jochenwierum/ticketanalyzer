@@ -2,13 +2,14 @@ import org.neo4j.graphdb.RelationshipType
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.kernel.EmbeddedGraphDatabase
 import de.jowisoftware.neo4j._
-import de.jowisoftware.neo4j.Converter._
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
   val KNOWS = ScalaRelationshipType("knows")
   val PERSON = ScalaRelationshipType("person")
 }
+
+
 
 class Person extends Node {
   val version = 1
@@ -87,6 +88,10 @@ object Main {
       
       println(rel)
       println(rel.sink)
+      
+      val test2 = dbit.createNode
+      val test = root.add(person)
+      println(root.neighbors(RelTypes.PERSON).map{_.toString})
       
       dbit.success
     }

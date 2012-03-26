@@ -5,8 +5,6 @@ import java.io.File
 import de.jowisoftware.util.FileUtils
 import org.neo4j.kernel.AbstractGraphDatabase
 
-import Converter._
-
 trait Database {
   def shutdown
   def inTransaction[T](body: DBWithTransaction => T): T
@@ -44,10 +42,10 @@ class DefaultTransaction(db: Database, tx: NeoTransaction) extends DBWithTransac
   def failure = tx.failure()
   
   def rootNode[T <: Node: Manifest]: T =
-    neoNode2Node(db.service.getReferenceNode())
+    Node.wrapNeoNode(db.service.getReferenceNode())
   
   def createNode[T <: Node: Manifest]: T =
-    neoNode2Node(db.service.createNode())
+    Node.wrapNeoNode(db.service.createNode())
 }
 
 object Database {
