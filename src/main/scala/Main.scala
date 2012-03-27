@@ -9,7 +9,9 @@ object RelTypes {
   val PERSON = ScalaRelationshipType("person")
 }
 
-
+object Person extends NodeCompanion[Person] {
+  def apply() = new Person()
+} 
 
 class Person extends Node {
   val version = 1
@@ -23,8 +25,10 @@ class Person extends Node {
   }
   
   def updateFrom(oldVersion: Int) = {}
-  
-  //val friends = neighbors(RelTypes.KNOWS)
+}
+
+object RootNode extends NodeCompanion[RootNode] {
+  def apply() = new RootNode()
 }
 
 class RootNode extends Node {
@@ -32,24 +36,30 @@ class RootNode extends Node {
   def updateFrom(oldVersion: Int) = {}
 }
 
-class Knows extends Relationship {
+object Knows extends RelationshipCompanion[Knows] {
   val relationType = RelTypes.KNOWS
-  protected type leftType = Person
-  protected type rightType = Person
-  protected val leftTypeManifest = manifest[leftType]
-  protected val rightTypeManifest = manifest[rightType]
   
+  type leftType = Person
+  type rightType = Person
+  
+  def apply() = new Knows
+}
+
+class Knows extends Relationship {
   val version = 1
   def updateFrom(oldVersion: Int) = {}
 }
 
-class PersonRel extends Relationship {
+object PersonRel extends RelationshipCompanion[PersonRel] {
   val relationType = RelTypes.PERSON
-  protected type leftType = RootNode
-  protected type rightType = Person
-  protected val leftTypeManifest = manifest[leftType]
-  protected val rightTypeManifest = manifest[rightType]
   
+  type leftType = RootNode
+  type rightType = Person
+  
+  def apply() = new PersonRel
+}
+
+class PersonRel extends Relationship {
   val version = 1
   def updateFrom(oldVersion: Int) = {}
 }
@@ -72,9 +82,12 @@ object Main {
   
   def doWork(db: Database) {
     db.inTransaction { implicit dbit =>
-      val root = dbit.rootNode[RootNode]
-      val person = dbit.createNode[Person]
-      val person2 = dbit.createNode[Person]
+      implicit val p = Person
+      implicit val pr = PersonRel
+      
+      val root = dbit.rootNode(RootNode)
+      val person: Person = dbit.createNode
+      val person2: Person = dbit.createNode
       
       person.firstName("Jochen")
       person.lastName("Wierum")
@@ -82,15 +95,13 @@ object Main {
       person2.firstName("Karl")
       person2.lastName("Klammer")
       
-      val rel = person.add[Knows](person2)
-      root.add[PersonRel](person)
-      root.add[PersonRel](person2)
+      val rel = person.add(person2)(Knows)
+      root.add(person)
+      root.add(person2)
       
       println(rel)
       println(rel.sink)
       
-      val test2 = dbit.createNode
-      val test = root.add(person)
       println(root.neighbors(RelTypes.PERSON).map{_.toString})
       
       dbit.success

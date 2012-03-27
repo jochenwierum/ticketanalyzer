@@ -6,15 +6,15 @@ import org.neo4j.graphdb.RelationshipType
 import org.neo4j.graphdb.Direction
 
 object Node {
-  def wrapNeoNode[T <: Node](neoNode: NeoNode)(implicit manifest: Manifest[T]): T = {
-    val node = manifest.erasure.newInstance().asInstanceOf[T]
+  def wrapNeoNode[T <: Node](neoNode: NeoNode)(implicit companion: NodeCompanion[T]): T = {
+    val node = companion()
     node initWith neoNode
     node
   }
   
   implicit def node2NeoNode(node: Node): NeoNode = node.content
   
-  implicit def neoNode2Node(node: NeoNode): Option[Node] = {
+  def neoNode2Node(node: NeoNode): Option[Node] = {
     try {
       val clazz = node.getProperty(".class").asInstanceOf[String]
       val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
@@ -24,6 +24,10 @@ object Node {
       case e: Exception => None
     }
   }
+}
+
+trait NodeCompanion[+T <: Node] {
+  def apply() : T
 }
 
 trait Node extends Versionable with Properties {
@@ -36,11 +40,9 @@ trait Node extends Versionable with Properties {
     sanityCheck(node)
   }
   
-  def add[R <: Relationship](other: Node)(implicit man: Manifest[R]): R = {
-    require(classOf[Relationship].isAssignableFrom(man.erasure))
-    
-    val relationship = man.erasure.newInstance().asInstanceOf[R]
-    val neoRelationship = innerNode.createRelationshipTo(other.innerNode, relationship.relationType)
+  def add[T <: Relationship](other: Node)(implicit relType: RelationshipCompanion[T]): T = {
+    val relationship = relType()
+    val neoRelationship = innerNode.createRelationshipTo(other.innerNode, relType.relationType)
     relationship initWith neoRelationship
     relationship
   }

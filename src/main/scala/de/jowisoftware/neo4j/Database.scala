@@ -16,8 +16,8 @@ trait DBWithTransaction {
   def success
   def failure
   
-  def rootNode[T <: Node: Manifest]: T
-  def createNode[T <: Node: Manifest]: T
+  def rootNode[T <: Node](implicit companion: NodeCompanion[T]): T
+  def createNode[T <: Node](implicit companion: NodeCompanion[T]): T
 }
 
 class EmbeddedDatabase(filepath: String) extends Database {
@@ -41,10 +41,10 @@ class DefaultTransaction(db: Database, tx: NeoTransaction) extends DBWithTransac
   def success = tx.success()
   def failure = tx.failure()
   
-  def rootNode[T <: Node: Manifest]: T =
+  def rootNode[T <: Node](implicit companion: NodeCompanion[T]): T =
     Node.wrapNeoNode(db.service.getReferenceNode())
   
-  def createNode[T <: Node: Manifest]: T =
+  def createNode[T <: Node](implicit companion: NodeCompanion[T]): T =
     Node.wrapNeoNode(db.service.createNode())
 }
 

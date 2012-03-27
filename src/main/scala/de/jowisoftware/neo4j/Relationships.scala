@@ -3,16 +3,19 @@ package de.jowisoftware.neo4j
 import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship}
 import org.neo4j.graphdb.RelationshipType
 
-trait Relationship extends Versionable with Properties {
+trait RelationshipCompanion[+T <: Relationship] {
   val relationType: RelationshipType
   
-  protected type leftType <: Node
-  protected type rightType <: Node
-  protected val leftTypeManifest: Manifest[leftType]
-  protected val rightTypeManifest: Manifest[rightType]
+  def apply(): T
+  protected[neo4j] type leftType <: Node
+  protected[neo4j] type rightType <: Node
+} 
+
+trait Relationship extends Versionable with Properties {
+  protected[neo4j] type companion <: RelationshipCompanion[Relationship]
   
-  private[neo4j] var sourceNode: leftType = _
-  private[neo4j] var sinkNode: rightType = _
+  private[neo4j] var sourceNode: companion#leftType = _
+  private[neo4j] var sinkNode: companion#rightType = _
   private[neo4j] var innerRelationship: NeoRelationship = _
   
   protected[neo4j] def content = innerRelationship
@@ -24,8 +27,8 @@ trait Relationship extends Versionable with Properties {
   def initWith(relationship: NeoRelationship) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
-    sourceNode = Node.wrapNeoNode(relationship.getStartNode())(leftTypeManifest)
-    sinkNode = Node.wrapNeoNode(relationship.getEndNode())(rightTypeManifest)
+    sourceNode = Node.neoNode2Node(relationship.getStartNode()).get.asInstanceOf[companion#leftType]
+    sinkNode = Node.neoNode2Node(relationship.getEndNode()).get.asInstanceOf[companion#rightType]
   }
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
