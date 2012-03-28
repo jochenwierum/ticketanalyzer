@@ -13,8 +13,6 @@ object Node {
     node
   }
   
-  implicit def node2NeoNode(node: Node): NeoNode = node.content
-  
   def neoNode2Node(node: NeoNode): Option[Node] = {
     try {
       val clazz = node.getProperty(".class").asInstanceOf[String]
@@ -34,7 +32,7 @@ trait NodeCompanion[+T <: Node] {
 trait Node extends Versionable with Properties {
   protected[neo4j] var innerNode: NeoNode = _
   
-  protected[neo4j] def content: NeoNode = innerNode
+  def content: NeoNode = innerNode
   
   private[neo4j] final def initWith(node: NeoNode) {
     this.innerNode = node
@@ -58,15 +56,12 @@ trait Node extends Versionable with Properties {
     for (Some(node) <- nodes.map(
         n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
   }
-  
-  /*
-  def traverse(order: Order, stopEvaluator: NeoStopEvaluator, returnableEvaluator: NeoReturnableEvaluator,
-      relationsAndDirections: Map[RelationshipType, Direction]) = {
- 
-    val relationsAndDirectionsObject = relationsAndDirections.map(x => List(x._1, x._2)).toSeq
-    innerNode.traverse(order, stopEvaluator, returnableEvaluator, relationsAndDirectionsObject:_*)
+
+  def delete = innerNode.delete()
+  def forceDelete = {
+   innerNode.getRelationships().foreach(_.delete()) 
+   delete
   }
-  */
   
   override def toString() = toString(innerNode.getId(), innerNode)
 }

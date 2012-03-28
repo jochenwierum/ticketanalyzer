@@ -6,8 +6,8 @@ import org.neo4j.graphdb.traversal.{Evaluation => NeoEvaluation}
 import de.jowisoftware.neo4j._
 import de.jowisoftware.neo4j.Traverser._
 import de.jowisoftware.neo4j.Relationship._
-
 import scala.collection.JavaConversions._
+import de.jowisoftware.mining.importer.trac.Importer
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
@@ -76,6 +76,8 @@ object Main {
   val dbPath = "db"
     
   def main(args: Array[String]) {
+    new Importer().importAll()
+    /*
     Database.drop(dbPath)
     val database = Database(dbPath)
     
@@ -84,6 +86,7 @@ object Main {
     } finally {
       database.shutdown
     }
+    */
   }
   
   def doWork(db: Database) {
@@ -101,6 +104,12 @@ object Main {
       person2.firstName("Karl")
       person2.lastName("Klammer")
       
+      val person3: Person = dbit.createNode
+      person.add(person3)(Knows)
+      val rd = person.add(person2)(Knows)
+      rd.delete
+      person3.forceDelete
+      
       val rel = person.add(person2)(Knows)
       root.add(person)
       root.add(person2)
@@ -109,11 +118,13 @@ object Main {
       println(rel.sink)
       println()
       
-      var d = Traverser()
-      d = d.breadthFirst()
-      d = d.relationships(PersonRel)
-      d = d.evaluator((p: Path) => NeoEvaluation.INCLUDE_AND_CONTINUE)
-      println(d.traverse(root).nodes.map{Node.neoNode2Node(_)})
+      val d = (Traverser()
+      .breadthFirst()
+      .relationships(PersonRel)
+      .evaluator((p: Path) => NeoEvaluation.INCLUDE_AND_CONTINUE)
+      .traverse(root.content))
+      
+      println(d.nodes.map{Node.neoNode2Node(_)})
       
       /*
       println(person.neighbors().map{_.toString})

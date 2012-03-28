@@ -32,6 +32,8 @@ trait Relationship extends Versionable with Properties {
   }
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
+  
+  def delete = innerRelationship.delete()
 }
 
 object Relationship {
@@ -39,6 +41,8 @@ object Relationship {
     r.relationType
   implicit def relationshipCompanion2RelationshipType(r: Relationship): RelationshipType =
     r.innerRelationship.getType()
+  /*
   implicit def relationship2Relationship(r: Relationship): NeoRelationship =
     r.innerRelationship
+  */
 }
