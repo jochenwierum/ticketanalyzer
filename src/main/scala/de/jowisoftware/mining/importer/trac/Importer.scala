@@ -7,10 +7,13 @@ import scala.xml.Elem
 import java.net.Authenticator
 import java.net.PasswordAuthentication
 import scala.xml.NodeSeq
+import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.DateTimeFormat
 
 class Importer {
   private val rpcurl = "http://jowisoftware.de/trac/ssh/login/xmlrpc"
-  
+  private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
+    
   def importAll() {
     setupAuth
     
@@ -19,8 +22,8 @@ class Importer {
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
     
     //val ticketIds = List(27)
-    val tickets = ticketIds.map(getTicket(_))
-    println(tickets)
+    val tickets = ticketIds.view.map(getTicket(_))
+    println(tickets.force)
   }
   
   def setupAuth() {
@@ -30,46 +33,48 @@ class Importer {
   }
 
   def receiveTicketNumbers =
-    retrieveXML(<methodCall>
-        <methodName>ticket.query</methodName>
-        <params>
-          <param>
-            <param><string>max=0</string></param>
-          </param>
-        </params>
-        </methodCall>)
-
+    retrieveXML(methodCall("ticket.query", <string>max=0</string>))
+        
   def getTicket(id: Int) = {
     val xml = receiveTicket(id)
     
     val body = xml \ "params" \ "param" \ "value" \ "array" \ "data"
     val values = body \ "value"
     
-    var result: Map[String, (String, String)] = Map()
-    result += wrap("id", values.head)
-    result += wrap("creationDate", values.tail.head)
-    result += wrap("updateDate", values.drop(2).head)
+    var result: Map[String, Any] = Map()
+    result += "id" -> unpack(values.head)
+    result += "creationDate" -> unpack(values.tail.head)
+    result += "updateDate" -> unpack(values.drop(2).head)
     
     (values \ "struct" \ "member").foreach {member =>
-      result += wrap((member \ "name").text, member \ "value")
+      result += (member \ "name").text -> unpack(member \ "value")
     }
     
     result
   }
   
-  private def wrap(name: String, seq: NodeSeq) = seq.head.child.head match {
+  private def unpack(seq: NodeSeq): Any = seq.head.child.head match {
   case e: Elem =>
-    (name -> (e.label -> e.text))
+    e.label match {
+      case "string" => e.text
+      case "int" => e.text.toInt
+      case "dateTime.iso8601" => dateFormat.parseDateTime(e.text).toDate()
+    }
   } 
 
   private def receiveTicket(id: Int) =
-    retrieveXML(<methodCall>
-        <methodName>ticket.get</methodName>
-        <params>
-          <param><int>{id}</int></param>
-        </params>
-        </methodCall>)
-        
+    retrieveXML(methodCall("ticket.get", <int>{id}</int>))
+    
+  private def methodCall(name: String, params: Elem) =
+    <methodCall>
+      <methodName>{name}</methodName>
+      <params>
+        <param>
+          {params.map {x => <param>{x}</param>}}
+        </param>
+      </params>
+    </methodCall>
+    
   def retrieveXML(request: Elem) = {
     val url = new URL(rpcurl)
     val data = request.toString()
@@ -78,8 +83,6 @@ class Importer {
     sendRequest(data, connection)
     XML.load(connection.getInputStream())
   }
-  
-  
   
   private def sendRequest(data: java.lang.String, connection: java.net.URLConnection): Unit = {
     connection.setDoOutput(true)

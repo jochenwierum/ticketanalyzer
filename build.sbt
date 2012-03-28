@@ -10,5 +10,7 @@ resolvers += "Sonatype OSS Releases" at
 libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "latest.integration",
   "org.scalatest" %% "scalatest" % "1.7.1" % "test",
-  "org.neo4j" % "neo4j" % "1.7.M01" withSources
+  "org.neo4j" % "neo4j" % "1.7.M01" withSources,
+  "joda-time" % "joda-time" % "2.1",
+  "org.joda" % "joda-convert" % "1.2"
 )
