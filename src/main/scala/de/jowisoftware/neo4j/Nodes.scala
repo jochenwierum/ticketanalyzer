@@ -1,9 +1,10 @@
 package de.jowisoftware.neo4j
 
-import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship}
+import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship,
+  Direction, RelationshipType}
+import org.neo4j.graphdb.Traverser.Order
+
 import scala.collection.JavaConversions._
-import org.neo4j.graphdb.RelationshipType
-import org.neo4j.graphdb.Direction
 
 object Node {
   def wrapNeoNode[T <: Node](neoNode: NeoNode)(implicit companion: NodeCompanion[T]): T = {
@@ -47,22 +48,26 @@ trait Node extends Versionable with Properties {
     relationship
   }
   
-  def neighbors() =
-    for (Some(node) <- innerNode.getRelationships().map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
-  
-  def neighbors(direction: Direction, relType: RelationshipType*) =
-    for (Some(node) <- innerNode.getRelationships(direction, relType:_*).map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
+  def neighbors2(direction: Direction=Direction.BOTH, relTypes: Seq[RelationshipCompanion[_]]=List()) =
+    neighbors(direction, relTypes.map{_.relationType})
 
-  def neighbors(direction: Direction) =
-    for (Some(node) <- innerNode.getRelationships(direction).map(
+  def neighbors(direction: Direction=Direction.BOTH, relTypes: Seq[RelationshipType]=List()) = {
+    val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
+    else innerNode.getRelationships(direction, relTypes:_*)
+    
+    for (Some(node) <- nodes.map(
         n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
-        
-  def neighbors(relType: RelationshipType*) =
-    for (Some(node) <- innerNode.getRelationships(relType:_*).map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
-        
+  }
+  
+  /*
+  def traverse(order: Order, stopEvaluator: NeoStopEvaluator, returnableEvaluator: NeoReturnableEvaluator,
+      relationsAndDirections: Map[RelationshipType, Direction]) = {
+ 
+    val relationsAndDirectionsObject = relationsAndDirections.map(x => List(x._1, x._2)).toSeq
+    innerNode.traverse(order, stopEvaluator, returnableEvaluator, relationsAndDirectionsObject:_*)
+  }
+  */
+  
   override def toString() = toString(innerNode.getId(), innerNode)
 }
 

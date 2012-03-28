@@ -33,3 +33,12 @@ trait Relationship extends Versionable with Properties {
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
 }
+
+object Relationship {
+  implicit def relationship2RelationshipType(r: RelationshipCompanion[_]): RelationshipType =
+    r.relationType
+  implicit def relationshipCompanion2RelationshipType(r: Relationship): RelationshipType =
+    r.innerRelationship.getType()
+  implicit def relationship2Relationship(r: Relationship): NeoRelationship =
+    r.innerRelationship
+}

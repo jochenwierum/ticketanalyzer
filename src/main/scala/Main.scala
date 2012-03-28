@@ -1,7 +1,13 @@
 import org.neo4j.graphdb.RelationshipType
-import org.neo4j.graphdb.GraphDatabaseService
-import org.neo4j.kernel.EmbeddedGraphDatabase
+import org.neo4j.graphdb.Direction
+import org.neo4j.graphdb.traversal.TraversalDescription
+import org.neo4j.graphdb.Path
+import org.neo4j.graphdb.traversal.{Evaluation => NeoEvaluation}
 import de.jowisoftware.neo4j._
+import de.jowisoftware.neo4j.Traverser._
+import de.jowisoftware.neo4j.Relationship._
+
+import scala.collection.JavaConversions._
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
@@ -101,8 +107,19 @@ object Main {
       
       println(rel)
       println(rel.sink)
+      println()
       
-      println(root.neighbors(RelTypes.PERSON).map{_.toString})
+      var d = Traverser()
+      d = d.breadthFirst()
+      d = d.relationships(PersonRel)
+      d = d.evaluator((p: Path) => NeoEvaluation.INCLUDE_AND_CONTINUE)
+      println(d.traverse(root).nodes.map{Node.neoNode2Node(_)})
+      
+      /*
+      println(person.neighbors().map{_.toString})
+      println(person.neighbors(Direction.INCOMING).map{_.toString})
+      println(person.neighbors(Direction.OUTGOING).map{_.toString})
+      */
       
       dbit.success
     }
