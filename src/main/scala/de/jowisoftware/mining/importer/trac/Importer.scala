@@ -9,21 +9,20 @@ import java.net.PasswordAuthentication
 import scala.xml.NodeSeq
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.format.DateTimeFormat
+import de.jowisoftware.mining.importer.{Importer, ImportEvents}
 
-class Importer {
+class TracImporter extends Importer {
   private val rpcurl = "http://jowisoftware.de/trac/ssh/login/xmlrpc"
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
     
-  def importAll() {
+  def importAll(events: ImportEvents) {
     setupAuth
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
     
-    //val ticketIds = List(27)
-    val tickets = ticketIds.view.map(getTicket(_))
-    println(tickets.force)
+    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId)))
   }
   
   def setupAuth() {
