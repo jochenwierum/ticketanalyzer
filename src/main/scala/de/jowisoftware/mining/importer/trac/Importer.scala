@@ -38,8 +38,7 @@ class Importer {
   def getTicket(id: Int) = {
     val xml = receiveTicket(id)
     
-    val body = xml \ "params" \ "param" \ "value" \ "array" \ "data"
-    val values = body \ "value"
+    val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     
     var result: Map[String, Any] = Map()
     result += "id" -> unpack(values.head)
@@ -48,6 +47,27 @@ class Importer {
     
     (values \ "struct" \ "member").foreach {member =>
       result += (member \ "name").text -> unpack(member \ "value")
+    }
+    
+    result += "history" -> getHistory(id)
+    
+    result
+  }
+  
+  def getHistory(id: Int) = {
+    var result: Map[String, Any] = Map()
+    val history = receiveHistory(id)
+    val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \ 
+      "value" \ "array" \ "data"
+      
+    entries.map { entry =>
+      val value = entry \ "value"
+      result += "time" -> unpack(value.head)
+      result += "author" -> unpack(value.tail.head)
+      result += "field"-> unpack(value.drop(2).head)
+      result += "oldvalue"-> unpack(value.drop(3).head)
+      result += "newvalue"-> unpack(value.drop(4).head)
+      result += "permanent"-> unpack(value.drop(5).head)
     }
     
     result
@@ -65,7 +85,10 @@ class Importer {
   private def receiveTicket(id: Int) =
     retrieveXML(methodCall("ticket.get", <int>{id}</int>))
     
-  private def methodCall(name: String, params: Elem) =
+  private def receiveHistory(id: Int) =
+    retrieveXML(methodCall("ticket.changeLog", <int>{id}</int>, <int>0</int>))
+
+  private def methodCall(name: String, params: Elem*) =
     <methodCall>
       <methodName>{name}</methodName>
       <params>
