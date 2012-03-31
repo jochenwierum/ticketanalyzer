@@ -5,27 +5,29 @@ import java.io.File
 import de.jowisoftware.util.FileUtils
 import org.neo4j.kernel.AbstractGraphDatabase
 
-trait Database {
+trait Database[T <: Node] {
   def shutdown
-  def inTransaction[T](body: DBWithTransaction => T): T
+  def inTransaction[S](body: DBWithTransaction[T] => S): S
   
   private[neo4j] def service: AbstractGraphDatabase
 }
 
-trait DBWithTransaction {
+trait DBWithTransaction[T <: Node] {
   def success
   def failure
   
-  def rootNode[T <: Node](implicit companion: NodeCompanion[T]): T
+  val rootNode: T = getRootNode
+  protected def getRootNode: T
+  
   def createNode[T <: Node](implicit companion: NodeCompanion[T]): T
 }
 
-class EmbeddedDatabase(filepath: String) extends Database {
+class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion[T]) extends Database[T] {
   private[neo4j] val service = new EmbeddedGraphDatabase(filepath)
   
-  def inTransaction[T](body: DBWithTransaction => T): T = {
+  def inTransaction[S](body: DBWithTransaction[T] => S): S = {
     val tx = service.beginTx()
-    val wrapper = new DefaultTransaction(this, tx)
+    val wrapper = new DefaultTransaction(this, tx, rootCompanion)
     
     try {
       return body(wrapper)
@@ -37,18 +39,19 @@ class EmbeddedDatabase(filepath: String) extends Database {
   def shutdown = service.shutdown()
 }
 
-class DefaultTransaction(db: Database, tx: NeoTransaction) extends DBWithTransaction {
+class DefaultTransaction[T <: Node](db: Database[T], tx: NeoTransaction,
+    rootCompanion: NodeCompanion[T]) extends DBWithTransaction[T] {
   def success = tx.success()
   def failure = tx.failure()
   
-  def rootNode[T <: Node](implicit companion: NodeCompanion[T]): T =
-    Node.wrapNeoNode(db.service.getReferenceNode())
+  protected def getRootNode: T =
+    Node.wrapNeoNode(db.service.getReferenceNode())(rootCompanion)
   
-  def createNode[T <: Node](implicit companion: NodeCompanion[T]): T =
+  def createNode[S <: Node](implicit companion: NodeCompanion[S]): S =
     Node.wrapNeoNode(db.service.createNode())
 }
 
 object Database {
-  def apply(path: String) = new EmbeddedDatabase(path)
+  def apply[T <: Node](path: String, rootNode: NodeCompanion[T]) = new EmbeddedDatabase(path, rootNode)
   def drop(path: String) = FileUtils.delTree(path)
 }

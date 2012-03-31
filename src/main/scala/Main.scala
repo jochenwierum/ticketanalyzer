@@ -1,5 +1,9 @@
 import de.jowisoftware.mining.importer.trac.TracImporter
 import de.jowisoftware.mining.importer.ImportEvents
+import de.jowisoftware.mining.importer.trac.DBImporter
+import de.jowisoftware.neo4j._
+import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.Initialization
 
 object Main {
   object DebugOutput extends ImportEvents {
@@ -7,6 +11,20 @@ object Main {
   }
   
   def main(args: Array[String]) {
-    new TracImporter().importAll(DebugOutput)
+    val dbPath = "db/"
+    Database.drop(dbPath)
+    val db = Database(dbPath, RootNode)
+    
+    Initialization.initDB(db)
+    
+    try {
+      db.inTransaction {
+        trans: DBWithTransaction[RootNode] =>
+          new TracImporter().importAll(new DBImporter(trans, "trac1"))
+          trans.success
+      }
+    } finally {
+      db.shutdown;
+    }
   }
 }

@@ -21,7 +21,7 @@ class TracImporter extends Importer {
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
-    
+    //val ticketIds = List(27)
     ticketIds.foreach(tId => events.loadedTicket(getTicket(tId)))
   }
   
@@ -64,8 +64,8 @@ class TracImporter extends Importer {
       result += "time" -> unpack(value.head)
       result += "author" -> unpack(value.tail.head)
       result += "field"-> unpack(value.drop(2).head)
-      result += "oldvalue"-> unpack(value.drop(3).head)
-      result += "newvalue"-> unpack(value.drop(4).head)
+      result += "newvalue"-> unpack(value.drop(3).head)
+      result += "oldvalue"-> unpack(value.drop(4).head)
       result += "permanent"-> unpack(value.drop(5).head)
     }
     

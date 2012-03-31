@@ -7,15 +7,15 @@ trait RelationshipCompanion[+T <: Relationship] {
   val relationType: RelationshipType
   
   def apply(): T
-  protected[neo4j] type leftType <: Node
-  protected[neo4j] type rightType <: Node
+  protected[neo4j] type sourceType <: Node
+  protected[neo4j] type sinkType <: Node
 } 
 
 trait Relationship extends Versionable with Properties {
   protected[neo4j] type companion <: RelationshipCompanion[Relationship]
   
-  private[neo4j] var sourceNode: companion#leftType = _
-  private[neo4j] var sinkNode: companion#rightType = _
+  private[neo4j] var sourceNode: companion#sourceType = _
+  private[neo4j] var sinkNode: companion#sinkType = _
   private[neo4j] var innerRelationship: NeoRelationship = _
   
   protected[neo4j] def content = innerRelationship
@@ -27,8 +27,8 @@ trait Relationship extends Versionable with Properties {
   def initWith(relationship: NeoRelationship) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
-    sourceNode = Node.neoNode2Node(relationship.getStartNode()).get.asInstanceOf[companion#leftType]
-    sinkNode = Node.neoNode2Node(relationship.getEndNode()).get.asInstanceOf[companion#rightType]
+    sourceNode = Node.neoNode2Node(relationship.getStartNode()).get.asInstanceOf[companion#sourceType]
+    sinkNode = Node.neoNode2Node(relationship.getEndNode()).get.asInstanceOf[companion#sinkType]
   }
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)

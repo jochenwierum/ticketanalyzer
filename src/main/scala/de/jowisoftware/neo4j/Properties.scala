@@ -37,7 +37,7 @@ trait Versionable {
     content.getPropertyKeys().map({key => key +"="+ content.getProperty(key)}).
         mkString("["+ getClass.getSimpleName +" "+ id +": ", ", ", "]")
   
-  protected val version: Int
+  protected def version: Int
   protected def initProperties = {}
   protected def updateFrom(oldVersion: Int)
 }
@@ -57,6 +57,9 @@ class NodeProperty[T] private[neo4j](val parent: Properties, val name: String) {
   
   def obj2Persist(obj: T): Any = obj
   def persist2Obj(persist: Any): T = persist.asInstanceOf[T]
+  
+  override def hashCode = apply().hashCode
+  override def equals(other: Any) = apply().equals(other)
   
   override def toString = apply().toString
 }

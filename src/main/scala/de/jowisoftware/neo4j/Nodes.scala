@@ -3,7 +3,6 @@ package de.jowisoftware.neo4j
 import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship,
   Direction, RelationshipType}
 import org.neo4j.graphdb.Traverser.Order
-
 import scala.collection.JavaConversions._
 
 object Node {
@@ -57,6 +56,19 @@ trait Node extends Versionable with Properties {
         n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
   }
 
+  def getFirstRelationship[T <: Node](direction: Direction=Direction.BOTH, relTypes: RelationshipType)
+      (implicit nodeType: NodeCompanion[T]): Option[T] = {
+    val targetClass = nodeType.apply().getClass().getName()
+    innerNode.getRelationships(relTypes, direction).map {
+      _.getOtherNode(innerNode)
+    }.find {otherNode =>
+        otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
+    } match {
+      case Some(node) => Some(Node.wrapNeoNode(node))
+      case _ => None
+    }
+  }
+  
   def delete = innerNode.delete()
   def forceDelete = {
    innerNode.getRelationships().foreach(_.delete()) 
@@ -64,6 +76,11 @@ trait Node extends Versionable with Properties {
   }
   
   override def toString() = toString(innerNode.getId(), innerNode)
+  override def hashCode = innerNode.hashCode
+  override def equals(other: Any) = other match {
+    case n: Node => innerNode.equals(n.innerNode)
+    case _ => false
+  }
 }
 
 class EmptyNode extends Node {
