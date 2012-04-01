@@ -4,35 +4,75 @@ import de.jowisoftware.neo4j.DefaultTransaction
 import de.jowisoftware.mining.model._
 import de.jowisoftware.neo4j.DBWithTransaction
 
-class DBImporter(db: DBWithTransaction[RootNode]) extends ImportEvents {
+class DBImporter(root: RootNode) extends ImportEvents {
   def loadedTicket(ticketData: Map[String, Any]) = {
     
-    val repository = getTicketRepository(ticketData("repositoryName").toString)
+    val repository = getTicketRepository(ticketData("repository").toString)
     
-    val ticket = db.createNode(Ticket)
+    val ticket = repository.createTicket()
     ticket.id(ticketData("id").toString)
-    ticket.reporter(ticketData("reporter").toString)
     ticket.title(ticketData("summary").toString)
     ticket.text(ticketData("description").toString)
+    
+    ticket.add(getPerson(ticketData("reporter").toString))(ReportedBy)
     ticket.add(getMilestone(ticketData("milestone").toString()))(InMilestone)
     ticket.add(getVersion(ticketData("version").toString))(InVersion)
     ticket.add(getType(ticketData("type").toString))(HasType)
     ticket.add(getComponent(ticketData("component").toString))(InComponent)
     ticket.add(getStatus(ticketData("status").toString))(HasStatus)
-    ticket.owner(ticketData("owner").toString) // TODO: own node!
+    ticket.add(getPerson(ticketData("owner").toString))(Owns)
     
     repository.add(ticket)(Contains)
   }
   
   def loadedCommit(commitData: Map[String, Any]) = {
-    println(commitData)
+    val repository = getCommitRepository(commitData("repository").toString)
+
+    val commit = repository.createCommit()
+    commit.id(commitData("id").toString)
+    commit.date(commitData("date").toString)
+    commit.message(commitData("message").toString)
+    
+    commit.add(getPerson(commitData("author").toString))(Owns)
+    
+    val pathes: Map[String, String] =
+      commitData("pathes").asInstanceOf[Map[String, String]]
+    
+    pathes.foreach{case (filename, value) =>
+      val file = getFile(repository, filename)
+      val relation = commit.add(file)(ChangedFile)
+      relation.editType(value)
+    }
+
+    repository.add(commit)(Contains)
   }
   
-  def getTicketRepository(name: String): TicketRepository = TicketRepository.findOrCreate(db, name)
-  def getMilestone(name: String): Milestone = Milestone.findOrCreate(db, name)
-  def getVersion(name: String): Version = Version.findOrCreate(db, name)
-  def getType(name: String): Type = Type.findOrCreate(db, name)
-  def getComponent(name: String): Component = Component.findOrCreate(db, name)
-  def getStatus(name: String): Status = Status.findOrCreate(db, name)
+  def getTicketRepository(name: String) =
+    root.ticketRepositoryCollection.findOrCreateChild(name)
+  def getMilestone(name: String) =
+    root.milestoneCollection.findOrCreateChild(name)
+  def getVersion(name: String) = 
+    root.versionCollection.findOrCreateChild(name)
+  def getType(name: String) = 
+    root.typeCollection.findOrCreateChild(name)
 
+  def getComponent(name: String) = 
+    root.componentCollection.findOrCreateChild(name)
+  def getStatus(name: String) =
+    root.statusCollection.findOrCreateChild(name)
+  def getPerson(name: String) = 
+    root.personCollection.findOrCreateChild(name)
+  
+  def getCommitRepository(name: String) =
+    root.commitRepositoryCollection.findOrCreateChild(name)
+    
+  def getFile(repository: CommitRepository, name: String): File =
+    repository.findFile(name) match {
+    case Some(file) => file
+    case None => 
+      val file = repository.createFile()
+      file.name(name)
+      repository.add(file)(Contains)
+      file
+    }
 }

@@ -24,11 +24,11 @@ trait Relationship extends Versionable with Properties {
   def sink = sinkNode
   def getRelationship = innerRelationship
   
-  def initWith(relationship: NeoRelationship) {
+  def initWith(relationship: NeoRelationship, db: DBWithTransaction[_ <: Node]) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
-    sourceNode = Node.neoNode2Node(relationship.getStartNode()).get.asInstanceOf[companion#sourceType]
-    sinkNode = Node.neoNode2Node(relationship.getEndNode()).get.asInstanceOf[companion#sinkType]
+    sourceNode = Node.neoNode2Node(relationship.getStartNode(), db).get.asInstanceOf[companion#sourceType]
+    sinkNode = Node.neoNode2Node(relationship.getEndNode(), db).get.asInstanceOf[companion#sinkType]
   }
   
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
@@ -41,8 +41,4 @@ object Relationship {
     r.relationType
   implicit def relationshipCompanion2RelationshipType(r: Relationship): RelationshipType =
     r.innerRelationship.getType()
-  /*
-  implicit def relationship2Relationship(r: Relationship): NeoRelationship =
-    r.innerRelationship
-  */
 }

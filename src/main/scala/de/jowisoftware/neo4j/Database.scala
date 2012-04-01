@@ -45,10 +45,10 @@ class DefaultTransaction[T <: Node](db: Database[T], tx: NeoTransaction,
   def failure = tx.failure()
   
   protected def getRootNode: T =
-    Node.wrapNeoNode(db.service.getReferenceNode())(rootCompanion)
+    Node.wrapNeoNode(db.service.getReferenceNode(), this)(rootCompanion)
   
   def createNode[S <: Node](implicit companion: NodeCompanion[S]): S =
-    Node.wrapNeoNode(db.service.createNode())
+    Node.wrapNeoNode(db.service.createNode(), this)
 }
 
 object Database {

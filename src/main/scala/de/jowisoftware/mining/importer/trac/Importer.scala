@@ -61,14 +61,16 @@ class TracImporter extends Importer {
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \ 
       "value" \ "array" \ "data"
       
-    entries.map { entry =>
+    entries.view.zipWithIndex.foreach { case (entry, id) =>
       val value = entry \ "value"
-      result += "time" -> unpack(value.head)
-      result += "author" -> unpack(value.tail.head)
-      result += "field"-> unpack(value.drop(2).head)
-      result += "newvalue"-> unpack(value.drop(3).head)
-      result += "oldvalue"-> unpack(value.drop(4).head)
-      result += "permanent"-> unpack(value.drop(5).head)
+      var subResult: Map[String, Any] = Map()
+      subResult += "time" -> unpack(value.head)
+      subResult += "author" -> unpack(value.tail.head)
+      subResult += "field"-> unpack(value.drop(2).head)
+      subResult += "newvalue"-> unpack(value.drop(3).head)
+      subResult += "oldvalue"-> unpack(value.drop(4).head)
+      subResult += "permanent"-> unpack(value.drop(5).head)
+      result += id.toString -> subResult
     }
     
     result

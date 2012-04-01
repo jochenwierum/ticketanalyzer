@@ -6,17 +6,17 @@ import org.neo4j.graphdb.Traverser.Order
 import scala.collection.JavaConversions._
 
 object Node {
-  def wrapNeoNode[T <: Node](neoNode: NeoNode)(implicit companion: NodeCompanion[T]): T = {
+  def wrapNeoNode[T <: Node](neoNode: NeoNode, db: DBWithTransaction[_ <: Node])(implicit companion: NodeCompanion[T]): T = {
     val node = companion()
-    node initWith neoNode
+    node initWith(neoNode, db)
     node
   }
   
-  def neoNode2Node(node: NeoNode): Option[Node] = {
+  def neoNode2Node(node: NeoNode, db: DBWithTransaction[_ <: Node]): Option[Node] = {
     try {
       val clazz = node.getProperty(".class").asInstanceOf[String]
       val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
-      obj initWith node
+      obj initWith(node, db)
       Some(obj)
     } catch {
       case e: Exception => None
@@ -30,18 +30,21 @@ trait NodeCompanion[+T <: Node] {
 
 trait Node extends Versionable with Properties {
   protected[neo4j] var innerNode: NeoNode = _
+  private var innerDB: DBWithTransaction[_ <: Node] = _
   
   def content: NeoNode = innerNode
+  protected def db = innerDB
   
-  private[neo4j] final def initWith(node: NeoNode) {
+  private[neo4j] final def initWith(node: NeoNode, db: DBWithTransaction[_ <: Node]) {
     this.innerNode = node
+    this.innerDB = db
     sanityCheck(node)
   }
   
   def add[T <: Relationship](other: Node)(implicit relType: RelationshipCompanion[T]): T = {
     val relationship = relType()
     val neoRelationship = innerNode.createRelationshipTo(other.innerNode, relType.relationType)
-    relationship initWith neoRelationship
+    relationship.initWith(neoRelationship, db)
     relationship
   }
   
@@ -53,7 +56,7 @@ trait Node extends Versionable with Properties {
     else innerNode.getRelationships(direction, relTypes:_*)
     
     for (Some(node) <- nodes.map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode)))) yield node
+        n => Node.neoNode2Node(n.getOtherNode(innerNode), innerDB))) yield node
   }
 
   def getFirstRelationship[T <: Node](direction: Direction=Direction.BOTH, relTypes: RelationshipType)
@@ -64,7 +67,7 @@ trait Node extends Versionable with Properties {
     }.find {otherNode =>
         otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
     } match {
-      case Some(node) => Some(Node.wrapNeoNode(node))
+      case Some(node) => Some(Node.wrapNeoNode(node, innerDB))
       case _ => None
     }
   }

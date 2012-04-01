@@ -4,9 +4,6 @@ import _root_.de.jowisoftware.neo4j._
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
-  val references = ScalaRelationshipType("references")
-  val follows = ScalaRelationshipType("follows")
-  
   val contains = ScalaRelationshipType("contains")
   
   val inVersion = ScalaRelationshipType("in_version")
@@ -14,6 +11,10 @@ object RelTypes {
   val hasType = ScalaRelationshipType("has_type")
   val inMilestone = ScalaRelationshipType("in_milestone")
   val hasStatus = ScalaRelationshipType("has_status")
+  val fromPerson = ScalaRelationshipType("from_person")
+  val owns = ScalaRelationshipType("owns")
+  val reportedBy = ScalaRelationshipType("reported_by")
+  val changedFile = ScalaRelationshipType("changed_file")
 }
 
 
@@ -21,36 +22,6 @@ object RelTypes {
 trait EmptyRelationship extends Relationship {
   val version = 0
   def updateFrom(version: Int) = { }
-}
-
-
-
-object Follows extends RelationshipCompanion[Follows] {
-  def apply = new Follows
-  
-  val relationType = RelTypes.follows
-  
-  type sourceType = Commit
-  type sinkType = Commit 
-}
-
-class Follows extends EmptyRelationship {
-  val companion = Follows
-}
-
-
-
-object Reference extends RelationshipCompanion[Reference] {
-  def apply = new Reference
-  
-  val relationType = RelTypes.follows
-  
-  type sourceType = Node
-  type sinkType = Node 
-}
-
-class Reference extends EmptyRelationship {
-  val companion = Follows
 }
 
 
@@ -156,4 +127,69 @@ object HasStatus extends RelationshipCompanion[HasStatus] {
 
 class HasStatus extends EmptyRelationship {
   val companion = HasStatus
+}
+
+
+
+object FromPerson extends RelationshipCompanion[FromPerson] {
+  def apply = new FromPerson
+  
+  val relationType = RelTypes.fromPerson
+  
+  type sourceType = Node
+  type sinkType = Person
+}
+
+class FromPerson extends EmptyRelationship {
+  val companion = FromPerson
+}
+
+
+
+object Owns extends RelationshipCompanion[Owns] {
+  def apply = new Owns
+  
+  val relationType = RelTypes.owns
+  
+  type sourceType = Node
+  type sinkType = Person
+}
+
+class Owns extends EmptyRelationship {
+  val companion = Owns
+}
+
+
+
+object ReportedBy extends RelationshipCompanion[ReportedBy] {
+  def apply = new ReportedBy
+  
+  val relationType = RelTypes.reportedBy
+  
+  type sourceType = Node
+  type sinkType = Person
+}
+
+class ReportedBy extends EmptyRelationship {
+  val companion = ReportedBy
+}
+
+
+
+object ChangedFile extends RelationshipCompanion[ChangedFile] {
+  def apply = new ChangedFile
+  
+  val relationType = RelTypes.changedFile
+  
+  type sourceType = Commit
+  type sinkType = File
+}
+
+class ChangedFile extends Relationship {
+  val companion = ReportedBy
+  
+  val version = 1
+  def updateFrom(version: Int) = {}
+  
+  val editType = stringProperty("editType")
 }

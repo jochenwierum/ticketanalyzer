@@ -3,7 +3,6 @@ import de.jowisoftware.mining.importer.ImportEvents
 import de.jowisoftware.mining.importer.trac.DBImporter
 import de.jowisoftware.neo4j._
 import de.jowisoftware.mining.model.RootNode
-import de.jowisoftware.mining.model.Initialization
 import org.tmatesoft.svn.core.wc.SVNClientManager
 import org.tmatesoft.svn.core.SVNURL
 import org.tmatesoft.svn.core.wc.SVNRevision
@@ -17,12 +16,10 @@ object Main {
     Database.drop(dbPath)
     val db = Database(dbPath, RootNode)
     
-    Initialization.initDB(db)
-    
     try {
       db.inTransaction {
         trans: DBWithTransaction[RootNode] =>
-          //importTrac(trans)
+          importTrac(trans)
           importSVN(trans)
           trans.success
       }
@@ -37,12 +34,12 @@ object Main {
     importer.username = "test"
     importer.password = "test"
     
-    importer.importAll(new DBImporter(db), "trac1")
+    importer.importAll(new DBImporter(db.rootNode), "trac1")
   }
   
   def importSVN(db: DBWithTransaction[RootNode]) {
     val importer = new SVNImporter()
     importer.url = "https://test@jowisoftware.de:4443/svn/ssh"
-    importer.importAll(new DBImporter(db), "svn1")
+    importer.importAll(new DBImporter(db.rootNode), "svn1")
   }
 }
