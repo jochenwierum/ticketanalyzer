@@ -4,10 +4,10 @@ import de.jowisoftware.neo4j.DefaultTransaction
 import de.jowisoftware.mining.model._
 import de.jowisoftware.neo4j.DBWithTransaction
 
-class DBImporter(db: DBWithTransaction[RootNode], repositoryName: String) extends ImportEvents {
+class DBImporter(db: DBWithTransaction[RootNode]) extends ImportEvents {
   def loadedTicket(ticketData: Map[String, Any]) = {
     
-    val repository = getRepository(repositoryName)
+    val repository = getTicketRepository(ticketData("repositoryName").toString)
     
     val ticket = db.createNode(Ticket)
     ticket.id(ticketData("id").toString)
@@ -24,10 +24,15 @@ class DBImporter(db: DBWithTransaction[RootNode], repositoryName: String) extend
     repository.add(ticket)(Contains)
   }
   
-  def getRepository(name: String): TicketRepository = TicketRepository.findOrCreate(db, name)
+  def loadedCommit(commitData: Map[String, Any]) = {
+    println(commitData)
+  }
+  
+  def getTicketRepository(name: String): TicketRepository = TicketRepository.findOrCreate(db, name)
   def getMilestone(name: String): Milestone = Milestone.findOrCreate(db, name)
   def getVersion(name: String): Version = Version.findOrCreate(db, name)
   def getType(name: String): Type = Type.findOrCreate(db, name)
   def getComponent(name: String): Component = Component.findOrCreate(db, name)
-  def getStatus(name: String): Status = Status.findOrCreate(db, name) 
+  def getStatus(name: String): Status = Status.findOrCreate(db, name)
+
 }

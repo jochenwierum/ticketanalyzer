@@ -12,22 +12,24 @@ import org.joda.time.format.DateTimeFormat
 import de.jowisoftware.mining.importer.{Importer, ImportEvents}
 
 class TracImporter extends Importer {
-  private val rpcurl = "http://jowisoftware.de/trac/ssh/login/xmlrpc"
+  var url: String = _
+  var username: String = _
+  var password: String = _
+    
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
     
-  def importAll(events: ImportEvents) {
+  def importAll(events: ImportEvents, repositoryName: String) {
     setupAuth
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
-    //val ticketIds = List(27)
-    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId)))
+    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
   }
   
   def setupAuth() {
     Authenticator.setDefault(new Authenticator() {
-      override def getPasswordAuthentication = new PasswordAuthentication("test", "test".toCharArray())
+      override def getPasswordAuthentication = new PasswordAuthentication(username, password.toCharArray())
     })
   }
 
@@ -98,9 +100,9 @@ class TracImporter extends Importer {
     </methodCall>
     
   def retrieveXML(request: Elem) = {
-    val url = new URL(rpcurl)
+    val rpcurl = new URL(url)
     val data = request.toString()
-    val connection = url.openConnection()
+    val connection = rpcurl.openConnection()
     
     sendRequest(data, connection)
     XML.load(connection.getInputStream())
