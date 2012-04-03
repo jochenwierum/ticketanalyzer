@@ -10,21 +10,25 @@ import scala.xml.NodeSeq
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.format.DateTimeFormat
 import de.jowisoftware.mining.importer.{Importer, ImportEvents}
+import de.jowisoftware.mining.importer.ImportEvents.{LoadedTicket, CountedTicket}
+import scala.actors.Actor
 
 class TracImporter extends Importer {
   var url: String = _
   var username: String = _
   var password: String = _
+  var repositoryName: String = _
     
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
     
-  def importAll(events: ImportEvents, repositoryName: String) {
+  protected def importAll(events: Actor) {
     setupAuth
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
-    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
+    events ! CountedTicket(ticketIds.size)
+    ticketIds.foreach(tId => events ! LoadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
   }
   
   def setupAuth() {

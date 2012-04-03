@@ -1,12 +1,34 @@
 package de.jowisoftware.mining.importer.trac
-import de.jowisoftware.mining.importer.ImportEvents
 import de.jowisoftware.neo4j.DefaultTransaction
 import de.jowisoftware.mining.model._
 import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.mining.importer.{ImportEvents, Importer}
+import de.jowisoftware.mining.importer.ImportEvents._
+import scala.actors.Actor._
+import scala.actors.Actor
 
-class DBImporter(root: RootNode) extends ImportEvents {
-  def loadedTicket(ticketData: Map[String, Any]) = {
+class DBImporter(root: RootNode, importer: Importer*) {
+  def run() = {
+    var toFinish = importer.size
     
+    for (imp <- importer) {
+      imp.executeAsync(self)
+    }
+    
+    while(toFinish > 0) {
+      self.receive {
+        case CountedCommits(c) => println("Commits: "+ c)
+        case CountedTicket(t) => println("Tickets: "+ t)
+        case LoadedTicket(data) => print("t"); loadedTicket(data)
+        case LoadedCommit(data) => print("c"); loadedCommit(data)
+        case Finish() => 
+          print("F")
+          toFinish = toFinish - 1
+      }
+    }
+  }
+  
+  private def loadedTicket(ticketData: Map[String, Any]) = {
     val repository = getTicketRepository(ticketData("repository").toString)
     
     val ticket = repository.createTicket()

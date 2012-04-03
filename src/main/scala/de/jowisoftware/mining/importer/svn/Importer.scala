@@ -8,11 +8,14 @@ import org.tmatesoft.svn.core.SVNLogEntry
 import de.jowisoftware.mining.importer.ImportEvents
 import scala.collection.JavaConversions._
 import org.tmatesoft.svn.core.SVNLogEntryPath
+import de.jowisoftware.mining.importer.ImportEvents.LoadedCommit
+import scala.actors.Actor
 
 class SVNImporter extends Importer {
   var url: String = _
+  var repositoryName: String = _
   
-  def importAll(events: ImportEvents, repositoryName: String): Unit = {
+  protected def importAll(events: Actor): Unit = {
     val cm = SVNClientManager.newInstance();
     val lc = cm.getLogClient()
     val svnurl = SVNURL.parseURIDecoded(url)
@@ -21,7 +24,7 @@ class SVNImporter extends Importer {
     lc.doLog(svnurl, Array[String]("."), rev0, rev0, SVNRevision.HEAD,
         false, true, Long.MaxValue, new ISVNLogEntryHandler() {
       def handleLogEntry(entry: SVNLogEntry) {
-        events.loadedCommit(handle(entry, repositoryName))
+        events ! LoadedCommit(handle(entry, repositoryName))
       }
     })
   }

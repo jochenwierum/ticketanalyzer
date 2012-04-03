@@ -19,27 +19,33 @@ object Main {
     try {
       db.inTransaction {
         trans: DBWithTransaction[RootNode] =>
-          importTrac(trans)
-          importSVN(trans)
+          importFull(trans)
           trans.success
       }
     } finally {
       db.shutdown;
     }
+    scala.actors.Scheduler.shutdown()
   }
   
-  def importTrac(db: DBWithTransaction[RootNode]) {
+  def importFull(db: DBWithTransaction[RootNode]) = {
+    val importer = new DBImporter(db.rootNode, importSVN(db), importTrac(db))
+    importer.run()
+  }
+  
+  def importTrac(db: DBWithTransaction[RootNode]) = {
     val importer = new TracImporter()
     importer.url = "http://jowisoftware.de/trac/ssh/login/xmlrpc"
     importer.username = "test"
     importer.password = "test"
-    
-    importer.importAll(new DBImporter(db.rootNode), "trac1")
+    importer.repositoryName = "trac1"
+    importer
   }
   
-  def importSVN(db: DBWithTransaction[RootNode]) {
+  def importSVN(db: DBWithTransaction[RootNode]) = {
     val importer = new SVNImporter()
     importer.url = "https://test@jowisoftware.de:4443/svn/ssh"
-    importer.importAll(new DBImporter(db.rootNode), "svn1")
+    importer.repositoryName = "svn1"
+    importer
   }
 }

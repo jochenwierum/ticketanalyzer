@@ -1,10 +1,30 @@
 package de.jowisoftware.mining.importer
+import scala.actors.Actor
 
-trait ImportEvents {
-  def loadedTicket(ticket: Map[String, Any]): Unit
-  def loadedCommit(commit: Map[String, Any]): Unit
+object ImportEvents {
+  abstract sealed class ImportEvent
+  case class CountedTicket(count: Int) extends ImportEvent
+  case class CountedCommits(count: Int) extends ImportEvent
+  case class LoadedTicket(ticket: Map[String, Any]) extends ImportEvent
+  case class LoadedCommit(commit: Map[String, Any]) extends ImportEvent
+  case class Finish() extends ImportEvent
 }
 
-trait Importer {
-  def importAll(events: ImportEvents, repositoryName: String): Unit
+abstract class Importer extends Thread {
+  private var events: Actor = _
+  
+  private[importer] def executeAsync(events: Actor) = {
+    this.events = events
+    start()
+  }
+  
+  final override def run(): Unit = {
+    try {
+      importAll(events)
+    } finally {
+      events ! ImportEvents.Finish()
+    }
+  }
+  
+  protected def importAll(events: Actor): Unit
 }
