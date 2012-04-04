@@ -37,7 +37,7 @@ trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
           commitsDone, num(commitsCount), cp / 10.0);
 
   private def num(x: Long) =
-    if (x < 0) "?"
+    if (x <= 0) "?"
     else x.toString
 }
 
@@ -51,9 +51,9 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
   
   private val target = self
   protected var ticketsDone: Long = 0
-  protected var ticketsCount: Long = -1
+  protected var ticketsCount: Long = 0
   protected var commitsDone: Long = 0
-  protected var commitsCount: Long = -1
+  protected var commitsCount: Long = 0
   
   def reportProgress: Unit
   
