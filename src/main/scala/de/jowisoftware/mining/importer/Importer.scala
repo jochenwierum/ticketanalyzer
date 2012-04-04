@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.importer
 
-import de.jowisoftware.mining.model.{RootNode, ReportedBy, Owns, InVersion, InMilestone, InComponent, HasType, HasStatus, File, Contains, CommitRepository, ChangedFile}
+import de.jowisoftware.mining.model.{Ticket, RootNode, ReportedBy, Owns, InVersion, InMilestone, InComponent, HasType, HasStatus, File, Contains, CommitRepository, ChangedTicket, ChangedFile}
 
 class DatabaseImportHandler(root: RootNode) extends ImportEvents {
   def finish() { }
@@ -23,7 +23,20 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
     ticket.add(getStatus(ticketData("status").toString))(HasStatus)
     ticket.add(getPerson(ticketData("owner").toString))(Owns)
     
-    repository.add(ticket)(Contains)
+    addUpdates(ticket, ticketData("update").asInstanceOf[Map[Int, Map[String, Any]]])
+  }
+  
+  def addUpdates(ticket: Ticket, updates: Map[Int, Map[String, Any]]) = {
+    for ((id, data) <- updates) {
+      val update = ticket.createUpdate(id)
+      update.time(data("time").toString)
+      update.field(data("field").toString)
+      update.value(data("newvalue"))
+      update.oldvalue(data("oldvalue"))
+      
+      update.add(getPerson(data("author").toString))(ChangedTicket)
+      println(update)
+    }
   }
   
   def loadedCommit(commitData: Map[String, Any]) = {

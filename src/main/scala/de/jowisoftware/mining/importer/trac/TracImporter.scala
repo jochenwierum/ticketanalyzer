@@ -21,7 +21,8 @@ class TracImporter extends Importer {
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
-    val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
+    //val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
+    val ticketIds = List(27)
     events.countedTickets(ticketIds.size)
     ticketIds.foreach(tId => events.loadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
     events.finish()
@@ -50,13 +51,13 @@ class TracImporter extends Importer {
       result += (member \ "name").text -> unpack(member \ "value")
     }
     
-    result += "history" -> getHistory(id)
+    result += "update" -> getHistory(id)
     
     result
   }
   
   def getHistory(id: Int) = {
-    var result: Map[String, Any] = Map()
+    var result: Map[Int, Any] = Map()
     val history = receiveHistory(id)
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \ 
       "value" \ "array" \ "data"
@@ -67,10 +68,10 @@ class TracImporter extends Importer {
       subResult += "time" -> unpack(value.head)
       subResult += "author" -> unpack(value.tail.head)
       subResult += "field"-> unpack(value.drop(2).head)
-      subResult += "newvalue"-> unpack(value.drop(3).head)
-      subResult += "oldvalue"-> unpack(value.drop(4).head)
-      subResult += "permanent"-> unpack(value.drop(5).head)
-      result += id.toString -> subResult
+      subResult += "oldvalue"-> unpack(value.drop(3).head)
+      subResult += "newvalue"-> unpack(value.drop(4).head)
+      //subResult += "permanent"-> unpack(value.drop(5).head)
+      result += id -> subResult
     }
     
     result

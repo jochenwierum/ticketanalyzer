@@ -85,6 +85,29 @@ class Ticket extends Node {
   val reporter = stringProperty("reporter")
   val text = stringProperty("text")
   val title = stringProperty("title")
+  
+  def createUpdate(number: Int) = {
+    val update = db.createNode(Update)
+    val relation = update.add(this)(Updates)
+    relation.number(number)
+    update
+  }
+}
+
+
+
+object Update extends NodeCompanion[Update] {
+  def apply = new Update
+}
+
+class Update extends Node {
+  val version = 1
+  def updateFrom(version: Int) = {}
+  
+  val time = stringProperty("time")
+  val field = stringProperty("field")
+  val value = anyProperty("value")
+  val oldvalue = anyProperty("oldvalue")
 }
 
 
@@ -103,7 +126,11 @@ object TicketRepository extends NodeCompanion[TicketRepository] {
 }
 
 class TicketRepository extends Node with HasName with EmptyNode {
-  def createTicket(): Ticket = db.createNode(Ticket)
+  def createTicket(): Ticket = {
+    val ticket = db.createNode(Ticket)
+    this.add(ticket)(Contains)
+    ticket
+  }
 }
 
 

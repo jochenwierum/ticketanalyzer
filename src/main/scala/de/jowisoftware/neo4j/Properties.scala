@@ -46,6 +46,7 @@ trait Properties {
   protected[neo4j] def content: PropertyContainer
   protected def stringProperty(name: String) = new NodeProperty[String](this, name)
   protected def intProperty(name: String) = new NodeProperty[Int](this, name)
+  protected def anyProperty(name: String) = new NodeProperty[Any](this, name)
 }
 
 class NodeProperty[T] private[neo4j](val parent: Properties, val name: String) {

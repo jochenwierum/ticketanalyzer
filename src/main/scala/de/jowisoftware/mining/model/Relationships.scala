@@ -15,6 +15,8 @@ object RelTypes {
   val owns = ScalaRelationshipType("owns")
   val reportedBy = ScalaRelationshipType("reported_by")
   val changedFile = ScalaRelationshipType("changed_file")
+  val updates = ScalaRelationshipType("updates")
+  val changedTicket = ScalaRelationshipType("changedTicket")
 }
 
 
@@ -192,4 +194,42 @@ class ChangedFile extends Relationship {
   def updateFrom(version: Int) = {}
   
   val editType = stringProperty("editType")
+}
+
+
+
+object Updates extends RelationshipCompanion[Updates] {
+  def apply = new Updates
+  
+  val relationType = RelTypes.updates
+  
+  type sourceType = Ticket
+  type sinkType = Update
+}
+
+class Updates extends Relationship {
+  val companion = Updates
+  
+  val version = 1
+  def updateFrom(version: Int) = {}
+  
+  val number = intProperty("number")
+}
+
+
+
+object ChangedTicket extends RelationshipCompanion[ChangedTicket] {
+  def apply = new ChangedTicket
+  
+  val relationType = RelTypes.changedTicket
+  
+  type sourceType = Person
+  type sinkType = Update
+}
+
+class ChangedTicket extends Relationship {
+  val companion = ChangedTicket
+  
+  val version = 1
+  def updateFrom(version: Int) = {}
 }
