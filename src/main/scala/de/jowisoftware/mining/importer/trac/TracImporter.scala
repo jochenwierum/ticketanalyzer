@@ -1,17 +1,12 @@
 package de.jowisoftware.mining.importer.trac
-import java.net.{URL, URLEncoder}
 import java.io.OutputStreamWriter
-import scala.io.Source
-import scala.xml.XML
-import scala.xml.Elem
-import java.net.Authenticator
-import java.net.PasswordAuthentication
-import scala.xml.NodeSeq
-import org.joda.time.format.ISODateTimeFormat
+import java.net.{URL, PasswordAuthentication, Authenticator}
+
+import scala.xml.{XML, NodeSeq, Elem}
+
 import org.joda.time.format.DateTimeFormat
+
 import de.jowisoftware.mining.importer.{Importer, ImportEvents}
-import de.jowisoftware.mining.importer.ImportEvents.{LoadedTicket, CountedTicket}
-import scala.actors.Actor
 
 class TracImporter extends Importer {
   var url: String = _
@@ -21,14 +16,15 @@ class TracImporter extends Importer {
     
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
     
-  protected def importAll(events: Actor) {
+  def importAll(events: ImportEvents) {
     setupAuth
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
-    events ! CountedTicket(ticketIds.size)
-    ticketIds.foreach(tId => events ! LoadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
+    events.countedTickets(ticketIds.size)
+    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
+    events.finish()
   }
   
   def setupAuth() {

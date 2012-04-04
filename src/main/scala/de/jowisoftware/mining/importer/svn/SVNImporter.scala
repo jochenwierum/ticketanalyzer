@@ -1,32 +1,34 @@
 package de.jowisoftware.mining.importer.svn
-import de.jowisoftware.mining.importer.Importer
-import org.tmatesoft.svn.core.SVNURL
-import org.tmatesoft.svn.core.wc.SVNClientManager
-import org.tmatesoft.svn.core.wc.SVNRevision
-import org.tmatesoft.svn.core.ISVNLogEntryHandler
-import org.tmatesoft.svn.core.SVNLogEntry
-import de.jowisoftware.mining.importer.ImportEvents
-import scala.collection.JavaConversions._
-import org.tmatesoft.svn.core.SVNLogEntryPath
-import de.jowisoftware.mining.importer.ImportEvents.LoadedCommit
-import scala.actors.Actor
+import scala.collection.JavaConversions.asScalaSet
+
+import org.tmatesoft.svn.core.wc.{SVNRevision, SVNClientManager}
+import org.tmatesoft.svn.core.{SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler}
+
+import de.jowisoftware.mining.importer.{Importer, ImportEvents}
 
 class SVNImporter extends Importer {
   var url: String = _
   var repositoryName: String = _
   
-  protected def importAll(events: Actor): Unit = {
+  def importAll(events: ImportEvents): Unit = {
     val cm = SVNClientManager.newInstance();
     val lc = cm.getLogClient()
     val svnurl = SVNURL.parseURIDecoded(url)
     val rev0 = SVNRevision.create(1)
 
-    lc.doLog(svnurl, Array[String]("."), rev0, rev0, SVNRevision.HEAD,
+    val info = cm.getWCClient().doInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD)
+    val latestRevision = info.getCommittedRevision()
+    
+    events.countedCommits(latestRevision.getNumber())
+    
+    lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
         false, true, Long.MaxValue, new ISVNLogEntryHandler() {
       def handleLogEntry(entry: SVNLogEntry) {
-        events ! LoadedCommit(handle(entry, repositoryName))
+        events.loadedCommit(handle(entry, repositoryName))
       }
     })
+    
+    events.finish()
   }
 
   private def handle(entry: SVNLogEntry, repositoryName: String) = {

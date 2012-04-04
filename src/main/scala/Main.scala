@@ -1,14 +1,9 @@
-import de.jowisoftware.mining.importer.trac.TracImporter
-import de.jowisoftware.mining.importer.ImportEvents
-import de.jowisoftware.mining.importer.trac.DBImporter
-import de.jowisoftware.neo4j._
-import de.jowisoftware.mining.model.RootNode
-import org.tmatesoft.svn.core.wc.SVNClientManager
-import org.tmatesoft.svn.core.SVNURL
-import org.tmatesoft.svn.core.wc.SVNRevision
-import org.tmatesoft.svn.core.ISVNLogEntryHandler
-import org.tmatesoft.svn.core.SVNLogEntry
 import de.jowisoftware.mining.importer.svn.SVNImporter
+import de.jowisoftware.mining.importer.trac.TracImporter
+import de.jowisoftware.mining.importer.AsyncDatabaseImportHandler
+import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.neo4j.{Database, DBWithTransaction}
+import de.jowisoftware.mining.importer.ConsoleProgressReporter
 
 object Main {
   def main(args: Array[String]) {
@@ -25,11 +20,13 @@ object Main {
     } finally {
       db.shutdown;
     }
+    
+    println("done")
     scala.actors.Scheduler.shutdown()
   }
   
   def importFull(db: DBWithTransaction[RootNode]) = {
-    val importer = new DBImporter(db.rootNode, importSVN(db), importTrac(db))
+    val importer = new AsyncDatabaseImportHandler(db.rootNode, importSVN(db), importTrac(db)) with ConsoleProgressReporter
     importer.run()
   }
   
