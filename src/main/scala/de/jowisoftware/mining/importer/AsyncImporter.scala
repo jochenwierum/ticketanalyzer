@@ -32,9 +32,13 @@ trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
   }
   
   private def mkStatusLine(tp: Long, cp: Long, total: Long) =
-    "%.1f %% done: %d of %d Tickets (%.1f %%), %d of %d Commits (%.1f %%)".
-      format(total / 10.0, ticketsDone, ticketsCount, tp / 10.0,
-          commitsDone, commitsCount, cp / 10.0);
+    "%.1f %% done: %d of %s Tickets (%.1f %%), %d of %s Commits (%.1f %%)".
+      format(total / 10.0, ticketsDone, num(ticketsCount), tp / 10.0,
+          commitsDone, num(commitsCount), cp / 10.0);
+
+  private def num(x: Long) =
+    if (x < 0) "?"
+    else x.toString
 }
 
 abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) extends ImportEvents {
@@ -62,25 +66,30 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
     }
     
     while(toFinish > 0) {
-      self.receive {
-        case CountedCommits(c) => 
-          dbImporter.countedCommits(c)
-          commitsCount = c
-          reportProgress
-        case CountedTickets(t) =>
-          dbImporter.countedTickets(t)
-          ticketsCount = t
-          reportProgress
-        case LoadedTicket(data) =>
-          ticketsDone += 1
-          dbImporter.loadedTicket(data)
-          reportProgress
-        case LoadedCommit(data) =>
-          commitsDone += 1
-          dbImporter.loadedCommit(data)
-          reportProgress
-        case Finish =>
-          toFinish = toFinish - 1
+      try {
+        self.receive {
+          case CountedCommits(c) =>
+            dbImporter.countedCommits(c)
+            commitsCount = c
+            reportProgress
+          case CountedTickets(t) =>
+            dbImporter.countedTickets(t)
+            ticketsCount = t
+            reportProgress
+          case LoadedTicket(data) =>
+            ticketsDone += 1
+            dbImporter.loadedTicket(data)
+            reportProgress
+          case LoadedCommit(data) =>
+            commitsDone += 1
+            dbImporter.loadedCommit(data)
+            reportProgress
+          case Finish =>
+            toFinish = toFinish - 1
+        }
+      } catch {
+        case e: Exception =>
+          e.printStackTrace() // TODO: Logger!
       }
     }
   }
