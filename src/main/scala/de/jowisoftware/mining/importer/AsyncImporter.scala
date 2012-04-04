@@ -21,9 +21,10 @@ trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
   private var lastTotal = -1L
   
   def reportProgress {
-    val tp = 1000 * ticketsDone / ticketsCount
-    val cp = 1000 * commitsDone / commitsCount
-    val total = 1000 * (ticketsDone + commitsDone) / (commitsCount + ticketsCount) 
+    val tp = if (ticketsCount == 0) 0 else 1000 * ticketsDone / ticketsCount
+    val cp = if (ticketsCount == 0) 0 else 1000 * commitsDone / commitsCount
+    val total = if (ticketsCount + commitsCount == 0) 0
+      else 1000 * (ticketsDone + commitsDone) / (commitsCount + ticketsCount) 
     
     if (lastTotal != total) {
       println(mkStatusLine(tp, cp, total))

@@ -85,8 +85,3 @@ trait Node extends Versionable with Properties {
     case _ => false
   }
 }
-
-class EmptyNode extends Node {
-  protected val version = 1
-  protected def updateFrom(oldVersion: Int) = {}
-}
