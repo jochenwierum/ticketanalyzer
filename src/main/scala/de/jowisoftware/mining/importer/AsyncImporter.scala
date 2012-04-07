@@ -3,6 +3,7 @@ package de.jowisoftware.mining.importer
 import scala.actors.Actor.self
 
 import de.jowisoftware.mining.model.RootNode
+import grizzled.slf4j.Logging
 
 class AsyncImporterThread(importer: Importer) extends Thread {
   private var events: ImportEvents = _
@@ -42,7 +43,8 @@ trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
     else x.toString
 }
 
-abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) extends ImportEvents {
+abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*)
+    extends ImportEvents with Logging {
   abstract sealed class ImportEvent
   case class CountedTickets(count: Long) extends ImportEvent
   case class CountedCommits(count: Long) extends ImportEvent
@@ -90,7 +92,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
         }
       } catch {
         case e: Exception =>
-          e.printStackTrace() // TODO: Logger!
+          error("Unexpected exception while importing, trying to ignore", e)
       }
     }
   }

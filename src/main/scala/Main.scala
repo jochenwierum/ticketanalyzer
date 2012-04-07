@@ -27,7 +27,7 @@ object Main {
   
   def importFull(db: DBWithTransaction[RootNode]) = {
     val importer = new AsyncDatabaseImportHandler(db.rootNode, 
-        //importSVN(db), 
+        importSVN(db), 
         importTrac(db)
         ) with ConsoleProgressReporter
     importer.run()
