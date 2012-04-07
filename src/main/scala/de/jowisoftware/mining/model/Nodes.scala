@@ -282,7 +282,7 @@ class Commit extends Node {
   
   val id = stringProperty("id")
   val message = stringProperty("message")
-  val date = stringProperty("date")
+  val date = dateProperty("date")
 }
 
 

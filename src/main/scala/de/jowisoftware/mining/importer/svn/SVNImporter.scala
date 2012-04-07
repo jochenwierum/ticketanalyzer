@@ -1,10 +1,9 @@
 package de.jowisoftware.mining.importer.svn
 import scala.collection.JavaConversions.asScalaSet
-
 import org.tmatesoft.svn.core.wc.{SVNRevision, SVNClientManager}
 import org.tmatesoft.svn.core.{SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler}
-
 import de.jowisoftware.mining.importer.{Importer, ImportEvents}
+import de.jowisoftware.mining.importer.CommitData
 
 class SVNImporter extends Importer {
   var url: String = _
@@ -31,20 +30,18 @@ class SVNImporter extends Importer {
     events.finish()
   }
 
-  private def handle(entry: SVNLogEntry, repositoryName: String) = {
-    var result = Map[String, Any]("repository" -> repositoryName)
-
-    result += "author" -> entry.getAuthor()
-    result += "date" -> entry.getDate()
-    result += "message" -> entry.getMessage()
-    result += "id" -> entry.getRevision()
-    result += "pathes" -> createPathMap(entry.getChangedPaths()
-        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]])
-
-    result
+  private def handle(entry: SVNLogEntry, repositoryName: String): CommitData = {
+    CommitData(
+      repositoryName,
+      entry.getRevision().toString(),
+      message=entry.getMessage(),
+      date=entry.getDate(),
+      author=entry.getAuthor(),
+      files=createFileList(entry.getChangedPaths()
+        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]]))
   }
   
-  private def createPathMap(pathMap: java.util.Map[String, SVNLogEntryPath]) = {
+  private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) = {
     var result: Map[String, String] = Map()
     
     pathMap.entrySet().foreach {entry =>

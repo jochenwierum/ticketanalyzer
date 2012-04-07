@@ -47,7 +47,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
   case class CountedTickets(count: Long) extends ImportEvent
   case class CountedCommits(count: Long) extends ImportEvent
   case class LoadedTicket(ticket: TicketData) extends ImportEvent
-  case class LoadedCommit(commit: Map[String, Any]) extends ImportEvent
+  case class LoadedCommit(commit: CommitData) extends ImportEvent
   case object Finish extends ImportEvent
   
   private val target = self
@@ -98,6 +98,6 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
   def countedTickets(count: Long) = target ! CountedTickets(count)
   def countedCommits(count: Long) = target ! CountedCommits(count)
   def loadedTicket(ticket: TicketData) = target ! LoadedTicket(ticket)
-  def loadedCommit(commit: Map[String, Any]) = target ! LoadedCommit(commit)
+  def loadedCommit(commit: CommitData) = target ! LoadedCommit(commit)
   def finish() = target ! Finish
 }

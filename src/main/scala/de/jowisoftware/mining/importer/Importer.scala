@@ -41,20 +41,17 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
     }
   }
   
-  def loadedCommit(commitData: Map[String, Any]) = {
-    val repository = getCommitRepository(commitData("repository").toString)
+  def loadedCommit(commitData: CommitData) = {
+    val repository = getCommitRepository(commitData.repository)
 
     val commit = repository.createCommit()
-    commit.id(commitData("id").toString)
-    commit.date(commitData("date").toString)
-    commit.message(commitData("message").toString)
+    commit.id(commitData.id)
+    commit.date(commitData.date)
+    commit.message(commitData.message)
     
-    commit.add(getPerson(commitData("author").toString))(Owns)
+    commit.add(getPerson(commitData.author))(Owns)
     
-    val pathes: Map[String, String] =
-      commitData("pathes").asInstanceOf[Map[String, String]]
-    
-    pathes.foreach{case (filename, value) =>
+    commitData.files.foreach{case (filename, value) =>
       val file = getFile(repository, filename)
       val relation = commit.add(file)(ChangedFile)
       relation.editType(value)
