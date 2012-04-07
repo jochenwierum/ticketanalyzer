@@ -1,12 +1,13 @@
 package de.jowisoftware.mining.importer.trac
 import java.io.OutputStreamWriter
 import java.net.{URL, PasswordAuthentication, Authenticator}
-
 import scala.xml.{XML, NodeSeq, Elem}
-
 import org.joda.time.format.DateTimeFormat
-
 import de.jowisoftware.mining.importer.{Importer, ImportEvents}
+import scala.annotation.tailrec
+import de.jowisoftware.mining.importer.TicketData
+import java.sql.Date
+import de.jowisoftware.mining.importer.TicketUpdate
 
 class TracImporter extends Importer {
   var url: String = _
@@ -17,75 +18,110 @@ class TracImporter extends Importer {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
     
   def importAll(events: ImportEvents) {
+    try {
+      doImport(events)
+    } finally {
+      events.finish()
+    }
+  }
+  
+  private def doImport(events: ImportEvents) {
     setupAuth
     
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
-    //val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
-    val ticketIds = List(27)
+    val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
     events.countedTickets(ticketIds.size)
-    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId) + ("repository" -> repositoryName)))
-    events.finish()
+    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId, repositoryName)))
   }
   
-  def setupAuth() {
+  private def setupAuth() {
     Authenticator.setDefault(new Authenticator() {
       override def getPasswordAuthentication = new PasswordAuthentication(username, password.toCharArray())
     })
   }
 
-  def receiveTicketNumbers =
+  private def receiveTicketNumbers =
     retrieveXML(methodCall("ticket.query", <string>max=0</string>))
         
-  def getTicket(id: Int) = {
+  private def getTicket(id: Int, repositoryName: String): TicketData = {
     val xml = receiveTicket(id)
-    
     val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
+    val subValues = values \ "struct" \ "member";
     
-    var result: Map[String, Any] = Map()
-    result += "id" -> unpack(values.head)
-    result += "creationDate" -> unpack(values.tail.head)
-    result += "updateDate" -> unpack(values.drop(2).head)
-    
-    (values \ "struct" \ "member").foreach {member =>
-      result += (member \ "name").text -> unpack(member \ "value")
-    }
-    
-    result += "update" -> getHistory(id)
-    
-    result
+    val updates = getHistory(id)
+    TicketData(
+      repositoryName,
+      id=getNodeAsInt(values(0)),
+      creationDate=getNodeAsDate(values(1)),
+      updateDate=getNodeAsDate(values(2)),
+      status=getNodeAsString(findNode(subValues, "status")),
+      description=getNodeAsString(findNode(subValues, "description")),
+      reporter=getNodeAsString(findNode(subValues, "reporter")),
+      resolution=getNodeAsString(findNode(subValues, "resolution")),
+      component=getNodeAsString(findNode(subValues, "component")),
+      tags=getNodeAsString(findNode(subValues, "keywords")),
+      blocking=getNodeAsString(findNode(subValues, "blocking")),
+      priority=getNodeAsString(findNode(subValues, "priority")),
+      summary=getNodeAsString(findNode(subValues, "summary")),
+      ticketType=getNodeAsString(findNode(subValues, "type")),
+      owner=getNodeAsString(findNode(subValues, "owner")),
+      milestone=getNodeAsString(findNode(subValues, "milestone")),
+      version=getNodeAsString(findNode(subValues, "version")),
+      updates=updates)
   }
   
-  def getHistory(id: Int) = {
-    var result: Map[Int, Any] = Map()
+  private def getHistory(id: Int) = {
+    var result: List[TicketUpdate] = List()
     val history = receiveHistory(id)
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \ 
       "value" \ "array" \ "data"
-      
+    
     entries.view.zipWithIndex.foreach { case (entry, id) =>
       val value = entry \ "value"
       var subResult: Map[String, Any] = Map()
-      subResult += "time" -> unpack(value.head)
-      subResult += "author" -> unpack(value.tail.head)
-      subResult += "field"-> unpack(value.drop(2).head)
-      subResult += "oldvalue"-> unpack(value.drop(3).head)
-      subResult += "newvalue"-> unpack(value.drop(4).head)
-      //subResult += "permanent"-> unpack(value.drop(5).head)
-      result += id -> subResult
+
+      val time = getNodeAsDate(value(0))
+      val author = getNodeAsString(value(1))
+      val field = getNodeAsString(value(2))
+      val oldvalue = getNodeAsString(value(3))
+      val newvalue = getNodeAsString(value(4))
+      result = TicketUpdate(id, field, newvalue, oldvalue, author, time) :: result
     }
     
-    result
+    result.reverse
+  }
+
+  private def findNode(parent: NodeSeq, name: String) =
+    parent.filter(node => (node \ "name").text == name) \ "value"
+  
+  private def getNodeAsDate(parent: NodeSeq, default: Date=null) = {
+    val value = getTypedContent(parent, "dateTime.iso8601", null)
+    if (value != null)
+      dateFormat.parseDateTime(value).toDate()
+    else
+      default
   }
   
-  private def unpack(seq: NodeSeq): Any = seq.head.child.head match {
-  case e: Elem =>
-    e.label match {
-      case "string" => e.text
-      case "int" => e.text.toInt
-      case "dateTime.iso8601" => dateFormat.parseDateTime(e.text).toDate()
+  private def getNodeAsInt(parent: NodeSeq, default: String="0") =
+    getTypedContent(parent, "int", default).toInt
+  
+  private def getNodeAsString(parent: NodeSeq, default: String="") =
+    getTypedContent(parent, "string", default)
+    
+  private def getTypedContent(parent: NodeSeq, expectedType: String, default: String) = {
+    if (parent.isEmpty)
+      default
+    else {
+      val node = parent \ expectedType
+      require(!node.isEmpty, "Node '"+ parent
+        +"' did not yield the expected type: " + expectedType)
+      node.text
     }
-  } 
-
+  }
+  
+  
+  
   private def receiveTicket(id: Int) =
     retrieveXML(methodCall("ticket.get", <int>{id}</int>))
     
@@ -118,5 +154,4 @@ class TracImporter extends Importer {
     writer.write(data)
     writer.close
   }
-  
 }

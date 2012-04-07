@@ -22,7 +22,7 @@ trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
   
   def reportProgress {
     val tp = if (ticketsCount == 0) 0 else 1000 * ticketsDone / ticketsCount
-    val cp = if (ticketsCount == 0) 0 else 1000 * commitsDone / commitsCount
+    val cp = if (commitsCount == 0) 0 else 1000 * commitsDone / commitsCount
     val total = if (ticketsCount + commitsCount == 0) 0
       else 1000 * (ticketsDone + commitsDone) / (commitsCount + ticketsCount) 
     
@@ -46,7 +46,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
   abstract sealed class ImportEvent
   case class CountedTickets(count: Long) extends ImportEvent
   case class CountedCommits(count: Long) extends ImportEvent
-  case class LoadedTicket(ticket: Map[String, Any]) extends ImportEvent
+  case class LoadedTicket(ticket: TicketData) extends ImportEvent
   case class LoadedCommit(commit: Map[String, Any]) extends ImportEvent
   case object Finish extends ImportEvent
   
@@ -97,7 +97,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*) e
   
   def countedTickets(count: Long) = target ! CountedTickets(count)
   def countedCommits(count: Long) = target ! CountedCommits(count)
-  def loadedTicket(ticket: Map[String, Any]) = target ! LoadedTicket(ticket)
+  def loadedTicket(ticket: TicketData) = target ! LoadedTicket(ticket)
   def loadedCommit(commit: Map[String, Any]) = target ! LoadedCommit(commit)
   def finish() = target ! Finish
 }

@@ -81,10 +81,13 @@ class Ticket extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
   
-  val id = stringProperty("id")
+  val id = intProperty("id")
   val reporter = stringProperty("reporter")
   val text = stringProperty("text")
   val title = stringProperty("title")
+  val tags = optionalStringProperty("tags")
+  val updateDate = dateProperty("time")
+  val creationDate = dateProperty("time")
   
   def createUpdate(number: Int) = {
     val update = db.createNode(Update)
@@ -104,7 +107,7 @@ class Update extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
   
-  val time = stringProperty("time")
+  val time = dateProperty("time")
   val field = stringProperty("field")
   val value = anyProperty("value")
   val oldvalue = anyProperty("oldvalue")

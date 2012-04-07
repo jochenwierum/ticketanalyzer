@@ -1,41 +1,43 @@
 package de.jowisoftware.mining.importer
 
 import de.jowisoftware.mining.model.{Ticket, RootNode, ReportedBy, Owns, InVersion, InMilestone, InComponent, HasType, HasStatus, File, Contains, CommitRepository, ChangedTicket, ChangedFile}
+import java.util.Date
 
 class DatabaseImportHandler(root: RootNode) extends ImportEvents {
   def finish() { }
   def countedTickets(count: Long) { }
   def countedCommits(count: Long) { }
   
-  def loadedTicket(ticketData: Map[String, Any]) = {
-    val repository = getTicketRepository(ticketData("repository").toString)
+  def loadedTicket(ticketData: TicketData) = {
+    val repository = getTicketRepository(ticketData.repository)
     
     val ticket = repository.createTicket()
-    ticket.id(ticketData("id").toString)
-    ticket.title(ticketData("summary").toString)
-    ticket.text(ticketData("description").toString)
+    ticket.id(ticketData.id)
+    ticket.title(ticketData.summary)
+    ticket.text(ticketData.description)
+    ticket.creationDate(ticketData.creationDate)
+    ticket.updateDate(ticketData.updateDate)
     
-    ticket.add(getPerson(ticketData("reporter").toString))(ReportedBy)
-    ticket.add(getMilestone(ticketData("milestone").toString()))(InMilestone)
-    ticket.add(getVersion(ticketData("version").toString))(InVersion)
-    ticket.add(getType(ticketData("type").toString))(HasType)
-    ticket.add(getComponent(ticketData("component").toString))(InComponent)
-    ticket.add(getStatus(ticketData("status").toString))(HasStatus)
-    ticket.add(getPerson(ticketData("owner").toString))(Owns)
+    ticket.add(getPerson(ticketData.reporter))(ReportedBy)
+    ticket.add(getMilestone(ticketData.milestone))(InMilestone)
+    ticket.add(getVersion(ticketData.version))(InVersion)
+    ticket.add(getType(ticketData.ticketType))(HasType)
+    ticket.add(getComponent(ticketData.component))(InComponent)
+    ticket.add(getStatus(ticketData.status))(HasStatus)
+    ticket.add(getPerson(ticketData.owner))(Owns)
     
-    addUpdates(ticket, ticketData("update").asInstanceOf[Map[Int, Map[String, Any]]])
+    addUpdates(ticket, ticketData.updates)
   }
   
-  def addUpdates(ticket: Ticket, updates: Map[Int, Map[String, Any]]) = {
-    for ((id, data) <- updates) {
-      val update = ticket.createUpdate(id)
-      update.time(data("time").toString)
-      update.field(data("field").toString)
-      update.value(data("newvalue"))
-      update.oldvalue(data("oldvalue"))
+  def addUpdates(ticket: Ticket, updates: Seq[TicketUpdate]) = {
+    for (update <- updates) {
+      val updateNode = ticket.createUpdate(update.id)
+      updateNode.time(update.time)
+      updateNode.field(update.field)
+      updateNode.value(update.newvalue)
+      updateNode.oldvalue(update.oldvalue)
       
-      update.add(getPerson(data("author").toString))(ChangedTicket)
-      println(update)
+      updateNode.add(getPerson(update.author))(ChangedTicket)
     }
   }
   
