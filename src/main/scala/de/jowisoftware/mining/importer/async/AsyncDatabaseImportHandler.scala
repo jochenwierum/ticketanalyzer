@@ -1,47 +1,13 @@
-package de.jowisoftware.mining.importer
+package de.jowisoftware.mining.importer.async
 
 import scala.actors.Actor.self
-
 import de.jowisoftware.mining.model.RootNode
 import grizzled.slf4j.Logging
-
-class AsyncImporterThread(importer: Importer) extends Thread {
-  private var events: ImportEvents = _
-  
-  private[importer] def executeAsync(events: ImportEvents) = {
-    this.events = events
-    start()
-  }
-  
-  final override def run(): Unit = {
-    importer.importAll(events)
-  }
-}
-
-trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
-  private var lastTotal = -1L
-  
-  def reportProgress {
-    val tp = if (ticketsCount == 0) 0 else 1000 * ticketsDone / ticketsCount
-    val cp = if (commitsCount == 0) 0 else 1000 * commitsDone / commitsCount
-    val total = if (ticketsCount + commitsCount == 0) 0
-      else 1000 * (ticketsDone + commitsDone) / (commitsCount + ticketsCount) 
-    
-    if (lastTotal != total) {
-      println(mkStatusLine(tp, cp, total))
-      lastTotal = total
-    }
-  }
-  
-  private def mkStatusLine(tp: Long, cp: Long, total: Long) =
-    "%.1f %% done: %d of %s Tickets (%.1f %%), %d of %s Commits (%.1f %%)".
-      format(total / 10.0, ticketsDone, num(ticketsCount), tp / 10.0,
-          commitsDone, num(commitsCount), cp / 10.0);
-
-  private def num(x: Long) =
-    if (x <= 0) "?"
-    else x.toString
-}
+import de.jowisoftware.mining.importer.TicketData
+import de.jowisoftware.mining.importer.Importer
+import de.jowisoftware.mining.importer.ImportEvents
+import de.jowisoftware.mining.importer.CommitData
+import de.jowisoftware.mining.importer.DatabaseImportHandler
 
 abstract class AsyncDatabaseImportHandler(root: RootNode, importer: Importer*)
     extends ImportEvents with Logging {

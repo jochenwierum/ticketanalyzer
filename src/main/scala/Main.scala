@@ -1,9 +1,9 @@
 import de.jowisoftware.mining.importer.svn.SVNImporter
 import de.jowisoftware.mining.importer.trac.TracImporter
-import de.jowisoftware.mining.importer.AsyncDatabaseImportHandler
 import de.jowisoftware.mining.model.RootNode
 import de.jowisoftware.neo4j.{Database, DBWithTransaction}
-import de.jowisoftware.mining.importer.ConsoleProgressReporter
+import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandler
+import de.jowisoftware.mining.importer.async.ConsoleProgressReporter
 
 object Main {
   def main(args: Array[String]) {
