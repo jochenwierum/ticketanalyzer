@@ -13,3 +13,11 @@ libraryDependencies ++= Seq(
 )
 
 retrieveManaged := true
+
+
+packageOptions := Seq(
+  Package.ManifestAttributes(
+    ("Plugin-Class", "de.jowisoftware.mining.importer.trac.TracImporter"),
+    ("Plugin-Type", "tickets")
+  )
+)

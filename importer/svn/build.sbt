@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.9.1"
 
- resolvers += "Tmatesoft Maven Repository" at
+resolvers += "Tmatesoft Maven Repository" at
   "http://maven.tmatesoft.com/content/repositories/releases/"
 
 libraryDependencies ++= Seq(
@@ -12,3 +12,11 @@ libraryDependencies ++= Seq(
 )
 
 retrieveManaged := true
+
+
+packageOptions := Seq(
+  Package.ManifestAttributes(
+    ("Plugin-Class", "de.jowisoftware.mining.importer.svn.SVNImporter"),
+    ("Plugin-Type", "SCM")
+  )
+)
