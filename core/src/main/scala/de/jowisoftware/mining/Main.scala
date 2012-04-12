@@ -6,8 +6,17 @@ import de.jowisoftware.neo4j.{Database, DBWithTransaction}
 import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandler
 import de.jowisoftware.mining.importer.async.ConsoleProgressReporter
 
+import java.io.File
+import de.jowisoftware.mining.plugins._
+
 object Main {
   def main(args: Array[String]) {
+    val pluginDir = new File("target/dist/plugins") // read from config!
+    val pluginManager = new PluginManager()
+    val scanner = new PluginScanner(pluginDir)
+    scanner.scan(pluginManager)
+    
+    /*
     val dbPath = "db/"
     Database.drop(dbPath)
     val db = Database(dbPath, RootNode)
@@ -24,6 +33,7 @@ object Main {
     
     println("done")
     scala.actors.Scheduler.shutdown()
+    */
   }
   
   def importFull(db: DBWithTransaction[RootNode]) = {

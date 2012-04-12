@@ -9,7 +9,7 @@ resolvers += "Sonatype OSS Releases" at
 
 libraryDependencies ++= Seq(
   "org.clapper" %% "grizzled-slf4j" % "0.6.8",
-  "org.slf4j" % "slf4j-log4j12" % "1.5.8"
+  "org.slf4j" % "slf4j-log4j12" % "1.6.0"
 )
 
 retrieveManaged := true

@@ -17,6 +17,7 @@ retrieveManaged := true
 packageOptions := Seq(
   Package.ManifestAttributes(
     ("Plugin-Class", "de.jowisoftware.mining.importer.svn.SVNImporter"),
-    ("Plugin-Type", "SCM")
+    ("Plugin-Type", "SCM"),
+    ("Plugin-Name", "SVN")
   )
 )
