@@ -1,13 +1,14 @@
 package de.jowisoftware.mining.plugins
 import java.io.File
-import grizzled.slf4j.Logging
-import java.net.URLClassLoader
-import scala.collection.JavaConversions._
-import de.jowisoftware.mining.importer.Importer
-import scala.annotation.tailrec
-import java.net.URL
+import java.net.{URLClassLoader, URL}
 
-class PluginScanner(pluginDir: File) extends Logging {
+import scala.collection.JavaConversions.enumerationAsScalaIterator
+
+import de.jowisoftware.mining.importer.Importer
+import de.jowisoftware.util.IterationUtil.Iterator2NoneValueRemover
+import grizzled.slf4j.Logging
+
+class PluginScanner(pluginDirs: File*) extends Logging {
   def scan(manager: PluginManager) {
     info("Scanning for plugins");
     val jarFiles = findFiles
@@ -23,14 +24,10 @@ class PluginScanner(pluginDir: File) extends Logging {
   
   private def getPluginInfos(classLoader: ClassLoader) = {
     val resources = classLoader.getResources("META-INF/MANIFEST.MF")
-    val plugins = mapToPlugins(classLoader, resources)
-    plugins.filter{_ match {
-      case Some(plugin) => true
-      case None => false
-    }}.map {_.get}
+    mapToPlugins(classLoader, resources).withoutNoneValues
   }
   
-  private def findFiles: List[File] = {
+  private def findFiles: Seq[File] = {
     def findFiles(oldResults: List[File], dir: File): List[File] = {
       var result = oldResults
       dir.listFiles().foreach { file =>
@@ -42,7 +39,7 @@ class PluginScanner(pluginDir: File) extends Logging {
       
       result
     }
-    return findFiles(Nil, pluginDir)
+    pluginDirs.flatMap(findFiles(Nil, _))
   }
   
   private def mapToPlugins(classLoader: ClassLoader, 
