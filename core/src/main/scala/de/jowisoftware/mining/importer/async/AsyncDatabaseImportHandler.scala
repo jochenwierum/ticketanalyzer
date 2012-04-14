@@ -18,23 +18,23 @@ abstract class AsyncDatabaseImportHandler(root: RootNode,
   case class LoadedTicket(ticket: TicketData) extends ImportEvent
   case class LoadedCommit(commit: CommitData) extends ImportEvent
   case object Finish extends ImportEvent
-  
+
   private val target = self
   protected var ticketsDone: Long = 0
   protected var ticketsCount: Long = 0
   protected var commitsDone: Long = 0
   protected var commitsCount: Long = 0
-  
+
   def reportProgress: Unit
-  
+
   def run() = {
     val dbImporter = new DatabaseImportHandler(root)
     var toFinish = importer.size
-    
+
     for ((imp, config) <- importer) {
       new AsyncImporterThread(config, imp).executeAsync(this)
     }
-    
+
     while(toFinish > 0) {
       try {
         self.receive {
@@ -63,7 +63,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode,
       }
     }
   }
-  
+
   def countedTickets(count: Long) = target ! CountedTickets(count)
   def countedCommits(count: Long) = target ! CountedCommits(count)
   def loadedTicket(ticket: TicketData) = target ! LoadedTicket(ticket)

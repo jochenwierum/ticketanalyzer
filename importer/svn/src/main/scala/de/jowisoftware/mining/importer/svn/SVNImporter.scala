@@ -8,11 +8,11 @@ import de.jowisoftware.mining.importer.CommitData
 class SVNImporter extends Importer {
   var url: String = _
   var repositoryName: String = _
-  
+
   def importAll(config: Map[String, String], events: ImportEvents): Unit = {
     url = config("url")
     repositoryName = config("repositoryName")
-    
+
     val cm = SVNClientManager.newInstance()
     val lc = cm.getLogClient()
     val svnurl = SVNURL.parseURIDecoded(url)
@@ -20,16 +20,16 @@ class SVNImporter extends Importer {
 
     val info = cm.getWCClient().doInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD)
     val latestRevision = info.getCommittedRevision()
-    
+
     events.countedCommits(latestRevision.getNumber())
-    
+
     lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
         false, true, Long.MaxValue, new ISVNLogEntryHandler() {
       def handleLogEntry(entry: SVNLogEntry) {
         events.loadedCommit(handle(entry, repositoryName))
       }
     })
-    
+
     events.finish()
   }
 
@@ -43,14 +43,14 @@ class SVNImporter extends Importer {
       files=createFileList(entry.getChangedPaths()
         .asInstanceOf[java.util.Map[String, SVNLogEntryPath]]))
   }
-  
+
   private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) = {
     var result: Map[String, String] = Map()
-    
+
     pathMap.entrySet().foreach {entry =>
       result += (entry.getKey() -> entry.getValue().getType().toString)
     }
-    
+
     result
   }
 }

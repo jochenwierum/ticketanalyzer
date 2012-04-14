@@ -14,32 +14,32 @@ class TracImporter extends Importer {
   var username: String = _
   var password: String = _
   var repositoryName: String = _
-    
+
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
-    
+
   def importAll(config: Map[String, String], events: ImportEvents) {
     url = config("url")
     username = config("username")
     password = config("password")
     repositoryName = config("repositoryName")
-    
+
     try {
       doImport(events)
     } finally {
       events.finish()
     }
   }
-  
+
   private def doImport(events: ImportEvents) {
     setupAuth
-    
+
     val ticketlist = receiveTicketNumbers
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map {node => (node \ "int").text.toInt}
     events.countedTickets(ticketIds.size)
     ticketIds.foreach(tId => events.loadedTicket(getTicket(tId, repositoryName)))
   }
-  
+
   private def setupAuth() {
     Authenticator.setDefault(new Authenticator() {
       override def getPasswordAuthentication = new PasswordAuthentication(username, password.toCharArray())
@@ -48,12 +48,12 @@ class TracImporter extends Importer {
 
   private def receiveTicketNumbers =
     retrieveXML(methodCall("ticket.query", <string>max=0</string>))
-        
+
   private def getTicket(id: Int, repositoryName: String): TicketData = {
     val xml = receiveTicket(id)
     val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val subValues = values \ "struct" \ "member";
-    
+
     val updates = getHistory(id)
     TicketData(
       repositoryName,
@@ -75,13 +75,13 @@ class TracImporter extends Importer {
       version=getNodeAsString(findNode(subValues, "version")),
       updates=updates)
   }
-  
+
   private def getHistory(id: Int) = {
     var result: List[TicketUpdate] = List()
     val history = receiveHistory(id)
-    val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \ 
+    val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \
       "value" \ "array" \ "data"
-    
+
     entries.view.zipWithIndex.foreach { case (entry, id) =>
       val value = entry \ "value"
       var subResult: Map[String, Any] = Map()
@@ -93,13 +93,13 @@ class TracImporter extends Importer {
       val newvalue = getNodeAsString(value(4))
       result = TicketUpdate(id, field, newvalue, oldvalue, author, time) :: result
     }
-    
+
     result.reverse
   }
 
   private def findNode(parent: NodeSeq, name: String) =
     parent.filter(node => (node \ "name").text == name) \ "value"
-  
+
   private def getNodeAsDate(parent: NodeSeq, default: Date=null) = {
     val value = getTypedContent(parent, "dateTime.iso8601", null)
     if (value != null)
@@ -107,13 +107,13 @@ class TracImporter extends Importer {
     else
       default
   }
-  
+
   private def getNodeAsInt(parent: NodeSeq, default: String="0") =
     getTypedContent(parent, "int", default).toInt
-  
+
   private def getNodeAsString(parent: NodeSeq, default: String="") =
     getTypedContent(parent, "string", default)
-    
+
   private def getTypedContent(parent: NodeSeq, expectedType: String, default: String) = {
     if (parent.isEmpty)
       default
@@ -124,12 +124,12 @@ class TracImporter extends Importer {
       node.text
     }
   }
-  
-  
-  
+
+
+
   private def receiveTicket(id: Int) =
     retrieveXML(methodCall("ticket.get", <int>{id}</int>))
-    
+
   private def receiveHistory(id: Int) =
     retrieveXML(methodCall("ticket.changeLog", <int>{id}</int>, <int>0</int>))
 
@@ -142,16 +142,16 @@ class TracImporter extends Importer {
         </param>
       </params>
     </methodCall>
-    
+
   def retrieveXML(request: Elem) = {
     val rpcurl = new URL(url)
     val data = request.toString()
     val connection = rpcurl.openConnection()
-    
+
     sendRequest(data, connection)
     XML.load(connection.getInputStream())
   }
-  
+
   private def sendRequest(data: java.lang.String, connection: java.net.URLConnection): Unit = {
     connection.setDoOutput(true)
     connection.setRequestProperty("Content-Type", "application/xml")

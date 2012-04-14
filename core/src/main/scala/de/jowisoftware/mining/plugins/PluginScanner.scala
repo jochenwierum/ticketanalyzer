@@ -12,21 +12,21 @@ class PluginScanner(pluginDirs: File*) extends Logging {
   def scan(manager: PluginManager) {
     info("Scanning for plugins");
     val jarFiles = findFiles
-    
+
     debug("Possible plugin files: "+ jarFiles.mkString(", "));
     var classLoader = loadFiles(jarFiles)
     for (plugin <- getPluginInfos(classLoader))
       manager.addPlugin(plugin)
   }
-  
+
   private def loadFiles(files: Seq[File]): ClassLoader =
       new URLClassLoader(files.map{_.toURI().toURL()}.toArray, getClass().getClassLoader())
-  
+
   private def getPluginInfos(classLoader: ClassLoader) = {
     val resources = classLoader.getResources("META-INF/MANIFEST.MF")
     mapToPlugins(classLoader, resources).withoutNoneValues
   }
-  
+
   private def findFiles: Seq[File] = {
     def findFiles(oldResults: List[File], dir: File): List[File] = {
       var result = oldResults
@@ -36,20 +36,20 @@ class PluginScanner(pluginDirs: File*) extends Logging {
         else if(file.isFile() && file.getName().endsWith(".jar"))
           result = file :: result
       }
-      
+
       result
     }
     pluginDirs.flatMap(findFiles(Nil, _))
   }
-  
-  private def mapToPlugins(classLoader: ClassLoader, 
+
+  private def mapToPlugins(classLoader: ClassLoader,
       resources: java.util.Enumeration[URL]): Iterator[Option[Plugin]] = {
     resources.map { url =>
       val manifest = new java.util.jar.Manifest(url.openStream())
       val pluginClass = manifest.getMainAttributes().getValue("Plugin-Class")
       val pluginType = manifest.getMainAttributes().getValue("Plugin-Type")
       val pluginName = manifest.getMainAttributes().getValue("Plugin-Name")
-      
+
       try {
 
         if (pluginClass != null && pluginType != null && pluginName != null) {

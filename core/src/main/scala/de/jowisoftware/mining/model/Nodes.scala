@@ -11,13 +11,13 @@ trait Node extends _root_.de.jowisoftware.neo4j.Node {
 protected trait HasChildWithName[T <: HasName] extends Node {
   protected def findOrCreateChild(name: String,
       relationShip: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[T]): T = {
-    
+
     val neighbor = neighbors(Direction.OUTGOING, List(relationShip.relationType)).find{
       _ match {
         case node: HasName => node.name() == name
       }
     }
-    
+
     neighbor match {
       case Some(node) => node.asInstanceOf[T]
       case None =>
@@ -27,7 +27,7 @@ protected trait HasChildWithName[T <: HasName] extends Node {
         node
     }
   }
-  
+
   def findOrCreateChild(name: String): T
 }
 
@@ -45,22 +45,22 @@ object RootNode extends NodeCompanion[RootNode] {
   def apply = new RootNode
 }
 
-class RootNode extends Node {  
+class RootNode extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   private def getCollection[T <: Node](implicit nodeType: NodeCompanion[T]): T = {
     val node = getFirstRelationship(Direction.OUTGOING, Contains.relationType)(nodeType)
-    
+
     node match {
       case Some(node) => node
-      case _ => 
+      case _ =>
         val node = db.createNode(nodeType)
-        this.add(node)(Contains) 
+        this.add(node)(Contains)
         node
     }
   }
-  
+
   lazy val statusCollection = getCollection(StatusRepository)
   lazy val componentCollection = getCollection(ComponentRepository)
   lazy val versionCollection = getCollection(VersionRepository)
@@ -75,12 +75,12 @@ class RootNode extends Node {
 
 object Ticket extends NodeCompanion[Ticket] {
   def apply = new Ticket
-} 
+}
 
 class Ticket extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   val id = intProperty("id")
   val reporter = stringProperty("reporter")
   val text = stringProperty("text")
@@ -88,7 +88,7 @@ class Ticket extends Node {
   val tags = optionalStringProperty("tags")
   val updateDate = dateProperty("time")
   val creationDate = dateProperty("time")
-  
+
   def createUpdate(number: Int) = {
     val update = db.createNode(Update)
     val relation = update.add(this)(Updates)
@@ -106,7 +106,7 @@ object Update extends NodeCompanion[Update] {
 class Update extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   val time = dateProperty("time")
   val field = stringProperty("field")
   val value = anyProperty("value")
@@ -162,7 +162,7 @@ object VersionRepository extends NodeCompanion[VersionRepository] {
 class VersionRepository extends Node with EmptyNode with HasChildWithName[Version] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, InVersion, Version)
-} 
+}
 
 object Version extends NodeCompanion[Version]{
   def apply = new Version
@@ -256,7 +256,7 @@ object CommitRepository extends NodeCompanion[CommitRepository] {
 class CommitRepository extends Node with HasName with EmptyNode {
   def createCommit(): Commit = db.createNode(Commit)
   def createFile(): File = db.createNode(File)
-  
+
   def findFile(name: String): Option[File] = {
     neighbors(Direction.OUTGOING, Seq(Contains.relationType)) find {
       _ match {
@@ -279,7 +279,7 @@ object Commit extends NodeCompanion[Commit] {
 class Commit extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   val id = stringProperty("id")
   val message = stringProperty("message")
   val date = dateProperty("date")

@@ -5,7 +5,7 @@ import _root_.de.jowisoftware.neo4j._
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
   val contains = ScalaRelationshipType("contains")
-  
+
   val inVersion = ScalaRelationshipType("in_version")
   val inComponent = ScalaRelationshipType("in_component")
   val hasType = ScalaRelationshipType("has_type")
@@ -30,9 +30,9 @@ trait EmptyRelationship extends Relationship {
 
 object IndexTicketRepository extends RelationshipCompanion[IndexTicketRepository] {
   def apply = new IndexTicketRepository
-  
+
   val relationType = RelTypes.contains
-  
+
   type sourceType = RootNode
   type sinkType = TicketRepository
 }
@@ -45,9 +45,9 @@ class IndexTicketRepository extends EmptyRelationship {
 
 object Contains extends RelationshipCompanion[Contains] {
   def apply = new Contains
-  
+
   val relationType = RelTypes.contains
-  
+
   type sourceType = Node
   type sinkType = Node
 }
@@ -60,9 +60,9 @@ class Contains extends EmptyRelationship {
 
 object InVersion extends RelationshipCompanion[InVersion] {
   def apply = new InVersion
-  
+
   val relationType = RelTypes.inVersion
-  
+
   type sourceType = Ticket
   type sinkType = Version
 }
@@ -75,9 +75,9 @@ class InVersion extends EmptyRelationship {
 
 object InComponent extends RelationshipCompanion[InComponent] {
   def apply = new InComponent
-  
+
   val relationType = RelTypes.inComponent
-  
+
   type sourceType = Ticket
   type sinkType = Component
 }
@@ -90,9 +90,9 @@ class InComponent extends EmptyRelationship {
 
 object HasType extends RelationshipCompanion[HasType] {
   def apply = new HasType
-  
+
   val relationType = RelTypes.hasType
-  
+
   type sourceType = Ticket
   type sinkType = Type
 }
@@ -105,9 +105,9 @@ class HasType extends EmptyRelationship {
 
 object InMilestone extends RelationshipCompanion[InMilestone] {
   def apply = new InMilestone
-  
+
   val relationType = RelTypes.inMilestone
-  
+
   type sourceType = Ticket
   type sinkType = Milestone
 }
@@ -120,9 +120,9 @@ class InMilestone extends EmptyRelationship {
 
 object HasStatus extends RelationshipCompanion[HasStatus] {
   def apply = new HasStatus
-  
+
   val relationType = RelTypes.hasStatus
-  
+
   type sourceType = Ticket
   type sinkType = Status
 }
@@ -135,9 +135,9 @@ class HasStatus extends EmptyRelationship {
 
 object FromPerson extends RelationshipCompanion[FromPerson] {
   def apply = new FromPerson
-  
+
   val relationType = RelTypes.fromPerson
-  
+
   type sourceType = Node
   type sinkType = Person
 }
@@ -150,9 +150,9 @@ class FromPerson extends EmptyRelationship {
 
 object Owns extends RelationshipCompanion[Owns] {
   def apply = new Owns
-  
+
   val relationType = RelTypes.owns
-  
+
   type sourceType = Node
   type sinkType = Person
 }
@@ -165,9 +165,9 @@ class Owns extends EmptyRelationship {
 
 object ReportedBy extends RelationshipCompanion[ReportedBy] {
   def apply = new ReportedBy
-  
+
   val relationType = RelTypes.reportedBy
-  
+
   type sourceType = Node
   type sinkType = Person
 }
@@ -180,19 +180,19 @@ class ReportedBy extends EmptyRelationship {
 
 object ChangedFile extends RelationshipCompanion[ChangedFile] {
   def apply = new ChangedFile
-  
+
   val relationType = RelTypes.changedFile
-  
+
   type sourceType = Commit
   type sinkType = File
 }
 
 class ChangedFile extends Relationship {
   val companion = ReportedBy
-  
+
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   val editType = stringProperty("editType")
 }
 
@@ -200,19 +200,19 @@ class ChangedFile extends Relationship {
 
 object Updates extends RelationshipCompanion[Updates] {
   def apply = new Updates
-  
+
   val relationType = RelTypes.updates
-  
+
   type sourceType = Ticket
   type sinkType = Update
 }
 
 class Updates extends Relationship {
   val companion = Updates
-  
+
   val version = 1
   def updateFrom(version: Int) = {}
-  
+
   val number = intProperty("number")
 }
 
@@ -220,16 +220,16 @@ class Updates extends Relationship {
 
 object ChangedTicket extends RelationshipCompanion[ChangedTicket] {
   def apply = new ChangedTicket
-  
+
   val relationType = RelTypes.changedTicket
-  
+
   type sourceType = Person
   type sinkType = Update
 }
 
 class ChangedTicket extends Relationship {
   val companion = ChangedTicket
-  
+
   val version = 1
   def updateFrom(version: Int) = {}
 }

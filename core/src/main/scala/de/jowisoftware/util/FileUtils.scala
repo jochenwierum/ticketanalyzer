@@ -6,10 +6,10 @@ object FileUtils {
     val dir = new File(path)
     if (dir.exists()) {
       require(dir.isDirectory())
-    
+
       def delTree(dir: File) {
         for (file <- dir.listFiles())
-          if (file.isDirectory()) 
+          if (file.isDirectory())
             delTree(file)
           else
             file.delete()

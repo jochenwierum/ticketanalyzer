@@ -8,7 +8,7 @@ object TicketAnalyzerBuild extends Build {
     scalaVersion := "2.9.1",
     publish := false
     )
-  
+
   lazy val root = Project(
     id = "ticketanalyzer",
     base = file("."),
