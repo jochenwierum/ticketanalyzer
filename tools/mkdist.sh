@@ -60,7 +60,3 @@ cd target/dist/
 makeSH > start.sh
 chmod 755 start.sh
 makeBAT > start.bat
-
-echo "* cleaning up"
-cd ../../
-rm -rf lib_managed
