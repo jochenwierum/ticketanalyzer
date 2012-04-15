@@ -10,7 +10,7 @@ import grizzled.slf4j.Logging
 
 class PluginScanner(pluginDirs: File*) extends Logging {
   def scan(manager: PluginManager) {
-    info("Scanning for plugins");
+    info("Scanning for plugins in: "+ pluginDirs.mkString(", "));
     val jarFiles = findFiles
 
     debug("Possible plugin files: "+ jarFiles.mkString(", "));
@@ -30,11 +30,14 @@ class PluginScanner(pluginDirs: File*) extends Logging {
   private def findFiles: Seq[File] = {
     def findFiles(oldResults: List[File], dir: File): List[File] = {
       var result = oldResults
-      dir.listFiles().foreach { file =>
-        if (file.isDirectory)
-          result = findFiles(result, file)
-        else if(file.isFile() && file.getName().endsWith(".jar"))
-          result = file :: result
+      var files = dir.listFiles()
+      if (files != null) {
+        files.foreach { file =>
+          if (file.isDirectory)
+            result = findFiles(result, file)
+          else if(file.isFile() && file.getName().endsWith(".jar"))
+            result = file :: result
+        }
       }
 
       result

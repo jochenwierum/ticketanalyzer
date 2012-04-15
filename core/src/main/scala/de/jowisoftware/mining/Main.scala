@@ -5,16 +5,19 @@ import de.jowisoftware.mining.model.RootNode
 import de.jowisoftware.neo4j.{Database, DBWithTransaction}
 import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandler
 import de.jowisoftware.mining.importer.async.ConsoleProgressReporter
-
 import java.io.File
 import de.jowisoftware.mining.plugins._
+import de.jowisoftware.mining.settings.Settings
 
 object Main {
   def main(args: Array[String]) {
-    val pluginDir = new File("target/dist/plugins") // read from config!
+
+    val pluginDirs = new Settings().getArray("plugindirs")
+    val pluginDirsAsFile = pluginDirs.map(new File(_))
     val pluginManager = new PluginManager()
-    val scanner = new PluginScanner(pluginDir)
+    val scanner = new PluginScanner(pluginDirsAsFile:_*)
     scanner.scan(pluginManager)
+    println(new File(".").getCanonicalPath())
 
     /*
     val dbPath = "db/"
