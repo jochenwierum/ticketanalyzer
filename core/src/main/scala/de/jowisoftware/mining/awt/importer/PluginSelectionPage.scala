@@ -20,9 +20,17 @@ class PluginSelectionPage(pluginManager: PluginManager,
   private val scmList = mkList(PluginType.SCM)
   private val ticketsList = mkList(PluginType.Tickets)
 
+  private var _scmPlugin: Option[Plugin] = _
+  private var _ticketsPlugin: Option[Plugin] = _
+
+  def scmPlugin = _scmPlugin
+  def ticketsPlugin = _ticketsPlugin
+
   override def save() = {
-    scmPage.plugin = if (scmList.selection.index == 0) None else Some(scmList.selection.item)
-    ticketsPage.plugin = if (ticketsList.selection.index == 0) None else Some(ticketsList.selection.item)
+    _scmPlugin = if (scmList.selection.index == 0) None else Some(scmList.selection.item)
+    _ticketsPlugin = if (ticketsList.selection.index == 0) None else Some(ticketsList.selection.item)
+    scmPage.plugin = _scmPlugin
+    ticketsPage.plugin = _ticketsPlugin
     true
   }
 

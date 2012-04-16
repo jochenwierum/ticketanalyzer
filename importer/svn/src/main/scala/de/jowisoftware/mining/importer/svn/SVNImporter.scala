@@ -10,7 +10,7 @@ class SVNImporter extends Importer {
 
   def importAll(config: Map[String, String], events: ImportEvents): Unit = {
     require(config.contains("url"))
-    require(config.contains("repositoryName"))
+    require(config.contains("repositoryname"))
 
     val cm = SVNClientManager.newInstance()
     val lc = cm.getLogClient()
@@ -25,7 +25,7 @@ class SVNImporter extends Importer {
     lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
       false, true, Long.MaxValue, new ISVNLogEntryHandler() {
         def handleLogEntry(entry: SVNLogEntry) {
-          events.loadedCommit(handle(entry, config("repositoryName")))
+          events.loadedCommit(handle(entry, config("repositoryname")))
         }
       })
 

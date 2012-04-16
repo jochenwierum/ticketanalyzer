@@ -8,10 +8,10 @@ import de.jowisoftware.mining.plugins.Plugin
 
 class PluginSettingsWrapper extends AssistantPage {
   object dummyPage extends ImporterOptions {
+    protected var result: Map[String, String] = Map()
     def getPanel = new BorderPanel() {
       layout(new Label("No plugin selected")) = BorderPanel.Position.Center
     }
-    def getUserInput = Map()
   }
 
   private var _options: ImporterOptions = _

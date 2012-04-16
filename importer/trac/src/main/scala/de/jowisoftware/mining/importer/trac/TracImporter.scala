@@ -18,7 +18,7 @@ class TracImporter extends Importer {
     require(config.contains("url"))
     require(config.contains("username"))
     require(config.contains("password"))
-    require(config.contains("repositoryName"))
+    require(config.contains("repositoryname"))
 
     try {
       doImport(events, config)
@@ -54,7 +54,7 @@ class TracImporter extends Importer {
 
     val updates = getHistory(id, config)
     TicketData(
-      repository = config("repositoryName"),
+      repository = config("repositoryname"),
       id = getNodeAsInt(values(0)),
       creationDate = getNodeAsDate(values(1)),
       updateDate = getNodeAsDate(values(2)),
