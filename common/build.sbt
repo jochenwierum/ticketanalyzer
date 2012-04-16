@@ -8,6 +8,7 @@ resolvers += "Sonatype OSS Releases" at
   "http://oss.sonatype.org/content/repositories/releases/"
 
 libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-swing" % "2.9.1",
   "org.clapper" %% "grizzled-slf4j" % "0.6.8",
   "org.slf4j" % "slf4j-log4j12" % "1.6.0"
 )

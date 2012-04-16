@@ -16,3 +16,5 @@ libraryDependencies ++= Seq(
 mainClass := Some("de.jowisoftware.mining.Main")
 
 retrieveManaged := true
+
+unmanagedClasspath in Runtime <++= baseDirectory map { bd => (bd / ".." / "lib_managed" ** "*.jar").getFiles map {_.getCanonicalFile} }

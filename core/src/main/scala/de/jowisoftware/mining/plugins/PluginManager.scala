@@ -5,6 +5,8 @@ class PluginManager {
 
   def addPlugin(plugin: Plugin) {
     plugins = plugin :: plugins
-    println("Added: "+ plugin)
   }
+
+  def getFor(pluginType: PluginType.PluginType) =
+    plugins.filter(_.pluginType == pluginType)
 }
