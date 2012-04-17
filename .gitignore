@@ -4,4 +4,4 @@ target/
 db
 .cache
 *.class
-/lib_managed/
+lib_managed/
