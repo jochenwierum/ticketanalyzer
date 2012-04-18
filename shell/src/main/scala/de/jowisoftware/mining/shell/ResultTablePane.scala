@@ -44,14 +44,18 @@ class ResultTablePane extends ScrollPane {
 
   private def anyToString(obj: Any): CellData =
     obj match {
+      case null => CellData("(null)", "(null)")
       case node: Node =>
         CellData(formatNode(node, identity),
-          formatNode(node, shortenString(40)))
+          clearNamespaces(formatNode(node, shortenString(40))))
       case rel: Relationship =>
         CellData(formatRelationship(rel, identity),
-          formatRelationship(rel, shortenString(40)))
+          clearNamespaces(formatRelationship(rel, shortenString(40))))
       case x => CellData(x.toString, shortenString(40)(x.toString))
     }
+
+  private def clearNamespaces(text: String) =
+    text.replace("de.jowisoftware.mining.model.", "")
 
   private def formatNode(node: Node, formatter: String => String) =
     "<b>Node["+node.getId+"]: "+formatProperties(node, formatter)
@@ -64,14 +68,14 @@ class ResultTablePane extends ScrollPane {
       text => "<br>\n"+formatter(text)
     }.mkString("")
 
-  private def getClassFromProperties(properties: org.neo4j.graphdb.PropertyContainer) =
+  private def getClassFromProperties(properties: PropertyContainer) =
     properties.getProperty(".class", "(?)").toString+"</b>"
 
-  private def formatPropertyLines(properties: org.neo4j.graphdb.PropertyContainer) =
+  private def formatPropertyLines(properties: PropertyContainer) =
     properties.getPropertyKeys.filter(!_.startsWith(".")).map { property =>
       property+": "+properties.getProperty(property).toString.replace("\\", "\\\\").replace("\n", "\\n")
     }
 
-  private def shortenString(length: Int)(text: java.lang.String) =
+  private def shortenString(length: Int)(text: String) =
     if (text.length > length) text.substring(0, length - 3)+"..." else text
 }
