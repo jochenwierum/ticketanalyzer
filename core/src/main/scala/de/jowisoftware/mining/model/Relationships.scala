@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.model
 import org.neo4j.graphdb.RelationshipType
-import _root_.de.jowisoftware.neo4j._
+import _root_.de.jowisoftware.neo4j.content._
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType

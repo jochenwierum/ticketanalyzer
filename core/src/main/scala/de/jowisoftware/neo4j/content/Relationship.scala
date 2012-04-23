@@ -1,15 +1,9 @@
-package de.jowisoftware.neo4j
+package de.jowisoftware.neo4j.content
 
-import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship}
-import org.neo4j.graphdb.RelationshipType
+import org.neo4j.graphdb.{RelationshipType, Relationship => NeoRelationship}
 
-trait RelationshipCompanion[+T <: Relationship] {
-  val relationType: RelationshipType
-
-  def apply(): T
-  protected[neo4j] type sourceType <: Node
-  protected[neo4j] type sinkType <: Node
-}
+import de.jowisoftware.neo4j.DBWithTransaction
+import properties.Versionable
 
 trait Relationship extends Versionable with Properties {
   protected[neo4j] type companion <: RelationshipCompanion[Relationship]
@@ -27,6 +21,7 @@ trait Relationship extends Versionable with Properties {
   def initWith(relationship: NeoRelationship, db: DBWithTransaction[_ <: Node]) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
+    this.innerDB = db
     sourceNode = Node.neoNode2Node(relationship.getStartNode(), db).get.asInstanceOf[companion#sourceType]
     sinkNode = Node.neoNode2Node(relationship.getEndNode(), db).get.asInstanceOf[companion#sinkType]
   }

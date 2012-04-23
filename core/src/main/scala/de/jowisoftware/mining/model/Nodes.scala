@@ -1,9 +1,10 @@
 package de.jowisoftware.mining.model
+import _root_.de.jowisoftware.neo4j.content._
 import _root_.de.jowisoftware.neo4j._
 import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
 
-trait Node extends _root_.de.jowisoftware.neo4j.Node {
+trait Node extends de.jowisoftware.neo4j.content.Node {
   def rootNode = db.rootNode.asInstanceOf[RootNode]
   override def db = super.db.asInstanceOf[DBWithTransaction[RootNode]]
 }

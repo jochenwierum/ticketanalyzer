@@ -1,9 +1,11 @@
-package de.jowisoftware.neo4j
+package de.jowisoftware.neo4j.content
 
 import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship,
   Direction, RelationshipType}
 import org.neo4j.graphdb.Traverser.Order
 import scala.collection.JavaConversions._
+import properties.Versionable
+import de.jowisoftware.neo4j.DBWithTransaction
 
 object Node {
   def wrapNeoNode[T <: Node](neoNode: NeoNode, db: DBWithTransaction[_ <: Node])(implicit companion: NodeCompanion[T]): T = {
@@ -24,13 +26,8 @@ object Node {
   }
 }
 
-trait NodeCompanion[+T <: Node] {
-  def apply() : T
-}
-
 trait Node extends Versionable with Properties {
   protected[neo4j] var innerNode: NeoNode = _
-  private var innerDB: DBWithTransaction[_ <: Node] = _
 
   def content: NeoNode = innerNode
   protected def db = innerDB
