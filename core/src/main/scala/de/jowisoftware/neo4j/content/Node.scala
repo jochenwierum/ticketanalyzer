@@ -6,9 +6,15 @@ import org.neo4j.graphdb.Traverser.Order
 import scala.collection.JavaConversions._
 import properties.Versionable
 import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.content.index.NodeIndexCreator
 
 object Node {
-  def wrapNeoNode[T <: Node](neoNode: NeoNode, db: DBWithTransaction[_ <: Node])(implicit companion: NodeCompanion[T]): T = {
+  def wrapNeoNode[T <: Node](
+      neoNode: NeoNode,
+      db: DBWithTransaction[_ <: Node]
+    )(
+      implicit companion: NodeCompanion[T]
+    ): T = {
     val node = companion()
     node initWith(neoNode, db)
     node
@@ -26,8 +32,9 @@ object Node {
   }
 }
 
-trait Node extends Versionable with Properties {
-  protected[neo4j] var innerNode: NeoNode = _
+trait Node extends Versionable with Properties[NeoNode] {
+  private[neo4j] var innerNode: NeoNode = _
+  private[neo4j] val indexCreator = NodeIndexCreator
 
   def content: NeoNode = innerNode
   protected def db = innerDB

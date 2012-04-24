@@ -1,12 +1,13 @@
 package de.jowisoftware.neo4j.content
 
 import org.neo4j.graphdb.{RelationshipType, Relationship => NeoRelationship}
-
 import de.jowisoftware.neo4j.DBWithTransaction
 import properties.Versionable
+import de.jowisoftware.neo4j.content.index.RelationshipIndexCreator
 
-trait Relationship extends Versionable with Properties {
-  protected[neo4j] type companion <: RelationshipCompanion[Relationship]
+trait Relationship extends Versionable with Properties[NeoRelationship] {
+  private[neo4j] type companion <: RelationshipCompanion[Relationship]
+  private[neo4j] val indexCreator = RelationshipIndexCreator
 
   private[neo4j] var sourceNode: companion#sourceType = _
   private[neo4j] var sinkNode: companion#sinkType = _
