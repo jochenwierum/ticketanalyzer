@@ -7,9 +7,16 @@ import javax.swing.SwingUtilities
 import gui.MainWindow
 import de.jowisoftware.mining.settings.Settings
 import java.io.File
+import javax.swing.UIManager
 
 object Main {
   def main(args: Array[String]) {
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+    } catch {
+      case e: Exception =>
+    }
+
     SwingUtilities.invokeLater(new Runnable() {
       def run = {
         val dbPath = "db/"

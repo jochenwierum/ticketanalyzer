@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.shell
+package de.jowisoftware.mining.gui.shell
 
 import scala.collection.JavaConversions._
 import scala.swing.{ Table, ScrollPane }

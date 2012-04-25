@@ -9,8 +9,7 @@ resolvers += "Sonatype OSS Releases" at
 
 libraryDependencies ++= Seq(
   "org.scalamock" %% "scalamock-scalatest-support" % "latest.integration" % "test",
-  "org.scalatest" %% "scalatest" % "1.7.1" % "test",
-  "org.neo4j" % "neo4j" % "1.7.M01" withSources
+  "org.scalatest" %% "scalatest" % "1.7.1" % "test"
 )
 
 mainClass := Some("de.jowisoftware.mining.Main")

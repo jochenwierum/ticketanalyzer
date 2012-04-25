@@ -12,7 +12,7 @@ object TicketAnalyzerBuild extends Build {
   lazy val root = Project(
     id = "ticketanalyzer",
     base = file(".")
-    ) aggregate(common, core, importerSvn, importerTrac, shell)
+    ) aggregate(common, core, importerSvn, importerTrac, linkerTrac)
 
   lazy val common = Project(
     id = "ticketanalyzer-common",
@@ -24,11 +24,6 @@ object TicketAnalyzerBuild extends Build {
     base = file("core")
     ) dependsOn(common)
 
-  lazy val shell = Project(
-    id = "ticketanalyzer-shell",
-    base = file("shell")
-    )
-
   lazy val importerSvn = Project(
     id = "ticketanalyzer-importer-svn",
     base = file("importer/svn")
@@ -37,5 +32,10 @@ object TicketAnalyzerBuild extends Build {
   lazy val importerTrac = Project(
     id = "ticketanalyzer-importer-trac",
     base = file("importer/trac")
+    ) dependsOn(common)
+
+  lazy val linkerTrac = Project(
+    id = "ticketanalyzer-linker-trac",
+    base = file("linker/trac")
     ) dependsOn(common)
 }

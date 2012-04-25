@@ -12,7 +12,7 @@ trait Database[T <: Node] {
   def inTransaction[S](body: DBWithTransaction[T] => S): S
   def deleteContent
 
-  private[neo4j] def service: AbstractGraphDatabase
+  def service: AbstractGraphDatabase
 }
 
 object Database {

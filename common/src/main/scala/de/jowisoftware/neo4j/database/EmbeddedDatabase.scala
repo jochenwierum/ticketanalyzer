@@ -10,7 +10,7 @@ import de.jowisoftware.neo4j.Database
 import de.jowisoftware.neo4j.DBWithTransaction
 
 class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion[T]) extends Database[T] {
-  private[neo4j] val service = new EmbeddedGraphDatabase(filepath)
+  val service = new EmbeddedGraphDatabase(filepath)
 
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {
     val tx = service.beginTx()

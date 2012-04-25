@@ -1,3 +1,3 @@
-package de.jowisoftware.mining.shell
+package de.jowisoftware.mining.gui.shell
 
 case class CellData(longText: String, shortText: String)

@@ -10,7 +10,8 @@ resolvers += "Sonatype OSS Releases" at
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-swing" % "2.9.1",
   "org.clapper" %% "grizzled-slf4j" % "0.6.8",
-  "org.slf4j" % "slf4j-log4j12" % "1.6.0"
+  "org.slf4j" % "slf4j-log4j12" % "1.6.0",
+  "org.neo4j" % "neo4j" % "1.7.M01" withSources
 )
 
 retrieveManaged := true

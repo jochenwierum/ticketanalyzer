@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.shell
+package de.jowisoftware.mining.gui.shell
 
 import java.awt.Color
 import scala.swing.{ Table, Label, Component, Alignment }

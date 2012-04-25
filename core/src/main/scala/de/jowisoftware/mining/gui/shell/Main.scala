@@ -1,7 +1,8 @@
-package de.jowisoftware.mining.shell
+package de.jowisoftware.mining.gui.shell
 
 import java.io.File
 import javax.swing.UIManager
+import org.neo4j.kernel.EmbeddedReadOnlyGraphDatabase
 
 object Main {
   def main(args: Array[String]) {
@@ -18,7 +19,8 @@ object Main {
       case e: Exception =>
     }
 
-    new MainUI(dbDir).run()
+    val db = new EmbeddedReadOnlyGraphDatabase(dbDir.getAbsolutePath)
+    new ShellWindow(db).run()
   }
 
   private def usageAndExit() {

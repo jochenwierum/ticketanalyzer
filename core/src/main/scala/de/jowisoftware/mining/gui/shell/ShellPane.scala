@@ -1,17 +1,14 @@
-package de.jowisoftware.mining.shell
+package de.jowisoftware.mining.gui.shell
 
-import java.awt.Dimension
-import java.io.File
 import scala.swing.BorderPanel.Position
-import scala.swing.event.{ WindowClosing, ButtonClicked }
-import scala.swing.{ TextField, SplitPane, Orientation, Frame, Dialog, Button, BorderPanel }
 import scala.swing.Dialog.Message
-import org.neo4j.cypher.ExecutionEngine
-import org.neo4j.kernel.{ EmbeddedReadOnlyGraphDatabase, AbstractGraphDatabase }
-import scala.swing.TextArea
+import scala.swing.event.ButtonClicked
+import scala.swing.{TextArea, SplitPane, Orientation, Dialog, Button, BorderPanel}
 
-class MainUI(dbFile: File) extends Frame { self =>
-  private val db = new EmbeddedReadOnlyGraphDatabase(dbFile.getAbsolutePath)
+import org.neo4j.cypher.ExecutionEngine
+import org.neo4j.kernel.AbstractGraphDatabase
+
+class ShellPane(db: AbstractGraphDatabase) extends BorderPanel { self =>
   private val engine = new ExecutionEngine(db);
 
   private val textInput = new TextArea
@@ -23,22 +20,12 @@ class MainUI(dbFile: File) extends Frame { self =>
   }
   private val resultTable = new ResultTablePane
 
-  title = "Database Shell"
-
-  contents = new SplitPane(Orientation.Horizontal, textPanel, resultTable)
+  layout(new SplitPane(Orientation.Horizontal, textPanel, resultTable)) = BorderPanel.Position.Center
 
   listenTo(startButton)
   reactions += {
-    case WindowClosing(`self`) =>
-      db.shutdown()
-      dispose()
     case ButtonClicked(`startButton`) =>
       doSearch()
-  }
-
-  def run() {
-    size = new Dimension(640, 480)
-    visible = true
   }
 
   private def doSearch() {
