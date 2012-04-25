@@ -1,10 +1,18 @@
-package de.jowisoftware.mining.awt
+package de.jowisoftware.mining.gui
 
-import java.awt.{ Toolkit, Point, Dimension }
-import scala.swing.event.{ WindowClosing, ButtonClicked }
-import scala.swing.{ Swing, Orientation, Label, Dialog, Button, BoxPanel, BorderPanel }
+import java.awt.Dimension
+import scala.swing.event.ButtonClicked
+import scala.swing.event.WindowClosing
+import scala.swing.BorderPanel
+import scala.swing.BoxPanel
+import scala.swing.Button
+import scala.swing.Dialog
+import scala.swing.Label
+import scala.swing.Orientation
+import scala.swing.Swing
+import scala.swing.Frame
 
-class Assistant(frameTitle: String, pages: AssistantPage*) extends Dialog {
+class Assistant(frameTitle: String, owner: Frame, pages: AssistantPage*) extends Dialog(owner) {
   private val stepTitle = new Label("")
   private val backButton = new Button("back")
   private val nextButton = new Button("next")

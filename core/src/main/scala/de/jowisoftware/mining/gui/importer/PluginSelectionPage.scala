@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.awt.importer
+package de.jowisoftware.mining.gui.importer
 
 import de.jowisoftware.mining.plugins.Plugin
 import de.jowisoftware.mining.plugins.PluginManager
@@ -12,7 +12,7 @@ import scala.swing.Component
 import scala.swing.Frame
 import scala.swing.GridPanel
 import scala.swing.Label
-import de.jowisoftware.mining.awt.AssistantPage
+import de.jowisoftware.mining.gui.AssistantPage
 
 class PluginSelectionPage(pluginManager: PluginManager,
     scmPage: PluginSettingsWrapper, ticketsPage: PluginSettingsWrapper) extends AssistantPage {

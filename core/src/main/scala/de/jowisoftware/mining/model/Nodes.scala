@@ -62,6 +62,10 @@ class RootNode extends Node {
     }
   }
 
+  override def initProperties =
+    state(0)
+
+  val state = intProperty("state")
   lazy val statusCollection = getCollection(StatusRepository)
   lazy val componentCollection = getCollection(ComponentRepository)
   lazy val versionCollection = getCollection(VersionRepository)

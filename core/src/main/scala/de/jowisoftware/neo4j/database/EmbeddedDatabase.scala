@@ -1,10 +1,13 @@
 package de.jowisoftware.neo4j.database
 
+import scala.collection.JavaConversions.iterableAsScalaIterable
+
 import org.neo4j.kernel.EmbeddedGraphDatabase
-import de.jowisoftware.neo4j.content.NodeCompanion
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.Database
+
 import de.jowisoftware.neo4j.content.Node
+import de.jowisoftware.neo4j.content.NodeCompanion
+import de.jowisoftware.neo4j.Database
+import de.jowisoftware.neo4j.DBWithTransaction
 
 class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion[T]) extends Database[T] {
   private[neo4j] val service = new EmbeddedGraphDatabase(filepath)
@@ -17,6 +20,13 @@ class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion
       return body(wrapper)
     } finally {
       tx.finish()
+    }
+  }
+
+  def deleteContent = inTransaction { trans =>
+    service.getAllNodes.foreach { n =>
+      n.getRelationships.foreach { r => r.delete }
+      n.delete
     }
   }
 

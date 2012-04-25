@@ -9,7 +9,7 @@ trait DBWithTransaction[T <: Node] {
 
   val rootNode: T = getRootNode
   protected def getRootNode: T
-  
+
   private[neo4j] def service: AbstractGraphDatabase
 
   def createNode[T <: Node](implicit companion: NodeCompanion[T]): T

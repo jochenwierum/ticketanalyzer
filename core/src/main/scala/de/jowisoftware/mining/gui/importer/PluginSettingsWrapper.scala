@@ -1,8 +1,8 @@
-package de.jowisoftware.mining.awt.importer
+package de.jowisoftware.mining.gui.importer
 
 import scala.swing.{ Panel, Label, BorderPanel }
 
-import de.jowisoftware.mining.awt.AssistantPage
+import de.jowisoftware.mining.gui.AssistantPage
 import de.jowisoftware.mining.importer.{ Importer, ImporterOptions }
 import de.jowisoftware.mining.plugins.Plugin
 

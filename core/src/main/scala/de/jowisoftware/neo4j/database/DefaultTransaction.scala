@@ -9,7 +9,7 @@ import org.neo4j.graphdb.{Transaction => NeoTransaction}
 private[neo4j] class DefaultTransaction[T <: Node](db: Database[T], tx: NeoTransaction,
     rootCompanion: NodeCompanion[T]) extends DBWithTransaction[T] {
   private[neo4j] val service = db.service
-  
+
   def success = tx.success()
   def failure = tx.failure()
 

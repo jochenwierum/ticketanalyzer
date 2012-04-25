@@ -2,6 +2,7 @@ target/
 .classpath
 .project
 db
+backups
 .cache
 *.class
 lib_managed/

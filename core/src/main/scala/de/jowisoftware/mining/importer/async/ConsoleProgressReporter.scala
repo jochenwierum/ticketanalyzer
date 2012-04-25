@@ -3,7 +3,7 @@ package de.jowisoftware.mining.importer.async
 trait ConsoleProgressReporter extends AsyncDatabaseImportHandler {
   private var lastTotal = -1L
 
-  def reportProgress {
+  override def reportProgress {
     val tp = if (ticketsCount == 0) 0 else 1000 * ticketsDone / ticketsCount
     val cp = if (commitsCount == 0) 0 else 1000 * commitsDone / commitsCount
     val total = if (ticketsCount + commitsCount == 0) 0

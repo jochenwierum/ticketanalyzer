@@ -1,41 +1,24 @@
 package de.jowisoftware.mining
 
-import de.jowisoftware.mining.importer.Importer
 import de.jowisoftware.mining.model.RootNode
-import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
-import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandler
-import de.jowisoftware.mining.importer.async.ConsoleProgressReporter
-import java.io.File
+import de.jowisoftware.neo4j.Database
 import de.jowisoftware.mining.plugins._
+import javax.swing.SwingUtilities
+import gui.MainWindow
 import de.jowisoftware.mining.settings.Settings
-import de.jowisoftware.mining.awt._
-import de.jowisoftware.mining.awt.importer._
+import java.io.File
 
 object Main {
   def main(args: Array[String]) {
-    val pluginManager = preparePluginManager
-    val plugins = new ImportAssistant().show(pluginManager)
+    SwingUtilities.invokeLater(new Runnable() {
+      def run = {
+        val dbPath = "db/"
+        val db = Database(dbPath, RootNode)
+        val pluginManager = preparePluginManager
 
-    val dbPath = "db/"
-    Database.drop(dbPath)
-    val db = Database(dbPath, RootNode)
-
-    try {
-      db.inTransaction {
-        trans: DBWithTransaction[RootNode] =>
-          importFull(trans, plugins)
-          trans.success
+        new MainWindow(db, pluginManager).visible = true
       }
-    } finally {
-      db.shutdown;
-    }
-
-    scala.actors.Scheduler.shutdown()
-  }
-
-  def importFull(db: DBWithTransaction[RootNode], plugins: List[(Importer, Map[String, String])]) = {
-    val importer = new AsyncDatabaseImportHandler(db.rootNode, plugins.toArray: _*) with ConsoleProgressReporter
-    importer.run()
+    })
   }
 
   private def preparePluginManager = {

@@ -9,7 +9,7 @@ import de.jowisoftware.mining.importer.ImportEvents
 import de.jowisoftware.mining.importer.CommitData
 import de.jowisoftware.mining.importer.DatabaseImportHandler
 
-abstract class AsyncDatabaseImportHandler(root: RootNode,
+class AsyncDatabaseImportHandler(root: RootNode,
     importer: (Importer, Map[String, String])*)
     extends ImportEvents with Logging {
   abstract sealed class ImportEvent
@@ -25,7 +25,7 @@ abstract class AsyncDatabaseImportHandler(root: RootNode,
   protected var commitsDone: Long = 0
   protected var commitsCount: Long = 0
 
-  def reportProgress: Unit
+  def reportProgress: Unit = {}
 
   def run() = {
     val dbImporter = new DatabaseImportHandler(root)

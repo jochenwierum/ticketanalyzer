@@ -10,6 +10,7 @@ import de.jowisoftware.util.FileUtils
 trait Database[T <: Node] {
   def shutdown
   def inTransaction[S](body: DBWithTransaction[T] => S): S
+  def deleteContent
 
   private[neo4j] def service: AbstractGraphDatabase
 }

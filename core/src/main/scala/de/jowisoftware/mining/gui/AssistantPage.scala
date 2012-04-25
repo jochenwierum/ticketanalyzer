@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.awt
+package de.jowisoftware.mining.gui
 
 import scala.swing.Panel
 
