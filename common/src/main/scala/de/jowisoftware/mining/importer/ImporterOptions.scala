@@ -8,7 +8,6 @@ import scala.swing.event.KeyPressed
 
 trait ImporterOptions {
   protected var result: Map[String, String]
-  def getUserInput: Map[String, String] = result
 
   protected def label(text: String) = new Label(text+":")
 
@@ -30,5 +29,6 @@ trait ImporterOptions {
     field
   }
 
+  def getUserInput: Map[String, String] = result
   def getPanel(): Panel
 }

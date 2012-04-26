@@ -1,17 +1,16 @@
 package de.jowisoftware.mining.gui
 
-import scala.swing.Frame
-import scala.swing.event.WindowClosing
-import scala.swing.TabbedPane
-import scala.swing.Alignment
-import de.jowisoftware.mining.plugins.PluginManager
+import java.awt.Dimension
+import scala.swing.event.{ WindowClosing, Event }
+import scala.swing.{ TabbedPane, Frame, Alignment }
+import MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.importer.ImportPane
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.model.RootNode
-import scala.swing.event.Event
-import de.jowisoftware.mining.gui.linker.LinkPane
 import de.jowisoftware.mining.gui.linker.LinkPane
 import de.jowisoftware.mining.gui.shell.ShellPane
+import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.plugins.PluginManager
+import de.jowisoftware.neo4j.Database
+import scala.swing.SplitPane
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -34,10 +33,11 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   }
 
   title = "Ticketanalyzer"
-
   contents = tabs
+  size = new Dimension(640, 480)
+  importPane.content.asInstanceOf[SplitPane].dividerLocation = .75
+
   updateView()
-  pack()
   centerOnScreen()
 
   reactions += {

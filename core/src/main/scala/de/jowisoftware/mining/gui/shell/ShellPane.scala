@@ -3,12 +3,12 @@ package de.jowisoftware.mining.gui.shell
 import scala.swing.BorderPanel.Position
 import scala.swing.Dialog.Message
 import scala.swing.event.ButtonClicked
-import scala.swing.{TextArea, SplitPane, Orientation, Dialog, Button, BorderPanel}
+import scala.swing.{ TextArea, SplitPane, Orientation, Dialog, Button, BorderPanel }
 
 import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.kernel.AbstractGraphDatabase
 
-class ShellPane(db: AbstractGraphDatabase) extends BorderPanel { self =>
+class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
   private val engine = new ExecutionEngine(db);
 
   private val textInput = new TextArea
@@ -20,7 +20,8 @@ class ShellPane(db: AbstractGraphDatabase) extends BorderPanel { self =>
   }
   private val resultTable = new ResultTablePane
 
-  layout(new SplitPane(Orientation.Horizontal, textPanel, resultTable)) = BorderPanel.Position.Center
+  leftComponent = textPanel
+  rightComponent = resultTable
 
   listenTo(startButton)
   reactions += {
