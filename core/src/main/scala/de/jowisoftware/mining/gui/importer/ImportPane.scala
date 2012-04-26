@@ -18,7 +18,6 @@ import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 
 class ImportPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BoxPanel(Orientation.Vertical) {
   val button = new Button("Import")
-  contents += new Label("Warning! (Re-)Importing Data wipes the database!")
   contents += button
 
   listenTo(button)
@@ -37,7 +36,6 @@ class ImportPane(db: Database[RootNode], pluginManager: PluginManager, parent: F
           importFull(trans, plugins)
           trans.success
         }
-        parent.publish(DatabaseUpdated)
       case None =>
     }
   }
@@ -45,6 +43,9 @@ class ImportPane(db: Database[RootNode], pluginManager: PluginManager, parent: F
   def importFull(db: DBWithTransaction[RootNode], plugins: List[(Importer, Map[String, String])]) = {
     val importer = new AsyncDatabaseImportHandler(db.rootNode, plugins.toArray: _*) with ConsoleProgressReporter
     importer.run()
-    db.rootNode.state(1)
+
+    if (db.rootNode.state() < 1) {
+      db.rootNode.state(1)
+    }
   }
 }

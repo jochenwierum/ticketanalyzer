@@ -9,8 +9,9 @@ import de.jowisoftware.mining.importer.ImportEvents
 import de.jowisoftware.mining.importer.CommitData
 import de.jowisoftware.mining.importer.DatabaseImportHandler
 
-class AsyncDatabaseImportHandler(root: RootNode,
-    importer: (Importer, Map[String, String])*)
+class AsyncDatabaseImportHandler(
+  root: RootNode,
+  importer: (Importer, Map[String, String])*)
     extends ImportEvents with Logging {
   abstract sealed class ImportEvent
   case class CountedTickets(count: Long) extends ImportEvent
@@ -35,16 +36,16 @@ class AsyncDatabaseImportHandler(root: RootNode,
       new AsyncImporterThread(config, imp).executeAsync(this)
     }
 
-    while(toFinish > 0) {
+    while (toFinish > 0) {
       try {
         self.receive {
           case CountedCommits(c) =>
             dbImporter.countedCommits(c)
-            commitsCount = c
+            commitsCount += c
             reportProgress
           case CountedTickets(t) =>
             dbImporter.countedTickets(t)
-            ticketsCount = t
+            ticketsCount += t
             reportProgress
           case LoadedTicket(data) =>
             ticketsDone += 1

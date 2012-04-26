@@ -17,20 +17,21 @@ object MainWindow {
   case object DatabaseUpdated extends Event
 }
 
-class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends Frame { frame =>
+class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends Frame {
   import MainWindow._
-  private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, frame))
-  private val linkPane = new TabbedPane.Page("2) Link data", new LinkPane(db, pluginManager, frame))
+  private val deletePane = new TabbedPane.Page("0) Delete", new DeletePane(db, this))
+  private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, this))
+  private val linkPane = new TabbedPane.Page("2) Link data", new LinkPane(db, pluginManager, this))
   private val shellPane = new TabbedPane.Page("3) Shell", new ShellPane(db.service))
 
   private val tabs = new TabbedPane {
     tabPlacement(Alignment.Left)
 
+    pages += deletePane
     pages += importPane
     pages += linkPane
     pages += shellPane
   }
-
 
   title = "Ticketanalyzer"
 
@@ -56,6 +57,6 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
 
     linkPane.enabled = state == 1
     shellPane.enabled = state > 0
-    tabs.selection.index = state
+    tabs.selection.index = state + 1
   }
 }
