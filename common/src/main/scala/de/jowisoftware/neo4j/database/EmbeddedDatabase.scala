@@ -26,8 +26,12 @@ class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion
   def deleteContent = inTransaction { trans =>
     service.getAllNodes.foreach { n =>
       n.getRelationships.foreach { r => r.delete }
-      n.delete
+      if (n.getId != 0)
+        n.delete
+      else
+        n.getPropertyKeys.foreach(k => n.removeProperty(k))
     }
+    trans.success
   }
 
   def shutdown = service.shutdown()

@@ -4,18 +4,21 @@ import scala.swing.{ SplitPane, ListView, BorderPanel, Button, ComboBox, GridPan
 import scala.swing.event.{ ButtonClicked, SelectionChanged }
 import scala.swing.BorderPanel.Position
 import scala.swing.ListView.AbstractRenderer
-
 import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
 import de.jowisoftware.mining.plugins.{ Plugin, PluginType, PluginManager }
 import de.jowisoftware.mining.model.RootNode
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.importer.async.{ AsyncDatabaseImportHandler, ConsoleProgressReporter }
 import de.jowisoftware.mining.importer.{ Importer, ImporterOptions }
+import de.jowisoftware.mining.gui.ProgressbarReporter
+import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.gui.SwingUtils
+import javax.swing.ProgressMonitor
 
 class ImportPane(
     db: Database[RootNode],
     pluginManager: PluginManager,
-    parent: Frame) extends SplitPane(Orientation.Vertical) {
+    parent: Frame) extends SplitPane(Orientation.Vertical) { self =>
 
   private class Task(val importer: Importer, val data: Map[String, String], val name: String) {
     override def toString =
@@ -100,17 +103,30 @@ class ImportPane(
   }
 
   def runImport() {
-    db.inTransaction { trans: DBWithTransaction[RootNode] =>
-      val importer = new AsyncDatabaseImportHandler(
-        trans.rootNode, tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter
-      importer.run()
+    val progress = new ProgressDialog(parent)
 
-      if (trans.rootNode.state() < 1) {
-        trans.rootNode.state(1)
+    new Thread() {
+      override def run = {
+        db.inTransaction { trans: DBWithTransaction[RootNode] =>
+          val importer = new AsyncDatabaseImportHandler(
+            trans.rootNode,
+            tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ProgressbarReporter {
+            var dialog = progress
+          }
+          importer.run()
+
+          if (trans.rootNode.state() < 1) {
+            trans.rootNode.state(1)
+          }
+
+          trans.success
+          SwingUtils.invokeAsync {
+            progress.hide
+            parent.publish(DatabaseUpdated)
+          }
+        }
       }
-      trans.success
-    }
-
-    parent.publish(DatabaseUpdated)
+    }.start()
+    progress.show()
   }
 }
