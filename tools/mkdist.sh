@@ -8,7 +8,7 @@ mkCall() {
 	SEP=$1
 	shift
 	
-	echo -n "scala -cp \""
+	echo -n "java -cp \""
 	for f in $(find lib -name '*.jar'); do
 		echo -n $f$SEP
 	done
@@ -70,18 +70,20 @@ echo "* preparing directories"
 rm -rf target/dist
 mkdir -p target/dist/lib
 mkdir -p target/dist/plugins/importer
+mkdir -p target/dist/plugins/linker
 
 echo "* copying jar files"
 cp core/target/scala-2.9.1/ticketanalyzer-core_*.jar target/dist/ticketanalyzer.jar
 cp common/target/scala-2.9.1/ticketanalyzer-common_*.jar target/dist/lib/common.jar
 cp importer/svn/target/scala-2.9.1/ticketanalyzer-importer-svn_*.jar target/dist/plugins/importer/svn.jar
 cp importer/trac/target/scala-2.9.1/ticketanalyzer-importer-trac_*.jar target/dist/plugins/importer/trac.jar
+cp linker/trac/target/scala-2.9.1/ticketanalyzer-linker-trac_*.jar target/dist/plugins/linker/trac.jar
 
 echo "* patching configuration"
 jar uf target/dist/ticketanalyzer.jar -C core/src/main/resources.package/ .
 
 echo "* copying dependencies"
-find lib_managed -name '*.jar' -exec cp {} target/dist/lib/ \;
+sbt copy-jars >/dev/null
 
 echo "* writing start scripts"
 cd target/dist/
