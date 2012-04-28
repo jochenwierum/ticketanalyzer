@@ -6,7 +6,7 @@ import de.jowisoftware.mining.importer.{ Importer, ImportEvents }
 import de.jowisoftware.mining.importer.CommitData
 
 class SVNImporter extends Importer {
-  def showOptions = new SVNOptions
+  def userOptions = new SVNOptions
 
   def importAll(config: Map[String, String], events: ImportEvents): Unit = {
     require(config.contains("url"))

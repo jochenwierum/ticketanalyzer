@@ -1,19 +1,21 @@
 package de.jowisoftware.mining.gui.importer
 
-import scala.swing.{ SplitPane, ListView, BorderPanel, Button, ComboBox, GridPanel, Frame, Orientation }
+import scala.swing.{ ScrollPane, SplitPane, ListView, BorderPanel, Button, ComboBox, GridPanel, Frame, Orientation }
 import scala.swing.event.{ ButtonClicked, SelectionChanged }
+import scala.swing.ScrollPane.BarPolicy
 import scala.swing.BorderPanel.Position
-import scala.swing.ListView.AbstractRenderer
-import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
-import de.jowisoftware.mining.plugins.{ Plugin, PluginType, PluginManager }
-import de.jowisoftware.mining.model.RootNode
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
+import de.jowisoftware.mining.gui.{ ProgressbarReporter, ProgressDialog }
 import de.jowisoftware.mining.importer.async.{ AsyncDatabaseImportHandler, ConsoleProgressReporter }
-import de.jowisoftware.mining.importer.{ Importer, ImporterOptions }
-import de.jowisoftware.mining.gui.ProgressbarReporter
-import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.gui.SwingUtils
-import javax.swing.ProgressMonitor
+import de.jowisoftware.mining.importer.Importer
+import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.plugins.{ Plugin, PluginType, PluginManager }
+import de.jowisoftware.mining.UserOptions
+import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
+import scala.swing.BoxPanel
+import javax.swing.BoxLayout
+import javax.swing.Box
+import scala.swing.Swing
 
 class ImportPane(
     db: Database[RootNode],
@@ -29,12 +31,14 @@ class ImportPane(
   private val deleteButton = new Button("Delete")
   private val addButton = new Button("Add")
   private val pluginList = new ComboBox(makePluginList)
-  private val pluginDetails = new BorderPanel()
+  private val pluginDetails = new ScrollPane
   private val taskList = new ListView[Task]
 
   private var selectedPlugin: Importer = _
-  private var importerOptions: ImporterOptions = _
+  private var importerOptions: UserOptions = _
   private var tasks: List[Task] = Nil
+
+  pluginDetails.horizontalScrollBarPolicy = BarPolicy.Never
 
   private val buttons = new GridPanel(2, 1) {
     contents += deleteButton
@@ -42,14 +46,14 @@ class ImportPane(
   }
 
   leftComponent = new BorderPanel() {
-    layout(pluginList) = Position.North
-    layout(pluginDetails) = Position.Center
-    layout(addButton) = Position.South
+    layout += pluginList -> Position.North
+    layout += pluginDetails -> Position.Center
+    layout += addButton -> Position.South
   };
 
   rightComponent = new BorderPanel() {
-    layout(taskList) = Position.Center
-    layout(buttons) = Position.South
+    layout += taskList -> Position.Center
+    layout += buttons -> Position.South
   };
 
   addButton.enabled = false
@@ -81,7 +85,6 @@ class ImportPane(
   def deleteTask() {
     val toDelete = taskList.selection.items
     tasks = tasks.filterNot(item => toDelete contains item)
-
     updateTaskList()
   }
 
@@ -94,9 +97,12 @@ class ImportPane(
   def updateSelection() {
     val plugin = pluginList.selection.item
     selectedPlugin = plugin.clazz.newInstance
-    importerOptions = selectedPlugin.showOptions
+    importerOptions = selectedPlugin.userOptions
 
-    pluginDetails.layout(importerOptions.getPanel) = Position.North
+    pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
+      contents += importerOptions.getPanel
+      contents += Swing.VGlue
+    }
     pluginDetails.revalidate()
 
     addButton.enabled = true
@@ -121,7 +127,7 @@ class ImportPane(
 
           transaction.success
         }
-        SwingUtils.invokeAsync {
+        Swing.onEDT {
           progress.hide
           parent.publish(DatabaseUpdated)
         }

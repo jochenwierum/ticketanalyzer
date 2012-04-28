@@ -1,10 +1,10 @@
 package de.jowisoftware.mining.importer.svn
 
 import scala.swing.{ TextField, PasswordField, Panel, Label, GridPanel }
-import de.jowisoftware.mining.importer.ImporterOptions
+import de.jowisoftware.mining.UserOptions
 import scala.swing.event.KeyPressed
 
-class SVNOptions extends ImporterOptions {
+class SVNOptions extends UserOptions {
   protected var result = Map(("url" -> "https://jowisoftware.de:4443/svn/ssh"),
     ("username" -> ""), ("password" -> ""), ("repositoryname" -> "default"))
 

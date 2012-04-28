@@ -1,10 +1,10 @@
 package de.jowisoftware.mining.importer.trac
 
 import scala.swing.{ TextField, PasswordField, Panel, Label, GridPanel }
-import de.jowisoftware.mining.importer.ImporterOptions
+import de.jowisoftware.mining.UserOptions
 import scala.swing.event.KeyPressed
 
-class TracOptions extends ImporterOptions {
+class TracOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
     ("url" -> "http://jowisoftware.de/trac/ssh/login/xmlrpc"),
     ("username" -> "test"), ("password" -> "test"), ("repositoryname" -> "default"))

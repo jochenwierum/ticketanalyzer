@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import scala.collection.immutable.TreeSet
 
 object TicketAnalyzerBuild extends Build {
   lazy val buildSettings = Seq(
@@ -9,10 +10,28 @@ object TicketAnalyzerBuild extends Build {
     publish := false
     )
 
-  lazy val root = Project(
-    id = "ticketanalyzer",
-    base = file(".")
-    ) aggregate(common, core, importerSvn, importerTrac, linkerTrac)
+  val aggregatedProjects: Seq[ProjectReference] = Seq(common, core, importerSvn, importerTrac, linkerTrac)
+  lazy val root: Project = {
+    val subDependencies = TaskKey[Seq[Classpath]]("sub-dependencies")
+    val copyDependencies = TaskKey[Unit]("copy-dependencies")
+
+	  Project(
+      id = "ticketanalyzer",
+      base = file("."),
+      settings = Defaults.defaultSettings ++ Seq(
+        subDependencies <<= aggregatedProjects.map(managedClasspath in Compile in _).join,
+        copyDependencies <<= (subDependencies, target).map{ (deps, target) =>
+          var dest = target / "dist" / "lib"
+          dest.mkdirs()
+          val fileSet = new TreeSet[File]()(new Ordering[File] {
+            def compare(x: File, y: File) = x.getName.compareTo(y.getName)
+          }) ++ deps.flatten.map{_.data}
+          val filemap = fileSet.map{file => (file, dest / file.getName)}
+          IO.copy(filemap)
+        }
+      )
+    ) aggregate(aggregatedProjects: _*)
+  }
 
   lazy val common = Project(
     id = "ticketanalyzer-common",

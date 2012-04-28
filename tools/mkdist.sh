@@ -83,7 +83,7 @@ echo "* patching configuration"
 jar uf target/dist/ticketanalyzer.jar -C core/src/main/resources.package/ .
 
 echo "* copying dependencies"
-sbt copy-jars >/dev/null
+sbt copy-dependencies >/dev/null
 
 echo "* writing start scripts"
 cd target/dist/

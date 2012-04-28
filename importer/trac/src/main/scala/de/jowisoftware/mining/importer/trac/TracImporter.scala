@@ -12,7 +12,7 @@ import de.jowisoftware.mining.importer.TicketUpdate
 class TracImporter extends Importer {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
 
-  def showOptions = new TracOptions()
+  def userOptions = new TracOptions()
 
   def importAll(config: Map[String, String], events: ImportEvents) {
     require(config.contains("url"))

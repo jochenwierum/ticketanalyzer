@@ -1,15 +1,19 @@
-package de.jowisoftware.mining.importer
+package de.jowisoftware.mining
 
-import scala.swing.Panel
-import scala.swing.PasswordField
-import scala.swing.Label
-import scala.swing.TextField
 import scala.swing.event.KeyPressed
+import scala.swing.{TextField, PasswordField, Panel, Label, Alignment}
 
-trait ImporterOptions {
+trait UserOptions {
   protected var result: Map[String, String]
 
-  protected def label(text: String) = new Label(text+":")
+  def getUserInput: Map[String, String] = result
+  def getPanel(): Panel
+
+  protected def label(text: String) = {
+    val label = new Label(text+":")
+    label.xAlignment = Alignment.Left
+    label
+  }
 
   protected def text(name: String) = {
     val field = new TextField
@@ -28,7 +32,4 @@ trait ImporterOptions {
     }
     field
   }
-
-  def getUserInput: Map[String, String] = result
-  def getPanel(): Panel
 }
