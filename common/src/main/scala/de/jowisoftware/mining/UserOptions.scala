@@ -1,6 +1,6 @@
 package de.jowisoftware.mining
 
-import scala.swing.event.KeyPressed
+import scala.swing.event.ValueChanged
 import scala.swing.{TextField, PasswordField, Panel, Label, Alignment}
 
 trait UserOptions {
@@ -17,8 +17,9 @@ trait UserOptions {
 
   protected def text(name: String) = {
     val field = new TextField
-    field.keys.reactions += {
-      case KeyPressed(_, _, _, _) => result += (name -> field.text)
+    field.reactions += {
+      case ValueChanged(_) =>
+        result += (name -> field.text)
     }
 
     field.text = result(name)
@@ -27,8 +28,8 @@ trait UserOptions {
 
   protected def password(name: String) = {
     val field = new PasswordField(result(name))
-    field.keys.reactions += {
-      case KeyPressed(_, _, _, _) => result += (name -> field.password.mkString(""))
+    field.reactions += {
+      case ValueChanged(_) => result += (name -> field.password.mkString(""))
     }
     field
   }
