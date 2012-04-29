@@ -1,7 +1,8 @@
 package de.jowisoftware.mining
 
 import scala.swing.event.ValueChanged
-import scala.swing.{TextField, PasswordField, Panel, Label, Alignment}
+import scala.swing.{ CheckBox, TextField, PasswordField, Panel, Label, Alignment }
+import scala.swing.event.ButtonClicked
 
 trait UserOptions {
   protected var result: Map[String, String]
@@ -21,7 +22,6 @@ trait UserOptions {
       case ValueChanged(_) =>
         result += (name -> field.text)
     }
-
     field.text = result(name)
     field
   }
@@ -30,6 +30,16 @@ trait UserOptions {
     val field = new PasswordField(result(name))
     field.reactions += {
       case ValueChanged(_) => result += (name -> field.password.mkString(""))
+    }
+    field
+  }
+
+  protected def checkbox(name: String, text: String) = {
+    val field = new CheckBox(text)
+    field.text = text
+    field.selected = text.toLowerCase == "true"
+    field.reactions += {
+      case ButtonClicked(`field`) => result += (name -> field.selected.toString.toLowerCase)
     }
     field
   }

@@ -96,7 +96,7 @@ class ImportPane(
 
   def updateSelection() {
     val plugin = pluginList.selection.item
-    selectedPlugin = plugin.clazz.newInstance
+    selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Importer]
     importerOptions = selectedPlugin.userOptions
 
     pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
@@ -111,7 +111,7 @@ class ImportPane(
   def runImport() {
     val progress = new ProgressDialog(parent)
 
-    new Thread() {
+    new Thread("importer-thread") {
       override def run = {
         db.inTransaction { transaction: DBWithTransaction[RootNode] =>
           val importer = new AsyncDatabaseImportHandler(

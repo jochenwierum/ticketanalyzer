@@ -1,10 +1,10 @@
 package de.jowisoftware.mining.gui
 
 import java.awt.Dimension
+
 import scala.swing.BorderPanel.Position
-import scala.swing.{ ProgressBar, Label, Frame, Dialog, BorderPanel }
-import javax.swing.JComponent
-import scala.swing.event.WindowClosing
+import scala.swing.{Swing, ProgressBar, Label, Frame, Dialog, BorderPanel}
+
 import javax.swing.WindowConstants
 
 class ProgressDialog(p: Frame) extends Dialog(p) {
@@ -25,9 +25,13 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
   bar.min = 0
   bar.value = 0
 
+  val status = new Label()
+  status.visible = false
+
   contents = new BorderPanel {
-    layout(new Label("Please wait...")) = Position.North
-    layout(bar) = Position.Center
+    layout += new Label("Please wait...") -> Position.North
+    layout += bar -> Position.Center
+    layout += status -> Position.South
   }
 
   def show() = visible = true
@@ -49,10 +53,33 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
     calc()
   }
 
+  def update(value: Long, max: Long) {
+    _value = value
+    _max = max
+    calc()
+  }
+
+  def status(text: String) {
+    Swing.onEDT {
+      status.text = text
+      if (!status.visible) {
+        updateStatusVisibility()
+      }
+    }
+  }
+
   private def calc() {
     if (_max > 0) {
-      bar.indeterminate = false
-      bar.value = (10000.0 * (1.0 * _value / _max)).asInstanceOf[Int]
+      Swing.onEDT {
+        bar.indeterminate = false
+        bar.value = (10000.0 * (1.0 * _value / _max)).asInstanceOf[Int]
+      }
     }
+  }
+
+  private def updateStatusVisibility() {
+    status.visible = true
+    val oldDimension = this.size
+    this.size = new Dimension(oldDimension.width, oldDimension.height + status.preferredSize.height)
   }
 }

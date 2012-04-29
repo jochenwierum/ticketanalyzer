@@ -10,6 +10,7 @@ import de.jowisoftware.mining.model.RootNode
 import de.jowisoftware.mining.plugins.PluginManager
 import de.jowisoftware.neo4j.Database
 import scala.swing.SplitPane
+import de.jowisoftware.mining.gui.linker.LinkPane
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -54,7 +55,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   def updateView() {
     val state = db.inTransaction(t => t.rootNode.state())
 
-    linkPane.enabled = state == 1
+    linkPane.enabled = state > 0
     shellPane.enabled = state > 0
     tabs.selection.index = state + 1
   }

@@ -9,10 +9,9 @@ trait ProgressbarReporter extends AsyncDatabaseImportHandler {
   protected var dialog: ProgressDialog
 
   override def reportProgress = {
-    Swing.onEDT {
-      dialog.max = ticketsCount + commitsCount
-      dialog.progress = ticketsDone + commitsDone
-    }
+    val max = ticketsCount + commitsCount
+    val state = ticketsDone + commitsDone
+    dialog.update(state, max)
     super.reportProgress
   }
 }
