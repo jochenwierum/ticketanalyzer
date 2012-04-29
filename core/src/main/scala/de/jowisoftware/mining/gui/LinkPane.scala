@@ -50,5 +50,8 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     nodes.map { node => node.asInstanceOf[HasName].name() }
   }
 
-  def updateComboBoxes = {}
+  def updateComboBoxes = {
+    scmList.peer.setModel(ComboBox.newConstantModel(makeSCMList))
+    ticketList.peer.setModel(ComboBox.newConstantModel(makeTicketList))
+  }
 }
