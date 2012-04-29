@@ -16,8 +16,8 @@ import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel {
   private val pluginList = new ComboBox[Plugin](makePluginList)
-  private val scmList = new ComboBox[String](makeSCMList)
-  private val ticketList = new ComboBox[String](makeTicketList)
+  private var scmList = makeSCMList
+  private var ticketList = makeTicketList
   private val linkButton = new Button("link")
   private val pluginDetails = new ScrollPane
 
@@ -51,13 +51,13 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   def makePluginList =
     pluginManager.getFor(PluginType.Linker)
 
-  def makeSCMList = db.inTransaction { transaction =>
+  def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
     namesOfChildren(transaction.rootNode.commitRepositoryCollection)
-  }.toSeq
+  }.toSeq)
 
-  def makeTicketList = db.inTransaction { transaction =>
+  def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
     namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
-  }.toSeq
+  }.toSeq)
 
   def namesOfChildren(repository: Node) = {
     val nodes = repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
@@ -65,8 +65,10 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   def updateComboBoxes() {
-    scmList.peer.setModel(ComboBox.newConstantModel(makeSCMList))
-    ticketList.peer.setModel(ComboBox.newConstantModel(makeTicketList))
+    scmList = makeSCMList
+    selectionPanel.contents(3) = scmList
+    ticketList = makeTicketList
+    selectionPanel.contents(5) = ticketList
   }
 
   def updateSelection() {
