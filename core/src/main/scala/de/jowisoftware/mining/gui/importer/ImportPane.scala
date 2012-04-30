@@ -5,7 +5,7 @@ import scala.swing.event.{ ButtonClicked, SelectionChanged }
 import scala.swing.ScrollPane.BarPolicy
 import scala.swing.BorderPanel.Position
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.{ ProgressbarReporter, ProgressDialog }
+import de.jowisoftware.mining.gui.{ ProgressDialog }
 import de.jowisoftware.mining.importer.async.{ AsyncDatabaseImportHandler, ConsoleProgressReporter }
 import de.jowisoftware.mining.importer.Importer
 import de.jowisoftware.mining.model.RootNode
@@ -116,7 +116,7 @@ class ImportPane(
         db.inTransaction { transaction: DBWithTransaction[RootNode] =>
           val importer = new AsyncDatabaseImportHandler(
             transaction.rootNode,
-            tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ProgressbarReporter {
+            tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ImporterEventGui {
             var dialog = progress
           }
           importer.run()

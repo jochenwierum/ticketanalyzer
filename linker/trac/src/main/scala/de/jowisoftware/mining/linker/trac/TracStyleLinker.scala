@@ -10,9 +10,9 @@ class TracStyleLinker extends Linker {
   def link(tickets: TicketRepository, commits: CommitRepository,
     options: Map[String, String], events: LinkEvents) {
 
-    events.progress(1, 100, "Doing something")
+    events.reportProgress(1, 100, "Doing something")
     Thread.sleep(2000)
-    events.progress(50, 100, "Doing something else...")
+    events.reportProgress(50, 100, "Doing something else...")
     Thread.sleep(2000)
     events.finish()
   }

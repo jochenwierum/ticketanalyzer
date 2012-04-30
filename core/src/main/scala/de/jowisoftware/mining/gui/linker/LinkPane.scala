@@ -3,9 +3,7 @@ package de.jowisoftware.mining.gui.linker
 import scala.swing.BorderPanel.Position
 import scala.swing.event.{ SelectionChanged, ButtonClicked }
 import scala.swing.{ Swing, ScrollPane, Orientation, GridPanel, Frame, Button, BoxPanel, BorderPanel, ComboBox }
-
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.{ ProgressDialog, LeftAlignedLabel }
 import de.jowisoftware.mining.linker.Linker
@@ -13,6 +11,8 @@ import de.jowisoftware.mining.model.{ RootNode, Node, HasName, Contains }
 import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
+import de.jowisoftware.mining.linker.ConsoleProgressReporter
+import de.jowisoftware.mining.linker.DatabaseLinkerHandler
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel {
   private val pluginList = new ComboBox[Plugin](makePluginList)
@@ -84,14 +84,17 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   def doLink() {
-    val progress = new ProgressDialog(parent)
+    val progressD = new ProgressDialog(parent)
     new Thread("linker-thread") {
       override def run() {
         val options = importerOptions.getUserInput
 
         db.inTransaction { transaction =>
           selectedPlugin.link(getSelectedTicketRepository(transaction),
-            getSelectedCommitRepository(transaction), options, new LinkerEventGui(progress))
+            getSelectedCommitRepository(transaction), options,
+            new DatabaseLinkerHandler() with ConsoleProgressReporter with LinkerEventGui {
+              val progressDialog = progressD
+            })
 
           if (transaction.rootNode.state() < 2) {
             transaction.rootNode.state(2)
@@ -100,13 +103,13 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
           transaction.success
 
           Swing.onEDT {
-            progress.hide()
+            progressD.hide()
             parent.publish(DatabaseUpdated)
           }
         }
       }
     }.start()
-    progress.show()
+    progressD.show()
   }
 
   def getSelectedTicketRepository(transaction: DBWithTransaction[RootNode]) =

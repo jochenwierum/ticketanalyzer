@@ -21,12 +21,16 @@ class AsyncDatabaseImportHandler(
   case object Finish extends ImportEvent
 
   private val target = self
-  protected var ticketsDone: Long = 0
-  protected var ticketsCount: Long = 0
-  protected var commitsDone: Long = 0
-  protected var commitsCount: Long = 0
+  private var ticketsDone: Long = 0
+  private var ticketsCount: Long = 0
+  private var commitsDone: Long = 0
+  private var commitsCount: Long = 0
 
-  def reportProgress: Unit = {}
+  def reportProgress(ticketsDone: Long, ticketsCount: Long, commitsDone: Long, commitsCount: Long) {}
+
+  private def reportProgress() {
+    reportProgress(ticketsDone, ticketsCount, commitsDone, commitsCount)
+  }
 
   def run() = {
     val dbImporter = new DatabaseImportHandler(root)
