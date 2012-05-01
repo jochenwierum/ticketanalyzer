@@ -7,7 +7,7 @@ trait ConsoleProgressReporter extends LinkEvents {
     val total = if (max > 0) 1000 * progress / max else 0
 
     if (lastTotal != total) {
-      println("%s: %.1f %% done: %d of %s Operations".
+      println("%s: %.1f %% done: %s of %s Operations".
         format(message, total / 10.0, num(progress), num(progress), num(max)))
       lastTotal = total
     }
