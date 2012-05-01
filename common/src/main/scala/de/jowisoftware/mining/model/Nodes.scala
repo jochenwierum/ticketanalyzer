@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.model
-import _root_.de.jowisoftware.neo4j.content._
-import _root_.de.jowisoftware.neo4j._
+import de.jowisoftware.neo4j.content._
+import de.jowisoftware.neo4j._
 import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
 
@@ -11,9 +11,9 @@ trait Node extends de.jowisoftware.neo4j.content.Node {
 
 protected trait HasChildWithName[T <: HasName] extends Node {
   protected def findOrCreateChild(name: String,
-      relationShip: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[T]): T = {
+    relationShip: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[T]): T = {
 
-    val neighbor = neighbors(Direction.OUTGOING, List(relationShip.relationType)).find{
+    val neighbor = neighbors(Direction.OUTGOING, List(relationShip.relationType)).find {
       _ match {
         case node: HasName => node.name() == name
       }
@@ -40,7 +40,6 @@ protected trait EmptyNode extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
 }
-
 
 object RootNode extends NodeCompanion[RootNode] {
   def apply = new RootNode
@@ -76,8 +75,6 @@ class RootNode extends Node {
   lazy val commitRepositoryCollection = getCollection(CommitRepositoryRepository)
 }
 
-
-
 object Ticket extends NodeCompanion[Ticket] {
   def apply = new Ticket
 }
@@ -102,8 +99,6 @@ class Ticket extends Node {
   }
 }
 
-
-
 object Update extends NodeCompanion[Update] {
   def apply = new Update
 }
@@ -118,15 +113,13 @@ class Update extends Node {
   val oldvalue = anyProperty("oldvalue")
 }
 
-
-
 object TicketRepositoryRepository extends NodeCompanion[TicketRepositoryRepository] {
   def apply = new TicketRepositoryRepository
 }
 
 class TicketRepositoryRepository extends Node with EmptyNode with HasChildWithName[TicketRepository] {
-    def findOrCreateChild(name: String) =
-      findOrCreateChild(name, Contains, TicketRepository)
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, TicketRepository)
 }
 
 object TicketRepository extends NodeCompanion[TicketRepository] {
@@ -141,8 +134,6 @@ class TicketRepository extends Node with HasName with EmptyNode {
   }
 }
 
-
-
 object ComponentRepository extends NodeCompanion[ComponentRepository] {
   def apply = new ComponentRepository
 }
@@ -152,13 +143,11 @@ class ComponentRepository extends Node with EmptyNode with HasChildWithName[Comp
     findOrCreateChild(name, InComponent, Component)
 }
 
-object Component extends NodeCompanion[Component]  {
+object Component extends NodeCompanion[Component] {
   def apply = new Component
 }
 
 class Component extends Node with HasName with EmptyNode
-
-
 
 object VersionRepository extends NodeCompanion[VersionRepository] {
   def apply = new VersionRepository
@@ -169,13 +158,11 @@ class VersionRepository extends Node with EmptyNode with HasChildWithName[Versio
     findOrCreateChild(name, InVersion, Version)
 }
 
-object Version extends NodeCompanion[Version]{
+object Version extends NodeCompanion[Version] {
   def apply = new Version
 }
 
 class Version extends Node with HasName with EmptyNode
-
-
 
 object TypeRepository extends NodeCompanion[TypeRepository] {
   def apply = new TypeRepository
@@ -192,8 +179,6 @@ object Type extends NodeCompanion[Type] {
 
 class Type extends Node with HasName with EmptyNode
 
-
-
 object MilestoneRepository extends NodeCompanion[MilestoneRepository] {
   def apply = new MilestoneRepository
 }
@@ -208,8 +193,6 @@ object Milestone extends NodeCompanion[Milestone] {
 }
 
 class Milestone extends Node with HasName with EmptyNode
-
-
 
 object StatusRepository extends NodeCompanion[StatusRepository] {
   def apply = new StatusRepository
@@ -226,8 +209,6 @@ object Status extends NodeCompanion[Status] {
 
 class Status extends Node with HasName with EmptyNode
 
-
-
 object PersonRepository extends NodeCompanion[PersonRepository] {
   def apply = new PersonRepository
 }
@@ -242,8 +223,6 @@ object Person extends NodeCompanion[Person] {
 }
 
 class Person extends Node with HasName with EmptyNode
-
-
 
 object CommitRepositoryRepository extends NodeCompanion[CommitRepositoryRepository] {
   def apply = new CommitRepositoryRepository
@@ -275,8 +254,6 @@ class CommitRepository extends Node with HasName with EmptyNode {
   }
 }
 
-
-
 object Commit extends NodeCompanion[Commit] {
   def apply = new Commit
 }
@@ -289,8 +266,6 @@ class Commit extends Node {
   val message = stringProperty("message")
   val date = dateProperty("date")
 }
-
-
 
 object File extends NodeCompanion[File] {
   def apply = new File

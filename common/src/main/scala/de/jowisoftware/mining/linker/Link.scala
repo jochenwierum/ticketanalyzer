@@ -1,8 +1,10 @@
 package de.jowisoftware.mining.linker
 
-trait LinkEvents {
-  def reportProgress(progress: Long, max: Long, message: String)
-  def finish()
+sealed abstract class Link
 
-  def foundLink(link: Link)
-}
+case class ScmLink(
+  ref: String,
+  isAbbrev: Boolean = false,
+  path: Option[String] = None) extends Link
+
+case class TicketLink(id: String) extends Link
