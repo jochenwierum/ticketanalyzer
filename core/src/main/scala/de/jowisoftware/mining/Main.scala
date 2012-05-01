@@ -8,6 +8,7 @@ import gui.MainWindow
 import de.jowisoftware.mining.settings.Settings
 import java.io.File
 import javax.swing.UIManager
+import scala.swing.Swing
 
 object Main {
   def main(args: Array[String]) {
@@ -17,15 +18,13 @@ object Main {
       case e: Exception =>
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      def run = {
-        val dbPath = "db/"
-        val db = Database(dbPath, RootNode)
-        val pluginManager = preparePluginManager
+    Swing.onEDT {
+      val dbPath = System.getProperty("dbpath", "db/")
+      val db = Database(dbPath, RootNode)
+      val pluginManager = preparePluginManager
 
-        new MainWindow(db, pluginManager).visible = true
-      }
-    })
+      new MainWindow(db, pluginManager).visible = true
+    }
   }
 
   private def preparePluginManager = {
