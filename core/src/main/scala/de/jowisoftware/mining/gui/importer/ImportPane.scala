@@ -127,8 +127,10 @@ class ImportPane(
 
           transaction.success
         }
+        tasks = Nil
         Swing.onEDT {
-          progress.hide
+          updateTaskList()
+          progress.hide()
           parent.publish(DatabaseUpdated)
         }
       }
