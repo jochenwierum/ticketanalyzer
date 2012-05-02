@@ -9,7 +9,7 @@ else
 	SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 fi
 
-java $JAVA_ARGS -jar "$SCRIPT_DIR\\sbt-launch.jar" "$@"
+java $JAVA_ARGS -jar "$SCRIPT_DIR/sbt-launch.jar" "$@"
 
 if [ "$OSTYPE" = cygwin ]; then
 	stty icanon echo > /dev/null 2>&1
