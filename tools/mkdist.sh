@@ -54,6 +54,17 @@ EOF
 	mkCall $MAIN ";" "$@"
 }
 
+copyPlugins() {
+	ptype=$1
+
+	for plugin in $(ls $ptype); do
+		mkdir -p target/dist/plugins/$ptype
+		cp $ptype/$plugin/target/scala-*/*$plugin*.jar target/dist/plugins/$ptype/$plugin.jar
+	done
+}
+
+
+
 cd "$(dirname "$(readlink -f $0)")"/..
 
 SKIP=0
@@ -63,7 +74,7 @@ fi
 
 if [ $SKIP -eq 0 ]; then
 	echo "* building"
-	sbt clean package >/dev/null
+	tools/sbt clean package >/dev/null
 fi
 
 echo "* preparing directories"
@@ -72,18 +83,17 @@ mkdir -p target/dist/lib
 mkdir -p target/dist/plugins/importer
 mkdir -p target/dist/plugins/linker
 
-echo "* copying jar files"
-cp core/target/scala-2.9.1/ticketanalyzer-core_*.jar target/dist/ticketanalyzer.jar
-cp common/target/scala-2.9.1/ticketanalyzer-common_*.jar target/dist/lib/common.jar
-cp importer/svn/target/scala-2.9.1/ticketanalyzer-importer-svn_*.jar target/dist/plugins/importer/svn.jar
-cp importer/trac/target/scala-2.9.1/ticketanalyzer-importer-trac_*.jar target/dist/plugins/importer/trac.jar
-cp linker/trac/target/scala-2.9.1/ticketanalyzer-linker-trac_*.jar target/dist/plugins/linker/trac.jar
+echo "* copying plugins"
+cp core/target/scala-*/ticketanalyzer-core_*.jar target/dist/ticketanalyzer.jar
+cp common/target/scala-*/ticketanalyzer-common_*.jar target/dist/lib/common.jar
+copyPlugins importer
+copyPlugins linker
 
 echo "* patching configuration"
 jar uf target/dist/ticketanalyzer.jar -C core/src/main/resources.package/ .
 
 echo "* copying dependencies"
-sbt copy-dependencies >/dev/null
+tools/sbt copy-dependencies >/dev/null
 
 echo "* writing start scripts"
 cd target/dist/

@@ -6,3 +6,4 @@ backups
 .cache
 *.class
 lib_managed/
+/project/projects.scala

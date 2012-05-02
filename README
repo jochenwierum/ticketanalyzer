@@ -1,0 +1,24 @@
+Initial Setup
+=============
+
+After cheking out, please do the following steps:
+
+1) generate/update the list of plugins by running
+$ tools/mksbt.sh
+
+2) create eclipse projects for all plugins by running
+$ tools/mkeclipse
+
+3) setup git by running
+$ cat > .git/hooks/pre-commit
+#!/bin/bash
+
+set -e
+tools/spaces.sh --git
+^D
+$ chmod 755 .git/hooks/pre-commit
+
+4) Test everything by running
+$ tools/run.sh
+and
+$tools/mkdist.sh
