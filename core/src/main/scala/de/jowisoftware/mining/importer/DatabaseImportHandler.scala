@@ -4,9 +4,9 @@ import de.jowisoftware.mining.model._
 import java.util.Date
 
 class DatabaseImportHandler(root: RootNode) extends ImportEvents {
-  def finish() { }
-  def countedTickets(count: Long) { }
-  def countedCommits(count: Long) { }
+  def finish() {}
+  def countedTickets(count: Long) {}
+  def countedCommits(count: Long) {}
 
   def loadedTicket(ticketData: TicketData) = {
     val repository = getTicketRepository(ticketData.repository)
@@ -17,6 +17,8 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
     ticket.text(ticketData.description)
     ticket.creationDate(ticketData.creationDate)
     ticket.updateDate(ticketData.updateDate)
+    ticket.dependsOn(ticketData.depends)
+    ticket.blocks(ticketData.blocks)
 
     ticket.add(getPerson(ticketData.reporter))(ReportedBy)
     ticket.add(getMilestone(ticketData.milestone))(InMilestone)
@@ -51,10 +53,11 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
 
     commit.add(getPerson(commitData.author))(Owns)
 
-    commitData.files.foreach{case (filename, value) =>
-      val file = getFile(repository, filename)
-      val relation = commit.add(file)(ChangedFile)
-      relation.editType(value)
+    commitData.files.foreach {
+      case (filename, value) =>
+        val file = getFile(repository, filename)
+        val relation = commit.add(file)(ChangedFile)
+        relation.editType(value)
     }
 
     repository.add(commit)(Contains)
@@ -81,11 +84,11 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
 
   def getFile(repository: CommitRepository, name: String): File =
     repository.findFile(name) match {
-    case Some(file) => file
-    case None =>
-      val file = repository.createFile()
-      file.name(name)
-      repository.add(file)(Contains)
-      file
+      case Some(file) => file
+      case None =>
+        val file = repository.createFile()
+        file.name(name)
+        repository.add(file)(Contains)
+        file
     }
 }

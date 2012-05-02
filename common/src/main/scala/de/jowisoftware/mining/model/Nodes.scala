@@ -90,6 +90,8 @@ class Ticket extends Node {
   val tags = optionalStringProperty("tags")
   val updateDate = dateProperty("time")
   val creationDate = dateProperty("time")
+  val blocks = stringProperty("blocks")
+  val dependsOn = stringProperty("dependsOn")
 
   def createUpdate(number: Int) = {
     val update = db.createNode(Update)

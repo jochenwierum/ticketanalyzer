@@ -11,8 +11,8 @@ class SvnScmScannerTest extends FunSpec {
     assert(result === expected)
   }
 
-  private def link(id: String) = ScmLink(id, false, None)
-  private def link(id: String, path: String) = ScmLink(id, false, Some(path))
+  private def link(id: String) = ScmLink(id, path = None)
+  private def link(id: String, path: String) = ScmLink(id, path = Some(path))
 
   describe("A SvnScmScanner") {
     it("should find r1 and r4") {
