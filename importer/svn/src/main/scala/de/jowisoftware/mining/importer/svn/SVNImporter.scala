@@ -4,6 +4,9 @@ import org.tmatesoft.svn.core.wc.{ SVNRevision, SVNClientManager }
 import org.tmatesoft.svn.core.{ SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler }
 import de.jowisoftware.mining.importer.{ Importer, ImportEvents }
 import de.jowisoftware.mining.importer.CommitData
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager
+import org.tmatesoft.svn.core.wc.SVNWCClient
+import org.tmatesoft.svn.core.wc.SVNWCUtil
 
 class SVNImporter extends Importer {
   def userOptions = new SVNOptions
@@ -11,8 +14,13 @@ class SVNImporter extends Importer {
   def importAll(config: Map[String, String], events: ImportEvents): Unit = {
     require(config.contains("url"))
     require(config.contains("repositoryname"))
+    require(config.contains("username"))
+    require(config.contains("password"))
 
-    val cm = SVNClientManager.newInstance()
+    val authManager = new BasicAuthenticationManager(config("username"), config("password"))
+    val svnOptions = SVNWCUtil.createDefaultOptions(true)
+
+    val cm = SVNClientManager.newInstance(svnOptions, authManager)
     val lc = cm.getLogClient()
     val svnurl = SVNURL.parseURIDecoded(config("url"))
     val rev0 = SVNRevision.create(1)
