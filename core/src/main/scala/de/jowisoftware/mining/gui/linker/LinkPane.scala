@@ -90,21 +90,23 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
         val options = importerOptions.getUserInput
 
         db.inTransaction { transaction =>
-          selectedPlugin.link(getSelectedTicketRepository(transaction),
-            getSelectedCommitRepository(transaction), options,
-            new DatabaseLinkerHandler() with ConsoleProgressReporter with LinkerEventGui {
-              val progressDialog = progressD
-            })
+          try {
+            selectedPlugin.link(getSelectedTicketRepository(transaction),
+              getSelectedCommitRepository(transaction), options,
+              new DatabaseLinkerHandler() with ConsoleProgressReporter with LinkerEventGui {
+                val progressDialog = progressD
+              })
 
-          if (transaction.rootNode.state() < 2) {
-            transaction.rootNode.state(2)
-          }
+            if (transaction.rootNode.state() < 2) {
+              transaction.rootNode.state(2)
+            }
 
-          transaction.success
-
-          Swing.onEDT {
-            progressD.hide()
-            parent.publish(DatabaseUpdated)
+            transaction.success
+          } finally {
+            Swing.onEDT {
+              progressD.hide()
+              parent.publish(DatabaseUpdated)
+            }
           }
         }
       }

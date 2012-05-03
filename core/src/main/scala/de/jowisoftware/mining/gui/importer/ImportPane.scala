@@ -113,25 +113,28 @@ class ImportPane(
 
     new Thread("importer-thread") {
       override def run = {
-        db.inTransaction { transaction: DBWithTransaction[RootNode] =>
-          val importer = new AsyncDatabaseImportHandler(
-            transaction.rootNode,
-            tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ImporterEventGui {
-            var dialog = progress
-          }
-          importer.run()
+        try {
+          db.inTransaction { transaction: DBWithTransaction[RootNode] =>
+            val importer = new AsyncDatabaseImportHandler(
+              transaction.rootNode,
+              tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ImporterEventGui {
+              var dialog = progress
+            }
+            importer.run()
 
-          if (transaction.rootNode.state() < 1) {
-            transaction.rootNode.state(1)
-          }
+            if (transaction.rootNode.state() < 1) {
+              transaction.rootNode.state(1)
+            }
 
-          transaction.success
-        }
-        tasks = Nil
-        Swing.onEDT {
-          updateTaskList()
-          progress.hide()
-          parent.publish(DatabaseUpdated)
+            transaction.success
+          }
+          tasks = Nil
+        } finally {
+          Swing.onEDT {
+            updateTaskList()
+            progress.hide()
+            parent.publish(DatabaseUpdated)
+          }
         }
       }
     }.start()

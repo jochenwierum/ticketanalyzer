@@ -13,6 +13,7 @@ class AsyncDatabaseImportHandler(
   root: RootNode,
   importer: (Importer, Map[String, String])*)
     extends ImportEvents with Logging {
+
   abstract sealed class ImportEvent
   case class CountedTickets(count: Long) extends ImportEvent
   case class CountedCommits(count: Long) extends ImportEvent
