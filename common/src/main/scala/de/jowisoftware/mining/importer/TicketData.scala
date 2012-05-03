@@ -9,4 +9,5 @@ case class TicketData(repository: String, id: Int,
   milestone: String = "", component: String = "", status: String = "", owner: String = "",
   resolution: String = "", blocking: String = "", priority: String = "",
   blocks: String = "", depends: String = "",
+  environment: String = "", severity: String = "",
   updates: List[TicketUpdate] = List())
