@@ -1,0 +1,7 @@
+def findProjectDir = {
+	if (new File(it, "build.gradle").exists()) {
+		include(it.toString().replaceAll("[\\\\/]", ":").substring(1))
+	}
+}
+
+new File(".").eachDirRecurse(findProjectDir)

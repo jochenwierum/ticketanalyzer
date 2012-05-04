@@ -1,0 +1,16 @@
+apply plugin: 'scala'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile group: "org.scala-lang", name: "scala-swing", version: "2.9.1"
+  compile group: "org.clapper", name: "grizzled-slf4j_2.9.1", version: "0.6.9"
+  compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.6.0"
+  compile group: "org.neo4j", name: "neo4j", version: "1.7.M01"
+  
+  scalaTools 'org.scala-lang:scala-compiler:2.9.1'
+  scalaTools 'org.scala-lang:scala-library:2.9.1'
+  compile 'org.scala-lang:scala-library:2.9.1'
+}

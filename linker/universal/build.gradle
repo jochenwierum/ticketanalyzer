@@ -1,0 +1,12 @@
+dependencies {
+  compile project(':common')
+}
+
+jar {
+	manifest {
+		attributes(
+			"Plugin-Class": "de.jowisoftware.mining.importer.linker.universal.UniversalLinker",
+			"Plugin-Type": "Linker",
+			"Plugin-Name": "Universal")
+	}
+}
