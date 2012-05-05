@@ -1,17 +1,65 @@
+defaultTasks 'dist'
+
+apply plugin: 'scala'
+
 subprojects {
-	apply plugin: 'scala'
-	
-	repositories {
-		mavenCentral()
-	}
-	
-	dependencies {
-		scalaTools 'org.scala-lang:scala-compiler:2.9.1'
-		scalaTools 'org.scala-lang:scala-library:2.9.1'
-		
-		compile 'org.scala-lang:scala-library:2.9.1'
-		
-		testCompile group: "org.scalamock", name: "scalamock-scalatest-support", version: "latest.integration"
-		testCompile group: "org.clapper", name: "grizzled-slf4j_2.9.1", version: "0.6.9"
-	  }
+  apply plugin: 'eclipse'
+  apply plugin: 'scala'
+  
+  repositories {
+    mavenCentral()
+  }
+  
+  dependencies {
+    scalaTools 'org.scala-lang:scala-compiler:2.9.1'
+    scalaTools 'org.scala-lang:scala-library:2.9.1'
+    
+    compile 'org.scala-lang:scala-library:2.9.1'
+    
+    testCompile group: "org.scalamock", name: "scalamock-scalatest-support_2.9.1", version: "latest.integration"
+    testCompile group: "org.scalatest", name: "scalatest_2.9.1", version: "1.7.1"
+
+    compile group: "org.clapper", name: "grizzled-slf4j_2.9.1", version: "0.6.9"
+    compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.6.0"
+    
+
+    if (project.name != 'common') {
+      compile project(':common')
+    }
+  }
+}
+
+task dist() {
+  subprojects.each { dependsOn("${it.path}:build") }
+}
+
+dist << {
+  File dist = mkdir("$buildDir/dist")
+  
+  copy {
+    into mkdir(new File(dist, "lib"))
+    subprojects.each {
+      from it.configurations.runtime
+    }
+    from project(':common').configurations.archives.allArtifacts.files
+  }
+  
+  copy {
+    into mkdir(new File(dist, "plugins/importer"))
+    project(':importer').subprojects.each {
+      from it.configurations.archives.allArtifacts.files
+    }
+  }
+  
+  copy {
+    into mkdir(new File(dist, "plugins/linker"))
+    project(':linker').subprojects.each {
+      from it.configurations.archives.allArtifacts.files
+    }
+  }
+
+  copy {
+    into dist
+    from project(':core').configurations.archives.allArtifacts.files
+  }
 }
