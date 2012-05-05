@@ -63,3 +63,16 @@ dist << {
     from project(':core').configurations.archives.allArtifacts.files
   }
 }
+
+task start() {
+  subprojects.each { dependsOn("${it.path}:build") }
+}
+
+start << {
+  print project(':importer:trac').sourceSets.main.runtimeClasspath.class.name
+  
+  javaexec{
+    main = "de.jowisoftware.mining.Main"
+    classpath = subprojects.collect{ p -> p.sourceSets.main.runtimeClasspath}.flatten().inject(null) {a, b -> if(a == null) b else a.add(b)}
+  }
+}
