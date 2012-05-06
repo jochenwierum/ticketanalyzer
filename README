@@ -3,13 +3,10 @@ Initial Setup
 
 After cheking out, please do the following steps:
 
-1) generate/update the list of plugins by running
-$ tools/mksbt.sh
+1) create eclipse projects for all plugins by running
+$ gradle cleanEclipse eclipse
 
-2) create eclipse projects for all plugins by running
-$ tools/mkeclipse
-
-3) setup git by running
+2) setup git by running
 $ cat > .git/hooks/pre-commit
 #!/bin/bash
 
@@ -18,7 +15,7 @@ tools/spaces.sh --git
 ^D
 $ chmod 755 .git/hooks/pre-commit
 
-4) Test everything by running
-$ tools/run.sh
+3) Test everything by running
+$ gradle dist
 and
-$tools/mkdist.sh
+$ gradle start

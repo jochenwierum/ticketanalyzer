@@ -6,10 +6,16 @@ dependencies {
 }
 
 jar {
-	manifest {
-		attributes(
-			"Plugin-Class": "de.jowisoftware.mining.importer.mantis.MantisImporter",
-			"Plugin-Type": "Tickets",
-			"Plugin-Name": "Mantis")
-	}
+  manifest {
+    attributes(
+      "Plugin-Class": "de.jowisoftware.mining.importer.mantis.MantisImporter",
+      "Plugin-Type": "Tickets",
+      "Plugin-Name": "Mantis")
+  }
+}
+
+eclipse {
+  project {
+    name = 'importer-mantis'
+  }
 }

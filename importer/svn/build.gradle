@@ -1,9 +1,9 @@
 description = "svn importer plugin"
 
 repositories {
-	maven {
-		url "http://maven.tmatesoft.com/content/repositories/releases/"
-	}
+  maven {
+    url "http://maven.tmatesoft.com/content/repositories/releases/"
+  }
 }
 
 dependencies {
@@ -11,11 +11,17 @@ dependencies {
 }
 
 jar {
-	manifest {
-		attributes (
-			"Plugin-Class": "de.jowisoftware.mining.importer.trac.TracImporter",
-			"Plugin-Type": "Tickets",
-			"Plugin-Name": "Trac"
-		)
-	}
+  manifest {
+    attributes (
+      "Plugin-Class": "de.jowisoftware.mining.importer.trac.TracImporter",
+      "Plugin-Type": "Tickets",
+      "Plugin-Name": "Trac"
+    )
+  }
+}
+
+eclipse {
+  project {
+    name = 'importer-svn'
+  }
 }

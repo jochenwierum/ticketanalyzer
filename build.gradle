@@ -1,6 +1,9 @@
-defaultTasks 'dist'
+defaultTasks 'help'
 
 apply plugin: 'scala'
+apply plugin: 'application'
+
+import org.gradle.plugins.ide.eclipse.model.SourceFolder 
 
 subprojects {
   apply plugin: 'eclipse'
@@ -11,15 +14,16 @@ subprojects {
   }
   
   dependencies {
-    scalaTools 'org.scala-lang:scala-compiler:2.9.1'
-    scalaTools 'org.scala-lang:scala-library:2.9.1'
+    scalaTools 'org.scala-lang:scala-compiler:2.9.2'
+    scalaTools 'org.scala-lang:scala-library:2.9.2'
     
-    compile 'org.scala-lang:scala-library:2.9.1'
+    compile 'org.scala-lang:scala-library:2.9.2'
     
-    testCompile group: "org.scalamock", name: "scalamock-scalatest-support_2.9.1", version: "latest.integration"
-    testCompile group: "org.scalatest", name: "scalatest_2.9.1", version: "1.7.1"
+    //testCompile group: "org.scalamock", name: "scalamock-support_2.9.1", version: "latest.integration"
+    testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
 
-    compile group: "org.clapper", name: "grizzled-slf4j_2.9.1", version: "0.6.9"
+    compile group: "org.scala-lang", name: "scala-swing", version: "2.9.2"
+    compile group: "org.clapper", name: "grizzled-slf4j_2.9.2", version: "0.6.9"
     compile group: "org.slf4j", name: "slf4j-log4j12", version: "1.6.0"
     
 
@@ -27,13 +31,43 @@ subprojects {
       compile project(':common')
     }
   }
+
+  test << {
+      def oldLevel = logging.getLevel()
+      logging.setLevel(LogLevel.INFO) 
+      ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: classpath.asPath)
+      ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
+          reporter(type: 'stdout')
+      }
+
+      if (oldLevel == null)
+        logging.setLevel(LogLevel.QUIET)
+      else
+        logging.setLevel(oldLevel)
+  }
+
+  eclipse {
+    classpath {
+      file {
+        whenMerged { cp ->
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/") }*.output = "build/classes/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/") }*.output = "build/classes/test"
+          cp.entries.removeAll(cp.entries.findAll { entry ->
+            entry.path.contains('scala-library-2.9.2.jar') ||
+            entry.path.contains('scala-swing-2.9.2.jar')
+          })
+        }
+      }
+      containers += ["org.scala-ide.sdt.launching.SCALA_CONTAINER"]
+    }
+  }
 }
 
-task dist() {
+task copyDistFiles() {
   subprojects.each { dependsOn("${it.path}:build") }
 }
 
-dist << {
+copyDistFiles << {
   File dist = mkdir("$buildDir/dist")
   
   copy {
@@ -42,6 +76,7 @@ dist << {
       from it.configurations.runtime
     }
     from project(':common').configurations.archives.allArtifacts.files
+    from project(':core').configurations.archives.allArtifacts.files
   }
   
   copy {
@@ -57,22 +92,63 @@ dist << {
       from it.configurations.archives.allArtifacts.files
     }
   }
-
-  copy {
-    into dist
-    from project(':core').configurations.archives.allArtifacts.files
-  }
 }
+
+task writeStartScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
+  File dist = new File("$buildDir/dist")
+  applicationName = "ticketanalyzer"
+  classpath = fileTree(dir: new File(dist, 'lib'), include: '*.jar')
+  mainClassName = "de.jowisoftware.mining.Main"
+  outputDir = mkdir(new File(dist, "bin"))
+  
+}
+
+task writeShellScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
+  File dist = new File("$buildDir/dist")
+  applicationName = "ticketanalyzershell"
+  classpath = fileTree(dir: new File(dist, 'lib'), include: '*.jar')
+  mainClassName = "de.jowisoftware.mining.gui.shell.Main"
+  outputDir = mkdir(new File(dist, "bin"))
+}
+
+writeShellScripts { doLast {
+  def bashFile = new File(getOutputDir(),applicationName)
+  String bashContent = bashFile.text
+  bashFile.text = bashContent.replaceFirst("DEFAULT_JVM_OPTS=\"\"", "DEFAULT_JVM_OPTS=\"-Ddbpath=../db/\"")
+  def batchFile = new File(getOutputDir(),applicationName+".bat")
+  String batchContent = batchFile.text
+  batchFile.text = batchContent.replaceFirst("set DEFAULT_JVM_OPTS=", "set DEFAULT_JVM_OPTS=-Ddbpath=../db/")
+}}
+
+writeStartScripts << {
+  def bashFile = new File(getOutputDir(),applicationName)
+  String bashContent = bashFile.text
+  bashFile.text = bashContent.replaceFirst("DEFAULT_JVM_OPTS=\"\"", "DEFAULT_JVM_OPTS=\"-Ddbpath=../db/\"")
+  def batchFile = new File(getOutputDir(),applicationName+".bat")
+  String batchContent = batchFile.text
+  batchFile.text = batchContent.replaceFirst("set DEFAULT_JVM_OPTS=", "set DEFAULT_JVM_OPTS=-Ddbpath=../db/")
+}
+
+task dist(dependsOn: [copyDistFiles, writeStartScripts, writeShellScripts])
 
 task start() {
   subprojects.each { dependsOn("${it.path}:build") }
 }
 
 start << {
-  print project(':importer:trac').sourceSets.main.runtimeClasspath.class.name
-  
   javaexec{
     main = "de.jowisoftware.mining.Main"
-    classpath = subprojects.collect{ p -> p.sourceSets.main.runtimeClasspath}.flatten().inject(null) {a, b -> if(a == null) b else a.add(b)}
+    classpath = files(subprojects.collect{ p -> p.sourceSets.test.runtimeClasspath}.flatten())
   }
+}
+
+task help() << {
+    println("Userfull tasks:")
+    println("  gradle clean   - remove all generated files")
+    println("  gradle start   - execute the application")
+    println("  gradle test    - execute only the tests")
+    println("  gradle dist    - compile everything you need to distribute")
+    println("                   the application into build/dist/")
+    println("  gradle eclipse - create eclipse plugins for all projects")
+    println("  gradle tasks   - show all supported tasks")
 }

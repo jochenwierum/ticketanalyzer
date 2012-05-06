@@ -1,10 +1,16 @@
 description = "universal linker plugin"
 
 jar {
-	manifest {
-		attributes(
-			"Plugin-Class": "de.jowisoftware.mining.importer.linker.universal.UniversalLinker",
-			"Plugin-Type": "Linker",
-			"Plugin-Name": "Universal")
-	}
+  manifest {
+    attributes(
+      "Plugin-Class": "de.jowisoftware.mining.linker.universal.UniversalLinker",
+      "Plugin-Type": "Linker",
+      "Plugin-Name": "Universal")
+  }
+}
+
+eclipse {
+  project {
+    name = 'linker-universal'
+  }
 }

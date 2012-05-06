@@ -1,13 +1,11 @@
-target/
-lib_managed/
-/project/projects.scala
-
 .gradle
 build/
+gradle-app.setting
 
 .classpath
 .project
 .settings
+bin/
 
 db
 backups
