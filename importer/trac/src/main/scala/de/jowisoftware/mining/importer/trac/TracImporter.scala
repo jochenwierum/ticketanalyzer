@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 import de.jowisoftware.mining.importer.TicketData
 import java.sql.Date
 import de.jowisoftware.mining.importer.TicketUpdate
+import de.jowisoftware.mining.importer.TicketComment
 
 class TracImporter extends Importer {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
@@ -52,31 +53,37 @@ class TracImporter extends Importer {
     val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val subValues = values \ "struct" \ "member";
 
-    val updates = getHistory(id, config)
-    TicketData(
+    def findNode(name: String) =
+      subValues.filter(node => (node \ "name").text == name) \ "value"
+
+    val history = receiveHistory(id, config)
+    val (updates, comments) = getHistory(history)
+
+    new TicketData(
       repository = config("repositoryname"),
       id = getNodeAsInt(values(0)),
       creationDate = getNodeAsDate(values(1)),
       updateDate = getNodeAsDate(values(2)),
-      status = getNodeAsString(findNode(subValues, "status")),
-      description = getNodeAsString(findNode(subValues, "description")),
-      reporter = getNodeAsString(findNode(subValues, "reporter")),
-      resolution = getNodeAsString(findNode(subValues, "resolution")),
-      component = getNodeAsString(findNode(subValues, "component")),
-      tags = getNodeAsString(findNode(subValues, "keywords")),
-      blocking = getNodeAsString(findNode(subValues, "blocking")),
-      priority = getNodeAsString(findNode(subValues, "priority")),
-      summary = getNodeAsString(findNode(subValues, "summary")),
-      ticketType = getNodeAsString(findNode(subValues, "type")),
-      owner = getNodeAsString(findNode(subValues, "owner")),
-      milestone = getNodeAsString(findNode(subValues, "milestone")),
-      version = getNodeAsString(findNode(subValues, "version")),
+      status = getNodeAsString(findNode("status")),
+      description = getNodeAsString(findNode("description")),
+      reporter = getNodeAsString(findNode("reporter")),
+      resolution = getNodeAsString(findNode("resolution")),
+      component = getNodeAsString(findNode("component")),
+      tags = getNodeAsString(findNode("keywords")),
+      blocking = getNodeAsString(findNode("blocking")),
+      priority = getNodeAsString(findNode("priority")),
+      summary = getNodeAsString(findNode("summary")),
+      ticketType = getNodeAsString(findNode("type")),
+      owner = getNodeAsString(findNode("owner")),
+      milestone = getNodeAsString(findNode("milestone")),
+      version = getNodeAsString(findNode("version")),
       updates = updates)
   }
 
-  private def getHistory(id: Int, config: Map[String, String]) = {
+  private def getHistory(history: Elem) = {
     var result: List[TicketUpdate] = List()
-    val history = receiveHistory(id, config)
+    var comments: List[TicketComment] = List()
+
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \
       "value" \ "array" \ "data"
 
@@ -88,16 +95,17 @@ class TracImporter extends Importer {
         val time = getNodeAsDate(value(0))
         val author = getNodeAsString(value(1))
         val field = getNodeAsString(value(2))
-        val oldvalue = getNodeAsString(value(3))
-        val newvalue = getNodeAsString(value(4))
-        result = TicketUpdate(id, field, newvalue, oldvalue, author, time) :: result
+        val oldValue = getNodeAsString(value(3))
+        val newValue = getNodeAsString(value(4))
+
+        if (field != "comment")
+          result = TicketUpdate(id, field, newValue, oldValue, author, time) :: result
+        else
+          comments = TicketComment(oldValue.toInt, newValue, author, time, time) :: comments
     }
 
-    result.reverse
+    (result.reverse, comments.reverse)
   }
-
-  private def findNode(parent: NodeSeq, name: String) =
-    parent.filter(node => (node \ "name").text == name) \ "value"
 
   private def getNodeAsDate(parent: NodeSeq, default: Date = null) = {
     val value = getTypedContent(parent, "dateTime.iso8601", null)

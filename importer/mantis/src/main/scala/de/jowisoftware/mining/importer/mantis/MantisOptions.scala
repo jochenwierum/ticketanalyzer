@@ -8,8 +8,8 @@ import scala.swing.Component
 
 class MantisOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
-    ("url" -> "http://www.mantisbt.org/bugs/api/soap/mantisconnect.php"),
-    ("username" -> ""), ("password" -> ""), ("repositoryname" -> "default"),
+    ("url" -> "http://jowisoftware.de/mant/api/soap/mantisconnect.php"),
+    ("username" -> "administrator"), ("password" -> "test"), ("repositoryname" -> "default"),
     ("project" -> "1"))
 
   def getPanel(): Panel = new GridBagPanel {

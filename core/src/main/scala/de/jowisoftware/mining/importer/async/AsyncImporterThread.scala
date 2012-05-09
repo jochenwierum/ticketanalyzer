@@ -29,8 +29,8 @@ class AsyncImporterThread(config: Map[String, String], importer: Importer) exten
   final override def run(): Unit = {
     try {
       importer.importAll(config, events)
-    } catch {
-      case e: Exception => events.finish
+    } finally {
+      events.finish
     }
   }
 }

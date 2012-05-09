@@ -16,6 +16,8 @@ class SoapClient extends Logging {
   }
 
   private def processAnswer(answer: Elem): SoapResult = {
+    trace(new PrettyPrinter(120, 2).format(answer))
+
     val body = answer \ "Body"
     if (!body.isEmpty)
       SoapResult(body(0).asInstanceOf[Elem])
@@ -24,6 +26,8 @@ class SoapClient extends Logging {
   }
 
   private def processError(error: Elem): SoapError = {
+    trace(new PrettyPrinter(120, 2).format(error))
+
     val text = (error \ "Body" \ "Fault" \ "faultstring").text
     val code = (error \ "Body" \ "Fault" \ "faultcode").text
     SoapError(code, text)
@@ -34,7 +38,7 @@ class SoapClient extends Logging {
     val out = wrap(req)
     val conn = url.openConnection.asInstanceOf[java.net.HttpURLConnection]
 
-    debug("Sending: "+out)
+    trace("Sending: "+out)
 
     try {
       conn.setRequestMethod("POST")
