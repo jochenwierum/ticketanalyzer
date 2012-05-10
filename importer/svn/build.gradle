@@ -13,9 +13,9 @@ dependencies {
 jar {
   manifest {
     attributes (
-      "Plugin-Class": "de.jowisoftware.mining.importer.trac.TracImporter",
+      "Plugin-Class": "de.jowisoftware.mining.importer.svn.SVNImporter",
       "Plugin-Type": "Tickets",
-      "Plugin-Name": "Trac"
+      "Plugin-Name": "SVN"
     )
   }
 }
