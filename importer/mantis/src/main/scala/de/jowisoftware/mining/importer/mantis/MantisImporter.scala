@@ -13,10 +13,18 @@ import de.jowisoftware.mining.importer.TicketComment
 import scala.xml.NodeSeq
 import grizzled.slf4j.Logging
 import scala.annotation.tailrec
+import scala.xml.XML
+import scala.io.Source
+import java.util.Date
+import scala.collection.SortedMap
+import de.jowisoftware.mining.importer.TicketData
 
 object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
-  private def toDate(value: String) = dateFormat.parseDateTime(value).toDate()
+  private def fromComplexDate(value: String) = dateFormat.parseDateTime(value).toDate()
+
+  private val simpleDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm")
+  private def fromSimpleDate(value: String) = simpleDateFormat.parseDateTime(value).toDate()
 
   object MantisConstants {
     val public = 10
@@ -35,7 +43,7 @@ class MantisImporter extends Importer with Logging {
     require(config contains "project")
     require(config contains "repositoryname")
 
-    val client = new SoapClient
+    val client = new SoapClient(config("url"))
 
     processAllTickets(config, client, events)
   }
@@ -45,12 +53,44 @@ class MantisImporter extends Importer with Logging {
     events.countedTickets(countTickets(config, client))
 
     info("Importing tickets...")
+    val scraper = new HTMLScraper(config("url"))
+    scraper.login(config("username"), config("password"))
+
     val items = receiveTickets(config, client)
-    items foreach { t => processTicket(t, events, config("repositoryname")) }
+    items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
+
+    scraper.logout
     info("Importing finished.")
   }
 
-  private def processTicket(item: Elem, events: ImportEvents, repository: String) {
+  private def processTicket(item: Elem, events: ImportEvents, repository: String, scraper: HTMLScraper) {
+    val id = (item \ "id").text.toInt
+    val ticket = createTicket(item, repository, id)
+    //val relationships =
+
+    val html = scraper.readTicket(id)
+    val historyTable = (html \\ "div" filter { tag => (tag \ "@id").text == "history_open" })(0)
+    val historyRows = historyTable \\ "tr" drop 2
+
+    val changes: SortedMap[Date, (String, String, String)] =
+      SortedMap.empty[Date, (String, String, String)] ++ historyRows.groupBy { row =>
+        fromSimpleDate((row \ "td").head.text.trim)
+      }.mapValues { row =>
+        val cols = row \ "td"
+        (cols(1).text.trim, cols(2).text.trim, cols(3).text.trim)
+      }
+    // events...
+
+    processChanges(changes, ticket, repository, id).foreach { x =>
+      //events...
+    }
+    /*
+    if (node("id").toInt == 1)
+      println(new PrettyPrinter(120, 2).format(item))
+      */
+  }
+
+  private def createTicket(item: scala.xml.Elem, repository: String, id: Int) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
@@ -58,13 +98,12 @@ class MantisImporter extends Importer with Logging {
     val build = node("build")
     val handler = subnode("handler")
     val eta = subnode("eta")
-    //val relationships =
 
-    val ticket = new TicketData(repository, node("id").toInt,
+    new TicketData(repository, id,
       summary = node("summary"),
       description = node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information"),
-      creationDate = toDate(node("date_submitted")),
-      updateDate = toDate(node("last_updated")),
+      creationDate = fromComplexDate(node("date_submitted")),
+      updateDate = fromComplexDate(node("last_updated")),
       version = node("version"),
       status = subnode("status"),
       priority = subnode("priority"),
@@ -76,9 +115,6 @@ class MantisImporter extends Importer with Logging {
       comments = comments(item \ "notes"),
       votes = node("sponsorship_total").toInt,
       environment = node("platform")+" "+node("os")+" "+node("osBuild"))
-
-    events.loadedTicket(ticket)
-    //println(new PrettyPrinter(120, 2).format(item))
   }
 
   private def comments(item: NodeSeq) =
@@ -90,13 +126,21 @@ class MantisImporter extends Importer with Logging {
             id = (comment \ "id" text) toInt,
             text = comment \ "text" text,
             author = comment \ "reporter" \ "name" text,
-            submitted = toDate(comment \ "date_submitted" text),
-            modified = toDate(comment \ "last_modified" text)))
+            submitted = fromComplexDate(comment \ "date_submitted" text),
+            modified = fromComplexDate(comment \ "last_modified" text)))
         } else {
           None
         }
       case _ => None
     }
+
+  private def processChanges(changes: SortedMap[Date, (String, String, String)], ticket: TicketData, repository: String, id: Int): Seq[TicketData] = {
+    changes.map {
+      case (timestamp, changes) =>
+        println(timestamp)
+    }
+    List()
+  }
 
   private def countTickets(config: Map[String, String], client: SoapClient) = {
     def tickets(headers: NodeSeq) = headers \ "mc_project_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
@@ -136,7 +180,7 @@ class MantisImporter extends Importer with Logging {
     else s.head.asInstanceOf[Elem] #:: toStream(s.tail, next)
 
   private def getPage(config: Map[String, String], page: Int, perPage: Int, client: SoapClient) =
-    client.sendMessage(config("url"),
+    client.sendMessage(
       <mc:mc_project_get_issues xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
         { getRequestContent(config, page, perPage, client) }
       </mc:mc_project_get_issues>) match {
@@ -145,7 +189,7 @@ class MantisImporter extends Importer with Logging {
       }
 
   private def getTicketHeaders(config: Map[String, String], page: Int, perPage: Int, client: SoapClient) =
-    client.sendMessage(config("url"),
+    client.sendMessage(
       <mc:mc_project_get_issue_headers xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
         { getRequestContent(config, page, perPage, client) }
       </mc:mc_project_get_issue_headers>) match {

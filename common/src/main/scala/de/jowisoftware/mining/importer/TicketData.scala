@@ -2,6 +2,69 @@ package de.jowisoftware.mining.importer
 import java.util.Date
 import scala.reflect.Field
 
+object TicketData {
+  private val dataTypes = Map(
+    "summary" -> classOf[String],
+    "description" -> classOf[String],
+    "creationDate" -> classOf[Date],
+    "updateDate" -> classOf[Date],
+    "tags" -> classOf[String],
+    "reporter" -> classOf[String],
+    "version" -> classOf[String],
+    "ticketType" -> classOf[String],
+    "milestone" -> classOf[String],
+    "component" -> classOf[String],
+    "status" -> classOf[String],
+    "owner" -> classOf[String],
+    "resolution" -> classOf[String],
+    "blocking" -> classOf[String],
+    "priority" -> classOf[String],
+    "blocks" -> classOf[String],
+    "depends" -> classOf[String],
+    "environment" -> classOf[String],
+    "severity" -> classOf[String],
+    "fixedInVersion" -> classOf[String],
+    "votes" -> classOf[java.lang.Integer],
+    "comments" -> classOf[Seq[TicketComment]],
+    "updates" -> classOf[Seq[TicketUpdate]])
+
+  private val defaults = Map(
+    "summary" -> "",
+    "description" -> "",
+    //"creationDate" -> new Date(),
+    //"updateDate" -> new Date(),
+    "tags" -> "",
+    "reporter" -> "",
+    "version" -> "",
+    "ticketType" -> "",
+    "milestone" -> "",
+    "component" -> "",
+    "status" -> "",
+    "owner" -> "",
+    "resolution" -> "",
+    "blocking" -> "",
+    "priority" -> "",
+    "blocks" -> "",
+    "depends" -> "",
+    "environment" -> "",
+    "severity" -> "",
+    "fixedInVersion" -> "",
+    "votes" -> 0,
+    "comments" -> List(),
+    "updates" -> List())
+
+  def apply(data: Map[String, Any]) {
+    val unknownKeys = data.keys.toBuffer - dataTypes.keys.toSeq
+    if (!unknownKeys.isEmpty) {
+      sys.error("Illegal key(s): "+unknownKeys)
+    }
+
+    val fullData = defaults ++ Map(
+      "creationDate" -> new Date(),
+      "updateDate" -> new Date()) ++ data
+  }
+}
+
 class TicketData(
     val repository: String,
     val id: Int,

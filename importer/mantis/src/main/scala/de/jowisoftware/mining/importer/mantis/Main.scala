@@ -17,7 +17,7 @@ object Main {
     org.apache.log4j.BasicConfigurator.configure()
     new MantisImporter().importAll(
       Map(
-        "url" -> "http://jowisoftware.de/mant/api/soap/mantisconnect.php",
+        "url" -> "http://jowisoftware.de/mant/",
         "username" -> "administrator",
         "password" -> "test",
         "project" -> "1",

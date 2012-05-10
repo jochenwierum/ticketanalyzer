@@ -3,7 +3,9 @@ package de.jowisoftware.mining.importer.mantis
 import scala.xml._
 import grizzled.slf4j.Logging
 
-class SoapClient extends Logging {
+class SoapClient(host: String) extends Logging {
+  private val url = new java.net.URL(host + (if (host.endsWith("/")) "" else "/")+"api/soap/mantisconnect.php")
+
   private def wrap(xml: Elem): String = {
     val buf = new StringBuilder
     buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n")
@@ -33,8 +35,7 @@ class SoapClient extends Logging {
     SoapError(code, text)
   }
 
-  def sendMessage(host: String, req: Elem): SoapResponse = {
-    val url = new java.net.URL(host)
+  def sendMessage(req: Elem): SoapResponse = {
     val out = wrap(req)
     val conn = url.openConnection.asInstanceOf[java.net.HttpURLConnection]
 
@@ -46,9 +47,12 @@ class SoapClient extends Logging {
       conn.setDoOutput(true)
       conn.setRequestProperty("Content-Length", outs.length.toString)
       conn.setRequestProperty("Content-Type", "text/xml")
-      conn.getOutputStream.write(outs)
-      conn.getOutputStream.close
-      processAnswer(XML.load(conn.getInputStream))
+      val stream = conn.getOutputStream
+      stream.write(outs)
+      stream.close
+      val result = processAnswer(XML.load(conn.getInputStream))
+      conn.disconnect
+      result
     } catch {
       case e: Exception =>
         warn("Error when communicating to "+host, e)
