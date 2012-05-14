@@ -9,26 +9,29 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
   def countedCommits(count: Long) {}
 
   def loadedTicket(ticketData: TicketData) = {
-    val repository = getTicketRepository(ticketData.repository)
+    import TicketData.TicketField
+    import TicketData.TicketField._
+
+    val repository = getTicketRepository(ticketData(TicketField.repository))
 
     val ticket = repository.createTicket()
-    ticket.id(ticketData.id)
-    ticket.title(ticketData.summary)
-    ticket.text(ticketData.description)
-    ticket.creationDate(ticketData.creationDate)
-    ticket.updateDate(ticketData.updateDate)
-    ticket.dependsOn(ticketData.depends)
-    ticket.blocks(ticketData.blocks)
+    ticket.id(ticketData(id))
+    ticket.title(ticketData(summary))
+    ticket.text(ticketData(description))
+    ticket.creationDate(ticketData(creationDate))
+    ticket.updateDate(ticketData(updateDate))
+    ticket.dependsOn(ticketData(depends))
+    ticket.blocks(ticketData(blocks))
 
-    ticket.add(getPerson(ticketData.reporter))(ReportedBy)
-    ticket.add(getMilestone(ticketData.milestone))(InMilestone)
-    ticket.add(getVersion(ticketData.version))(InVersion)
-    ticket.add(getType(ticketData.ticketType))(HasType)
-    ticket.add(getComponent(ticketData.component))(InComponent)
-    ticket.add(getStatus(ticketData.status))(HasStatus)
-    ticket.add(getPerson(ticketData.owner))(Owns)
+    ticket.add(getPerson(ticketData(reporter)))(ReportedBy)
+    ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
+    ticket.add(getVersion(ticketData(version)))(InVersion)
+    ticket.add(getType(ticketData(ticketType)))(HasType)
+    ticket.add(getComponent(ticketData(component)))(InComponent)
+    ticket.add(getStatus(ticketData(status)))(HasStatus)
+    ticket.add(getPerson(ticketData(owner)))(Owns)
 
-    addUpdates(ticket, ticketData.updates)
+    addUpdates(ticket, ticketData(updates))
   }
 
   def addUpdates(ticket: Ticket, updates: Seq[TicketUpdate]) = {

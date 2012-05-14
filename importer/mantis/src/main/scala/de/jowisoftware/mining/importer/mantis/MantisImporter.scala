@@ -21,10 +21,10 @@ import de.jowisoftware.mining.importer.TicketData
 
 object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
-  private def fromComplexDate(value: String) = dateFormat.parseDateTime(value).toDate()
+  def fromComplexDate(value: String) = dateFormat.parseDateTime(value).toDate()
 
   private val simpleDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm")
-  private def fromSimpleDate(value: String) = simpleDateFormat.parseDateTime(value).toDate()
+  def fromSimpleDate(value: String) = simpleDateFormat.parseDateTime(value).toDate()
 
   object MantisConstants {
     val public = 10
@@ -72,6 +72,9 @@ class MantisImporter extends Importer with Logging {
     val historyTable = (html \\ "div" filter { tag => (tag \ "@id").text == "history_open" })(0)
     val historyRows = historyTable \\ "tr" drop 2
 
+    val cp = new ChangeParser
+    val tmp = historyRows.map(row => cp.parse(row, ticket))
+
     val changes: SortedMap[Date, (String, String, String)] =
       SortedMap.empty[Date, (String, String, String)] ++ historyRows.groupBy { row =>
         fromSimpleDate((row \ "td").head.text.trim)
@@ -81,6 +84,7 @@ class MantisImporter extends Importer with Logging {
       }
     // events...
 
+    println(ticket)
     processChanges(changes, ticket, repository, id).foreach { x =>
       //events...
     }
@@ -90,7 +94,7 @@ class MantisImporter extends Importer with Logging {
       */
   }
 
-  private def createTicket(item: scala.xml.Elem, repository: String, id: Int) = {
+  private def createTicket(item: scala.xml.Elem, repositoryName: String, ticketId: Int) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
@@ -99,25 +103,34 @@ class MantisImporter extends Importer with Logging {
     val handler = subnode("handler")
     val eta = subnode("eta")
 
-    new TicketData(repository, id,
-      summary = node("summary"),
-      description = node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information"),
-      creationDate = fromComplexDate(node("date_submitted")),
-      updateDate = fromComplexDate(node("last_updated")),
-      version = node("version"),
-      status = subnode("status"),
-      priority = subnode("priority"),
-      reporter = subnode("reporter"),
-      component = node("category"),
-      resolution = subnode("resolution"),
-      severity = subnode("severity"),
-      fixedInVersion = subnode("fixed_in_version"),
-      comments = comments(item \ "notes"),
-      votes = node("sponsorship_total").toInt,
-      environment = node("platform")+" "+node("os")+" "+node("osBuild"))
+    val reporterName = subnode("reporter")
+
+    import TicketData.TicketField._
+    val ticket = TicketData(repositoryName, ticketId)
+    ticket(summary) = node("summary") -> reporterName
+    ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
+    ticket(creationDate) = fromComplexDate(node("date_submitted")) -> reporterName
+    ticket(updateDate) = fromComplexDate(node("last_updated")) -> reporterName
+    ticket(version) = node("version") -> reporterName
+    ticket(status) = subnode("status") -> reporterName
+    ticket(priority) = subnode("priority") -> reporterName
+    ticket(reporter) = subnode("reporter") -> reporterName
+    ticket(component) = node("category") -> reporterName
+    ticket(resolution) = subnode("resolution") -> reporterName
+    ticket(severity) = subnode("severity") -> reporterName
+    ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
+    ticket(comments) = getComments(item \ "notes") -> reporterName
+    ticket(votes) = node("sponsorship_total").toInt -> reporterName
+    ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
+
+    println(ticket)
+    println(item)
+    // reproducability
+
+    ticket
   }
 
-  private def comments(item: NodeSeq) =
+  private def getComments(item: NodeSeq) =
     (item \ "item").flatMap {
       case comment: Elem =>
         val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
@@ -135,10 +148,11 @@ class MantisImporter extends Importer with Logging {
     }
 
   private def processChanges(changes: SortedMap[Date, (String, String, String)], ticket: TicketData, repository: String, id: Int): Seq[TicketData] = {
-    changes.map {
-      case (timestamp, changes) =>
-        println(timestamp)
-    }
+    val reversedChanges = SortedMap.empty(changes.ordering.reverse) ++ changes.toList
+
+    reversedChanges.foreach { x => }
+    changes.foreach { x => }
+
     List()
   }
 

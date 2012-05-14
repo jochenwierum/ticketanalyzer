@@ -1,108 +1,82 @@
 package de.jowisoftware.mining.importer
+
 import java.util.Date
 import scala.reflect.Field
 
 object TicketData {
-  private val dataTypes = Map(
-    "summary" -> classOf[String],
-    "description" -> classOf[String],
-    "creationDate" -> classOf[Date],
-    "updateDate" -> classOf[Date],
-    "tags" -> classOf[String],
-    "reporter" -> classOf[String],
-    "version" -> classOf[String],
-    "ticketType" -> classOf[String],
-    "milestone" -> classOf[String],
-    "component" -> classOf[String],
-    "status" -> classOf[String],
-    "owner" -> classOf[String],
-    "resolution" -> classOf[String],
-    "blocking" -> classOf[String],
-    "priority" -> classOf[String],
-    "blocks" -> classOf[String],
-    "depends" -> classOf[String],
-    "environment" -> classOf[String],
-    "severity" -> classOf[String],
-    "fixedInVersion" -> classOf[String],
-    "votes" -> classOf[java.lang.Integer],
-    "comments" -> classOf[Seq[TicketComment]],
-    "updates" -> classOf[Seq[TicketUpdate]])
+  object TicketField {
+    class TicketField[T] private[TicketData] (val name: String, val default: T)(implicit manifest: Manifest[T]) {
+      val valueClass = manifest.erasure
 
-  private val defaults = Map(
-    "summary" -> "",
-    "description" -> "",
-    //"creationDate" -> new Date(),
-    //"updateDate" -> new Date(),
-    "tags" -> "",
-    "reporter" -> "",
-    "version" -> "",
-    "ticketType" -> "",
-    "milestone" -> "",
-    "component" -> "",
-    "status" -> "",
-    "owner" -> "",
-    "resolution" -> "",
-    "blocking" -> "",
-    "priority" -> "",
-    "blocks" -> "",
-    "depends" -> "",
-    "environment" -> "",
-    "severity" -> "",
-    "fixedInVersion" -> "",
-    "votes" -> 0,
-    "comments" -> List(),
-    "updates" -> List())
-
-  def apply(data: Map[String, Any]) {
-    val unknownKeys = data.keys.toBuffer - dataTypes.keys.toSeq
-    if (!unknownKeys.isEmpty) {
-      sys.error("Illegal key(s): "+unknownKeys)
+      override def toString = name+"["+valueClass.getSimpleName+"]"
     }
 
-    val fullData = defaults ++ Map(
-      "creationDate" -> new Date(),
-      "updateDate" -> new Date()) ++ data
+    val summary = new TicketField("summary", "")
+    val description = new TicketField("description", "")
+    val creationDate = new TicketField("creationDate", new Date)
+    val updateDate = new TicketField("updateDate", new Date)
+    val tags = new TicketField("tags", "")
+    val reporter = new TicketField("reporter", "")
+    val version = new TicketField("version", "")
+    val ticketType = new TicketField("ticketType", "")
+    val milestone = new TicketField("milestone", "")
+    val component = new TicketField("component", "")
+    val status = new TicketField("status", "")
+    val owner = new TicketField("owner", "")
+    val resolution = new TicketField("resolution", "")
+    val blocking = new TicketField("blocking", "")
+    val priority = new TicketField("priority", "")
+    val blocks = new TicketField("blocks", "")
+    val depends = new TicketField("depends", "")
+    val environment = new TicketField("environment", "")
+    val severity = new TicketField("severity", "")
+    val fixedInVersion = new TicketField("fixedInVersion", "")
+    val votes = new TicketField("votes", 0)
+    val comments = new TicketField("comments", Seq[TicketComment]())
+    val updates = new TicketField("updates", Seq[TicketUpdate]())
+    val reproducability = new TicketField("reproducability", "")
+
+    val repository = new TicketField("repository", "")
+    val id = new TicketField("id", 0)
+
+    val fields = List(summary, description, creationDate, updateDate, tags,
+      reporter, version, ticketType, milestone, component, status, owner,
+      resolution, blocking, priority, blocks, depends, environment, severity,
+      fixedInVersion, votes, comments, updates)
+  }
+
+  def apply(repository: String, id: Int) = {
+    val result = new TicketData()
+    result(TicketField.repository) = (repository, "(system)")
+    result(TicketField.id) = (id, "(system)")
+    result
   }
 }
 
-class TicketData(
-    val repository: String,
-    val id: Int,
-    val summary: String = "",
-    val description: String = "",
-    val creationDate: Date = new Date(),
-    val updateDate: Date = new Date(),
-    val tags: String = "",
-    val reporter: String = "",
-    val version: String = "",
-    val ticketType: String = "",
-    val milestone: String = "",
-    val component: String = "",
-    val status: String = "",
-    val owner: String = "",
-    val resolution: String = "",
-    val blocking: String = "",
-    val priority: String = "",
-    val blocks: String = "",
-    val depends: String = "",
-    val environment: String = "",
-    val severity: String = "",
-    val fixedInVersion: String = "",
-    val votes: Int = 0,
-    val comments: Seq[TicketComment] = List(),
-    val updates: Seq[TicketUpdate] = List()) {
+class TicketData private () {
+  import TicketData.TicketField
+  import TicketData.TicketField._
 
-  override def toString: String = {
-    val sb = new StringBuilder("TicketData(\n")
+  private var values: Map[TicketField[_], (Any, String)] =
+    TicketField.fields.map(field => (field -> (field.default, ""))).toMap
+  values += creationDate -> (new Date(), "")
+  values += updateDate -> (new Date(), "")
 
-    for {
-      method <- this.getClass.getDeclaredMethods.sortWith((a, b) => a.getName < b.getName)
-      if (method.getParameterTypes.length == 0 && method.getName != "toString" &&
-        !method.getName.startsWith("init$"))
-    } {
-      sb append "  " append method.getName append "=" append method.invoke(this).toString append "\n"
-    }
+  def update[T](field: TicketField[T], value: (T, String)) =
+    values += field -> value
 
-    sb.append("  )").toString
+  def apply[T](field: TicketField[T]): T =
+    values(field).asInstanceOf[T]
+
+  override def toString = "TicketData(\n"+values.map {
+    case (k, v) => "  "+k+"="+niceTupel(v)
+  }.mkString(",\n")+"  )"
+
+  private def niceTupel(t: (Any, String)) = {
+    (t._1 match {
+      case s: String if s.length > 50 => "\""+s.substring(0, 47)+"...\""
+      case s: String => "\""+s+"\""
+      case x => x.toString
+    }).replace("\n", "\\n") + (if (t._2.isEmpty) "" else " by "+t._2)
   }
 }

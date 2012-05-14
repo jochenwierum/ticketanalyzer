@@ -57,27 +57,29 @@ class TracImporter extends Importer {
       subValues.filter(node => (node \ "name").text == name) \ "value"
 
     val history = receiveHistory(id, config)
-    val (updates, comments) = getHistory(history)
+    val (ticketUpdates, comments) = getHistory(history)
 
-    new TicketData(
-      repository = config("repositoryname"),
-      id = getNodeAsInt(values(0)),
-      creationDate = getNodeAsDate(values(1)),
-      updateDate = getNodeAsDate(values(2)),
-      status = getNodeAsString(findNode("status")),
-      description = getNodeAsString(findNode("description")),
-      reporter = getNodeAsString(findNode("reporter")),
-      resolution = getNodeAsString(findNode("resolution")),
-      component = getNodeAsString(findNode("component")),
-      tags = getNodeAsString(findNode("keywords")),
-      blocking = getNodeAsString(findNode("blocking")),
-      priority = getNodeAsString(findNode("priority")),
-      summary = getNodeAsString(findNode("summary")),
-      ticketType = getNodeAsString(findNode("type")),
-      owner = getNodeAsString(findNode("owner")),
-      milestone = getNodeAsString(findNode("milestone")),
-      version = getNodeAsString(findNode("version")),
-      updates = updates)
+    import TicketData.TicketField._
+    val ticketReporter = getNodeAsString(findNode("reporter"))
+    val ticket = TicketData(config("repositoryname"), getNodeAsInt(values(0)))
+    ticket(creationDate) = (getNodeAsDate(values(1)) -> ticketReporter)
+    ticket(updateDate) = (getNodeAsDate(values(2)) -> ticketReporter)
+    ticket(status) = (getNodeAsString(findNode("status")) -> ticketReporter)
+    ticket(description) = (getNodeAsString(findNode("description")) -> ticketReporter)
+    ticket(reporter) = (getNodeAsString(findNode("reporter")) -> ticketReporter)
+    ticket(resolution) = (getNodeAsString(findNode("resolution")) -> ticketReporter)
+    ticket(component) = (getNodeAsString(findNode("component")) -> ticketReporter)
+    ticket(tags) = (getNodeAsString(findNode("keywords")) -> ticketReporter)
+    ticket(blocking) = (getNodeAsString(findNode("blocking")) -> ticketReporter)
+    ticket(priority) = (getNodeAsString(findNode("priority")) -> ticketReporter)
+    ticket(summary) = (getNodeAsString(findNode("summary")) -> ticketReporter)
+    ticket(ticketType) = (getNodeAsString(findNode("type")) -> ticketReporter)
+    ticket(owner) = (getNodeAsString(findNode("owner")) -> ticketReporter)
+    ticket(milestone) = (getNodeAsString(findNode("milestone")) -> ticketReporter)
+    ticket(version) = (getNodeAsString(findNode("version")) -> ticketReporter)
+    ticket(updates) = (ticketUpdates -> ticketReporter)
+
+    ticket
   }
 
   private def getHistory(history: Elem) = {
