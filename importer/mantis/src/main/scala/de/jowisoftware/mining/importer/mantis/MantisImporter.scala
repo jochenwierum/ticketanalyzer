@@ -1,23 +1,22 @@
 package de.jowisoftware.mining.importer.mantis
 
-import de.jowisoftware.mining.importer.Importer
-import scala.collection.immutable.Map
-import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.mining.importer.ImportEvents
-import scala.xml.Elem
-import scala.xml.PrettyPrinter
-import org.joda.time.format.DateTimeFormat
-import de.jowisoftware.mining.model.Ticket
-import de.jowisoftware.mining.importer.TicketData
-import de.jowisoftware.mining.importer.TicketComment
-import scala.xml.NodeSeq
-import grizzled.slf4j.Logging
-import scala.annotation.tailrec
-import scala.xml.XML
-import scala.io.Source
 import java.util.Date
+
+import scala.Option.option2Iterable
+import scala.annotation.tailrec
+import scala.collection.immutable.Stream.consWrapper
+import scala.collection.immutable.Map
 import scala.collection.SortedMap
-import de.jowisoftware.mining.importer.TicketData
+import scala.xml.{NodeSeq, Elem}
+
+import org.joda.time.format.DateTimeFormat
+
+import MantisImporter.{fromSimpleDate, fromComplexDate, MantisConstants}
+import de.jowisoftware.mining.importer.TicketData.TicketField._
+import de.jowisoftware.mining.importer.{TicketData, TicketComment, Importer, ImportEvents}
+import de.jowisoftware.mining.UserOptions
+import de.jowisoftware.util.XMLUtils._
+import grizzled.slf4j.Logging
 
 object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -57,7 +56,8 @@ class MantisImporter extends Importer with Logging {
     scraper.login(config("username"), config("password"))
 
     val items = receiveTickets(config, client)
-    items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
+    processTicket(items(0), events, config("repositoryname"), scraper)
+    //items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
 
     scraper.logout
     info("Importing finished.")
@@ -84,22 +84,16 @@ class MantisImporter extends Importer with Logging {
       }
     // events...
 
-    println(ticket)
     processChanges(changes, ticket, repository, id).foreach { x =>
       //events...
     }
-    /*
-    if (node("id").toInt == 1)
-      println(new PrettyPrinter(120, 2).format(item))
-      */
   }
 
-  private def createTicket(item: scala.xml.Elem, repositoryName: String, ticketId: Int) = {
+  private def createTicket(item: Elem, repositoryName: String, ticketId: Int) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
     val reproducibility = subnode("reproducibility")
-    val build = node("build")
     val handler = subnode("handler")
     val eta = subnode("eta")
 
@@ -112,6 +106,7 @@ class MantisImporter extends Importer with Logging {
     ticket(creationDate) = fromComplexDate(node("date_submitted")) -> reporterName
     ticket(updateDate) = fromComplexDate(node("last_updated")) -> reporterName
     ticket(version) = node("version") -> reporterName
+    ticket(build) = node("build") -> reporterName
     ticket(status) = subnode("status") -> reporterName
     ticket(priority) = subnode("priority") -> reporterName
     ticket(reporter) = subnode("reporter") -> reporterName
@@ -119,12 +114,13 @@ class MantisImporter extends Importer with Logging {
     ticket(resolution) = subnode("resolution") -> reporterName
     ticket(severity) = subnode("severity") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
+    ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
     ticket(comments) = getComments(item \ "notes") -> reporterName
     ticket(votes) = node("sponsorship_total").toInt -> reporterName
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
 
-    println(ticket)
-    println(item)
+    //println(ticket)
+    //println(item.formated)
     // reproducability
 
     ticket

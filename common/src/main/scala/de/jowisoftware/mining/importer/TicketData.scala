@@ -7,42 +7,56 @@ object TicketData {
   object TicketField {
     class TicketField[T] private[TicketData] (val name: String, val default: T)(implicit manifest: Manifest[T]) {
       val valueClass = manifest.erasure
-
-      override def toString = name+"["+valueClass.getSimpleName+"]"
+      override def toString = name+"["+valueClass.getSimpleName+"] = ("+default.toString + ")"
     }
+    
+    private def ticketField[T](name: String, value: T)(implicit manifest: Manifest[T]) = {
+      val result = new TicketField(name, value)
+      fieldList = result :: fieldList
+      result
+    }
+    
+    private var fieldList: List[TicketField[_]] = List()
+    def fields = fieldList
 
-    val summary = new TicketField("summary", "")
-    val description = new TicketField("description", "")
-    val creationDate = new TicketField("creationDate", new Date)
-    val updateDate = new TicketField("updateDate", new Date)
-    val tags = new TicketField("tags", "")
-    val reporter = new TicketField("reporter", "")
-    val version = new TicketField("version", "")
-    val ticketType = new TicketField("ticketType", "")
-    val milestone = new TicketField("milestone", "")
-    val component = new TicketField("component", "")
-    val status = new TicketField("status", "")
-    val owner = new TicketField("owner", "")
-    val resolution = new TicketField("resolution", "")
-    val blocking = new TicketField("blocking", "")
-    val priority = new TicketField("priority", "")
-    val blocks = new TicketField("blocks", "")
-    val depends = new TicketField("depends", "")
-    val environment = new TicketField("environment", "")
-    val severity = new TicketField("severity", "")
-    val fixedInVersion = new TicketField("fixedInVersion", "")
-    val votes = new TicketField("votes", 0)
-    val comments = new TicketField("comments", Seq[TicketComment]())
-    val updates = new TicketField("updates", Seq[TicketUpdate]())
-    val reproducability = new TicketField("reproducability", "")
-
-    val repository = new TicketField("repository", "")
-    val id = new TicketField("id", 0)
-
-    val fields = List(summary, description, creationDate, updateDate, tags,
-      reporter, version, ticketType, milestone, component, status, owner,
-      resolution, blocking, priority, blocks, depends, environment, severity,
-      fixedInVersion, votes, comments, updates)
+    val repository = ticketField("repository", "")
+    val id = ticketField("id", 0)
+    val summary = ticketField("summary", "")
+    val description = ticketField("description", "")
+    
+    val creationDate = ticketField("creationDate", new Date)
+    val updateDate = ticketField("updateDate", new Date)
+    val status = ticketField("status", "")
+    
+    val version = ticketField("version", "")
+    val fixedInVersion = ticketField("fixedInVersion", "")
+    val targetVersion = ticketField("targetVersion", "")
+    val milestone = ticketField("milestone", "")
+    
+    val tags = ticketField("tags", "")
+    val component = ticketField("component", "")
+    
+    val reporter = ticketField("reporter", "")
+    val owner = ticketField("owner", "")
+    val votes = ticketField("votes", 0)
+    val eta = ticketField("eta", 0)
+    val sponsors = ticketField("sponsors", Seq[String]())
+    
+    val ticketType = ticketField("ticketType", "")
+    val resolution = ticketField("resolution", "")
+    val priority = ticketField("priority", "")
+    val severity = ticketField("severity", "")
+    val reproducability = ticketField("reproducability", "")
+    
+    val blocking = ticketField("blocking", "")
+    val blocks = ticketField("blocks", "")
+    val depends = ticketField("depends", "")
+    
+    val environment = ticketField("environment", "")
+    val build = ticketField("build", "")
+    
+    val comments = ticketField("comments", Seq[TicketComment]())
+    val updates = ticketField("updates", Seq[TicketUpdate]())
   }
 
   def apply(repository: String, id: Int) = {
@@ -66,7 +80,7 @@ class TicketData private () {
     values += field -> value
 
   def apply[T](field: TicketField[T]): T =
-    values(field).asInstanceOf[T]
+    values(field)._1.asInstanceOf[T]
 
   override def toString = "TicketData(\n"+values.map {
     case (k, v) => "  "+k+"="+niceTupel(v)
