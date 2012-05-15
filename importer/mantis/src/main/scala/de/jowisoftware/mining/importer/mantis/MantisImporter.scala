@@ -7,13 +7,13 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Stream.consWrapper
 import scala.collection.immutable.Map
 import scala.collection.SortedMap
-import scala.xml.{NodeSeq, Elem}
+import scala.xml.{ NodeSeq, Elem }
 
 import org.joda.time.format.DateTimeFormat
 
-import MantisImporter.{fromSimpleDate, fromComplexDate, MantisConstants}
+import MantisImporter.{ fromSimpleDate, fromComplexDate, MantisConstants }
 import de.jowisoftware.mining.importer.TicketData.TicketField._
-import de.jowisoftware.mining.importer.{TicketData, TicketComment, Importer, ImportEvents}
+import de.jowisoftware.mining.importer.{ TicketData, TicketComment, Importer, ImportEvents }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.util.XMLUtils._
 import grizzled.slf4j.Logging
@@ -72,21 +72,15 @@ class MantisImporter extends Importer with Logging {
     val historyTable = (html \\ "div" filter { tag => (tag \ "@id").text == "history_open" })(0)
     val historyRows = historyTable \\ "tr" drop 2
 
-    val cp = new ChangeParser
-    val tmp = historyRows.map(row => cp.parse(row, ticket))
+    val changeParser = new ChangeParser
+    val changes = historyRows.flatMap(row => changeParser.parse(row, ticket))
+    val changesByDate = SortedMap.empty[Date, Seq[Change]] ++ changes.groupBy(_.date)
 
-    val changes: SortedMap[Date, (String, String, String)] =
-      SortedMap.empty[Date, (String, String, String)] ++ historyRows.groupBy { row =>
-        fromSimpleDate((row \ "td").head.text.trim)
-      }.mapValues { row =>
-        val cols = row \ "td"
-        (cols(1).text.trim, cols(2).text.trim, cols(3).text.trim)
-      }
-    // events...
+    val baseTicket = createBaseTicket(ticket, changesByDate)
+    val allTickets = baseTicket :: createTicketsByDate(ticket, changesByDate)
 
-    processChanges(changes, ticket, repository, id).foreach { x =>
-      //events...
-    }
+    println(allTickets)
+    //events.loadedTicket(allTickets, allComments)
   }
 
   private def createTicket(item: Elem, repositoryName: String, ticketId: Int) = {
@@ -95,9 +89,9 @@ class MantisImporter extends Importer with Logging {
 
     val reproducibility = subnode("reproducibility")
     val handler = subnode("handler")
-    val eta = subnode("eta")
 
     val reporterName = subnode("reporter")
+    val allComments = getComments(item \ "notes")
 
     import TicketData.TicketField._
     val ticket = TicketData(repositoryName, ticketId)
@@ -115,15 +109,42 @@ class MantisImporter extends Importer with Logging {
     ticket(severity) = subnode("severity") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
-    ticket(comments) = getComments(item \ "notes") -> reporterName
+    ticket(comments) = allComments.map(_.id) -> reporterName
     ticket(votes) = node("sponsorship_total").toInt -> reporterName
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
+    ticket(eta) = ValueUtils.etaStringToInt(subnode("eta")) -> reporterName
+    // reproducability
 
     //println(ticket)
     //println(item.formated)
-    // reproducability
 
     ticket
+  }
+
+  private def createBaseTicket(ticket: TicketData, changes: SortedMap[Date, Seq[Change]]) = {
+    val reversedChanges = SortedMap.empty(changes.ordering.reverse) ++ changes.toList
+    reversedChanges.foreach {
+      _._2.foreach {
+        _.downgrade(ticket)
+      }
+    }
+
+    ticket
+  }
+
+  private def createTicketsByDate(baseTicket: TicketData, changes: SortedMap[Date, Seq[Change]]) = {
+    def nextTickets(ticket: TicketData, changes: List[(Date, Seq[Change])]): List[TicketData] = {
+      if (changes.isEmpty)
+        Nil
+      else {
+        val newTicket = new TicketData(ticket)
+        changes.head._2.foreach(_.update(ticket))
+        newTicket(updateDate) = changes.head._1 -> "(system)"
+        newTicket :: nextTickets(newTicket, changes.tail)
+      }
+    }
+
+    nextTickets(baseTicket, changes.toList)
   }
 
   private def getComments(item: NodeSeq) =
@@ -142,15 +163,6 @@ class MantisImporter extends Importer with Logging {
         }
       case _ => None
     }
-
-  private def processChanges(changes: SortedMap[Date, (String, String, String)], ticket: TicketData, repository: String, id: Int): Seq[TicketData] = {
-    val reversedChanges = SortedMap.empty(changes.ordering.reverse) ++ changes.toList
-
-    reversedChanges.foreach { x => }
-    changes.foreach { x => }
-
-    List()
-  }
 
   private def countTickets(config: Map[String, String], client: SoapClient) = {
     def tickets(headers: NodeSeq) = headers \ "mc_project_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
