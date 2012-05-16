@@ -1,7 +1,8 @@
 package de.jowisoftware.mining.importer
 
 import java.util.Date
-import scala.reflect.Field
+import de.jowisoftware.mining.importer.TicketData.TicketField.TicketField
+import scala.collection.SortedMap
 
 object TicketData {
   object TicketField {
@@ -48,15 +49,12 @@ object TicketData {
     val severity = ticketField("severity", "")
     val reproducability = ticketField("reproducability", "")
 
-    val blocking = ticketField("blocking", "")
-    val blocks = ticketField("blocks", "")
-    val depends = ticketField("depends", "")
+    val relationships = ticketField("relationships", Seq[TicketRelationship]())
 
     val environment = ticketField("environment", "")
     val build = ticketField("build", "")
 
     val comments = ticketField("comments", Seq[Int]())
-    val relationships = ticketField("relationships", Seq[String]())
   }
 
   def apply(repository: String, id: Int) = {
@@ -87,9 +85,9 @@ class TicketData(reference: TicketData) {
   def apply[T](field: TicketField[T]): T =
     values(field)._1.asInstanceOf[T]
 
-  override def toString = "TicketData(\n"+values.map {
-    case (k, v) => "  "+k+"="+niceTupel(v)
-  }.mkString(",\n")+"  )"
+  override def toString = "TicketData(\n"+(SortedMap.empty(Ordering.by{k: TicketField[_] => k.name}) ++ values).map {
+    case (k, v) => "  "+k.name+"="+niceTupel(v)
+  }.mkString(",\n")+"\n)"
 
   private def niceTupel(t: (Any, String)) = {
     (t._1 match {

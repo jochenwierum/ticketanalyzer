@@ -5,6 +5,7 @@ import de.jowisoftware.mining.importer.TicketData.TicketField._
 import java.util.Date
 import grizzled.slf4j.Logging
 import de.jowisoftware.mining.importer.TicketData
+import de.jowisoftware.mining.importer.TicketRelationship
 
 trait Change {
   val date: Date
@@ -15,6 +16,17 @@ trait Change {
 class SimpleChange[T](val date: Date, field: TicketField[T], oldValue: T, newValue: T, user: String) extends Change {
   def update(ticket: TicketData) = ticket(field) = newValue -> user
   def downgrade(ticket: TicketData) = ticket(field) = oldValue -> user
+}
+
+class SplitChange[T](val date: Date, field: TicketField[String], pos: Int, oldValue: String, newValue: String, user: String) extends Change {
+  def update(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), newValue) -> user
+  def downgrade(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), oldValue) -> user
+  
+  private def replaceSegment(field: Int, original: String, newSegment: String) = {
+    val segs = original.split(":", -1)
+    segs(field) = newSegment
+    segs.mkString(":")
+  }
 }
 
 class ArrayChange[T](val date: Date, field: TicketField[Seq[T]], oldValue: Option[T], newValue: Option[T], user: String) extends Change {
@@ -42,13 +54,15 @@ class ArrayChange[T](val date: Date, field: TicketField[Seq[T]], oldValue: Optio
 }
 
 object ChangeParser {
-  private val noteAddRegex = """"Note Added: 0*(\d+)""".r
+  private val noteAddRegex = """Note Added: 0*(\d+)""".r
   private val tagAddedRegex = """Tag Attached: (.+)""".r
-  private val viewState = """Note View State: .*""".r
-  private val sponsorRegex = """([^:]+): """.r
-  private val noteDeletedRegex = """Note Deleted: (\d+)""".r
+  private val noteDeletedRegex = """Note Deleted: 0*(\d+)""".r
   private val tagDetachedRegex = """Tag Detached: (.+)""".r
+  
+  private val sponsorRegex = """([^:]+): """.r
+  private val relationshipRegex = """^(.*)\s+0*(\d+)$""".r
 
+  private val viewState = """Note View State: .*""".r
   private val issueMonitorRegex = """Issue (?:Monitored|End Monitor):.*""".r
   private val noteViewStateRegex = """Note View State:.*""".r
 }
@@ -77,13 +91,8 @@ class ChangeParser extends Logging {
     def wrapDefaultInt[T](f: TicketField[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
 
     field match {
-      case "New Issue" => None
-      case "Issue cloned" => None
-      case "Additional Information Updated" => None
-      case "Description Updated" => None
-      case `issueMonitorRegex` => None
-      case `noteViewStateRegex` => None
-      case "Project" => None
+      case "New Issue" | "Issue cloned" | "Additional Information Updated" |  "Description Updated" | "Project" | "Sponsorship Updated" => None
+      case issueMonitorRegex() | noteViewStateRegex() => None
 
       case "Status" => wrapDefaultString(status)
       case "Assigned To" => wrapDefaultString(owner)
@@ -98,9 +107,9 @@ class ChangeParser extends Logging {
 
       case "ETA" => new SimpleChange(date, eta, ValueUtils.etaStringToInt(oldValue), ValueUtils.etaStringToInt(newValue), user)
 
-      case "Platform" => new SimpleChange(date, environment, updateOs(0, ticket(environment), oldValue), ticket(environment), user)
-      case "OS" => new SimpleChange(date, environment, updateOs(1, ticket(environment), oldValue), ticket(environment), user)
-      case "OS Version" => new SimpleChange(date, environment, updateOs(2, ticket(environment), oldValue), ticket(environment), user)
+      case "Platform" => new SplitChange(date, environment, 0, oldValue, newValue, user)
+      case "OS" => new SplitChange(date, environment, 1, oldValue, newValue, user)
+      case "OS Version" => new SplitChange(date, environment, 2, oldValue, newValue, user)
 
       case "Relationship added" => new ArrayChange(date, relationships, None, Some(processRelationship(change)), user)
       case "Sponsorship Added" => new ArrayChange(date, sponsors, None, Some(findSponsor(change)), user)
@@ -129,14 +138,12 @@ class ChangeParser extends Logging {
     case _ => "unknown"
   }
 
-  private def updateOs(field: Int, oldValue: String, newValue: String) = {
-    val segs = oldValue.split(":", -1)
-    segs(field) = newValue
-    segs.mkString(":")
-  }
-
-  private def processRelationship(change: String) = {
-    val segs = change.split("""\s*of\s*""")
-    segs(1)+":"+segs(0)
+  private def processRelationship(change: String) = change match {
+    case relationshipRegex(relationString, ticketId) =>
+      ValueUtils.relationshipStringToRelationshipType(relationString) match {
+        case Some(ticketRel) => TicketRelationship(ticketId, ticketRel)
+        case None => sys.error("Unparsable Relationship: " + relationString)
+      }
+    case _ => sys.error("Unparsable String: " + change)
   }
 }

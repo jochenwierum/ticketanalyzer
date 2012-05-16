@@ -1,22 +1,20 @@
 package de.jowisoftware.mining.importer.mantis
 
 import java.util.Date
-
 import scala.Option.option2Iterable
 import scala.annotation.tailrec
 import scala.collection.immutable.Stream.consWrapper
 import scala.collection.immutable.Map
 import scala.collection.SortedMap
 import scala.xml.{ NodeSeq, Elem }
-
 import org.joda.time.format.DateTimeFormat
-
 import MantisImporter.{ fromSimpleDate, fromComplexDate, MantisConstants }
 import de.jowisoftware.mining.importer.TicketData.TicketField._
 import de.jowisoftware.mining.importer.{ TicketData, TicketComment, Importer, ImportEvents }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.util.XMLUtils._
 import grizzled.slf4j.Logging
+import de.jowisoftware.mining.importer.TicketRelationship
 
 object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -57,6 +55,7 @@ class MantisImporter extends Importer with Logging {
 
     val items = receiveTickets(config, client)
     processTicket(items(0), events, config("repositoryname"), scraper)
+    println(items(0).formatted)
     //items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
 
     scraper.logout
@@ -64,11 +63,10 @@ class MantisImporter extends Importer with Logging {
   }
 
   private def processTicket(item: Elem, events: ImportEvents, repository: String, scraper: HTMLScraper) {
-    val id = (item \ "id").text.toInt
-    val ticket = createTicket(item, repository, id)
-    //val relationships =
+    val allComments = getComments(item \ "notes")
+    val ticket = createTicket(item, repository, allComments)
 
-    val html = scraper.readTicket(id)
+    val html = scraper.readTicket(ticket(id))
     val historyTable = (html \\ "div" filter { tag => (tag \ "@id").text == "history_open" })(0)
     val historyRows = historyTable \\ "tr" drop 2
 
@@ -77,24 +75,20 @@ class MantisImporter extends Importer with Logging {
     val changesByDate = SortedMap.empty[Date, Seq[Change]] ++ changes.groupBy(_.date)
 
     val baseTicket = createBaseTicket(ticket, changesByDate)
-    val allTickets = baseTicket :: createTicketsByDate(ticket, changesByDate)
+    val allTickets = createTicketsByDate(baseTicket, changesByDate)
 
     println(allTickets)
     //events.loadedTicket(allTickets, allComments)
   }
 
-  private def createTicket(item: Elem, repositoryName: String, ticketId: Int) = {
+  private def createTicket(item: Elem, repositoryName: String, allComments: Seq[TicketComment]) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
-    val reproducibility = subnode("reproducibility")
-    val handler = subnode("handler")
-
     val reporterName = subnode("reporter")
-    val allComments = getComments(item \ "notes")
 
     import TicketData.TicketField._
-    val ticket = TicketData(repositoryName, ticketId)
+    val ticket = TicketData(repositoryName, (item \ "id").text.toInt)
     ticket(summary) = node("summary") -> reporterName
     ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
     ticket(creationDate) = fromComplexDate(node("date_submitted")) -> reporterName
@@ -113,10 +107,9 @@ class MantisImporter extends Importer with Logging {
     ticket(votes) = node("sponsorship_total").toInt -> reporterName
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
     ticket(eta) = ValueUtils.etaStringToInt(subnode("eta")) -> reporterName
-    // reproducability
-
-    //println(ticket)
-    //println(item.formated)
+    ticket(reproducability) = subnode("reproducability") -> reporterName
+    ticket(owner) = subnode("handler") -> reporterName
+    ticket(relationships) = getRelationships(item \ "relationships") -> reporterName
 
     ticket
   }
@@ -129,6 +122,7 @@ class MantisImporter extends Importer with Logging {
       }
     }
 
+    ticket(updateDate) = ticket(creationDate) -> "(system)"
     ticket
   }
 
@@ -138,17 +132,16 @@ class MantisImporter extends Importer with Logging {
         Nil
       else {
         val newTicket = new TicketData(ticket)
-        changes.head._2.foreach(_.update(ticket))
+        changes.head._2.foreach(_.update(newTicket))
         newTicket(updateDate) = changes.head._1 -> "(system)"
         newTicket :: nextTickets(newTicket, changes.tail)
       }
     }
 
-    nextTickets(baseTicket, changes.toList)
+    baseTicket :: nextTickets(baseTicket, changes.toList)
   }
 
-  private def getComments(item: NodeSeq) =
-    (item \ "item").flatMap {
+  private def getComments(item: NodeSeq) = (item \ "item").flatMap {
       case comment: Elem =>
         val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
         if (public) {
@@ -163,6 +156,18 @@ class MantisImporter extends Importer with Logging {
         }
       case _ => None
     }
+  
+  private def getRelationships(item: NodeSeq) = (item \ "item").flatMap {
+    case relationship: Elem =>
+      val typeString = relationship \ "type" \ "name" text
+      val target = (relationship \ "target_id" text) toInt
+      
+      ValueUtils.relationshipStringToRelationshipType(typeString) match {
+        case Some(relValue) => Some(new TicketRelationship(target.toString, relValue))
+        case None => None
+      }
+    case _ => None
+  }
 
   private def countTickets(config: Map[String, String], client: SoapClient) = {
     def tickets(headers: NodeSeq) = headers \ "mc_project_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
@@ -182,7 +187,7 @@ class MantisImporter extends Importer with Logging {
     val perPage = 20
 
     def nextPage(pageNr: Int, lastId: Int): Stream[Elem] = {
-      debug("Laizily fetching next "+perPage+" items")
+      debug("Lazily fetching next "+perPage+" items")
       val page = getPage(config, pageNr, perPage, client)
       val items = page \ "mc_project_get_issuesResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
       val id = (items \ "id").last.text.toInt

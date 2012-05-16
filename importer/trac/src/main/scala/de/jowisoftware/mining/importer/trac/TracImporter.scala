@@ -69,15 +69,15 @@ class TracImporter extends Importer {
     ticket(reporter) = (getNodeAsString(findNode("reporter")) -> ticketReporter)
     ticket(resolution) = (getNodeAsString(findNode("resolution")) -> ticketReporter)
     ticket(component) = (getNodeAsString(findNode("component")) -> ticketReporter)
-    ticket(tags) = (getNodeAsString(findNode("keywords")) -> ticketReporter)
-    ticket(blocking) = (getNodeAsString(findNode("blocking")) -> ticketReporter)
+    ticket(tags) = (getNodeAsString(findNode("keywords")).split(" ").toSeq -> ticketReporter)
+    //ticket(blocking) = (getNodeAsString(findNode("blocking")) -> ticketReporter)
     ticket(priority) = (getNodeAsString(findNode("priority")) -> ticketReporter)
     ticket(summary) = (getNodeAsString(findNode("summary")) -> ticketReporter)
     ticket(ticketType) = (getNodeAsString(findNode("type")) -> ticketReporter)
     ticket(owner) = (getNodeAsString(findNode("owner")) -> ticketReporter)
     ticket(milestone) = (getNodeAsString(findNode("milestone")) -> ticketReporter)
     ticket(version) = (getNodeAsString(findNode("version")) -> ticketReporter)
-    ticket(updates) = (ticketUpdates -> ticketReporter)
+    //ticket(updates) = (ticketUpdates -> ticketReporter)
 
     ticket
   }

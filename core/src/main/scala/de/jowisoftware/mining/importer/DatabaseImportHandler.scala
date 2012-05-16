@@ -20,8 +20,8 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
     ticket.text(ticketData(description))
     ticket.creationDate(ticketData(creationDate))
     ticket.updateDate(ticketData(updateDate))
-    ticket.dependsOn(ticketData(depends))
-    ticket.blocks(ticketData(blocks))
+    //ticket.dependsOn(ticketData(depends))
+    //ticket.blocks(ticketData(blocks))
 
     ticket.add(getPerson(ticketData(reporter)))(ReportedBy)
     ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
@@ -31,7 +31,7 @@ class DatabaseImportHandler(root: RootNode) extends ImportEvents {
     ticket.add(getStatus(ticketData(status)))(HasStatus)
     ticket.add(getPerson(ticketData(owner)))(Owns)
 
-    addUpdates(ticket, ticketData(updates))
+    //addUpdates(ticket, ticketData(updates))
   }
 
   def addUpdates(ticket: Ticket, updates: Seq[TicketUpdate]) = {
