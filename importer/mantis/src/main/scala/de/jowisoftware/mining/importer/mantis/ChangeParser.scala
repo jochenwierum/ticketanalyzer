@@ -21,7 +21,7 @@ class SimpleChange[T](val date: Date, field: TicketField[T], oldValue: T, newVal
 class SplitChange[T](val date: Date, field: TicketField[String], pos: Int, oldValue: String, newValue: String, user: String) extends Change {
   def update(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), newValue) -> user
   def downgrade(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), oldValue) -> user
-  
+
   private def replaceSegment(field: Int, original: String, newSegment: String) = {
     val segs = original.split(":", -1)
     segs(field) = newSegment
@@ -58,7 +58,7 @@ object ChangeParser {
   private val tagAddedRegex = """Tag Attached: (.+)""".r
   private val noteDeletedRegex = """Note Deleted: 0*(\d+)""".r
   private val tagDetachedRegex = """Tag Detached: (.+)""".r
-  
+
   private val sponsorRegex = """([^:]+): """.r
   private val relationshipRegex = """^(.*)\s+0*(\d+)$""".r
 
@@ -91,7 +91,7 @@ class ChangeParser extends Logging {
     def wrapDefaultInt[T](f: TicketField[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
 
     field match {
-      case "New Issue" | "Issue cloned" | "Additional Information Updated" |  "Description Updated" | "Project" | "Sponsorship Updated" => None
+      case "New Issue" | "Issue cloned" | "Additional Information Updated" | "Description Updated" | "Project" | "Sponsorship Updated" => None
       case issueMonitorRegex() | noteViewStateRegex() => None
 
       case "Status" => wrapDefaultString(status)
@@ -142,8 +142,8 @@ class ChangeParser extends Logging {
     case relationshipRegex(relationString, ticketId) =>
       ValueUtils.relationshipStringToRelationshipType(relationString) match {
         case Some(ticketRel) => TicketRelationship(ticketId, ticketRel)
-        case None => sys.error("Unparsable Relationship: " + relationString)
+        case None => sys.error("Unparsable Relationship: "+relationString)
       }
-    case _ => sys.error("Unparsable String: " + change)
+    case _ => sys.error("Unparsable String: "+change)
   }
 }

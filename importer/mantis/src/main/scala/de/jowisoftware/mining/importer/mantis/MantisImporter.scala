@@ -127,41 +127,39 @@ class MantisImporter extends Importer with Logging {
   }
 
   private def createTicketsByDate(baseTicket: TicketData, changes: SortedMap[Date, Seq[Change]]) = {
-    def nextTickets(ticket: TicketData, changes: List[(Date, Seq[Change])]): List[TicketData] = {
-      if (changes.isEmpty)
-        Nil
-      else {
+    def nextTickets(ticket: TicketData, changes: List[(Date, Seq[Change])]): List[TicketData] = changes match {
+      case Nil => Nil
+      case head :: tail =>
         val newTicket = new TicketData(ticket)
-        changes.head._2.foreach(_.update(newTicket))
-        newTicket(updateDate) = changes.head._1 -> "(system)"
-        newTicket :: nextTickets(newTicket, changes.tail)
-      }
+        head._2.foreach(_.update(newTicket))
+        newTicket(updateDate) = head._1 -> "(system)"
+        newTicket :: nextTickets(newTicket, tail)
     }
 
     baseTicket :: nextTickets(baseTicket, changes.toList)
   }
 
   private def getComments(item: NodeSeq) = (item \ "item").flatMap {
-      case comment: Elem =>
-        val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
-        if (public) {
-          Some(TicketComment(
-            id = (comment \ "id" text) toInt,
-            text = comment \ "text" text,
-            author = comment \ "reporter" \ "name" text,
-            submitted = fromComplexDate(comment \ "date_submitted" text),
-            modified = fromComplexDate(comment \ "last_modified" text)))
-        } else {
-          None
-        }
-      case _ => None
-    }
-  
+    case comment: Elem =>
+      val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
+      if (public) {
+        Some(TicketComment(
+          id = (comment \ "id" text) toInt,
+          text = comment \ "text" text,
+          author = comment \ "reporter" \ "name" text,
+          submitted = fromComplexDate(comment \ "date_submitted" text),
+          modified = fromComplexDate(comment \ "last_modified" text)))
+      } else {
+        None
+      }
+    case _ => None
+  }
+
   private def getRelationships(item: NodeSeq) = (item \ "item").flatMap {
     case relationship: Elem =>
       val typeString = relationship \ "type" \ "name" text
       val target = (relationship \ "target_id" text) toInt
-      
+
       ValueUtils.relationshipStringToRelationshipType(typeString) match {
         case Some(relValue) => Some(new TicketRelationship(target.toString, relValue))
         case None => None
