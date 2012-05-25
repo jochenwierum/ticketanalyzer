@@ -5,6 +5,7 @@ import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
 
 trait Node extends de.jowisoftware.neo4j.content.Node {
+  def id = content.getId
   def rootNode = db.rootNode.asInstanceOf[RootNode]
   override def db = super.db.asInstanceOf[DBWithTransaction[RootNode]]
 }
@@ -73,6 +74,11 @@ class RootNode extends Node {
   lazy val ticketRepositoryCollection = getCollection(TicketRepositoryRepository)
   lazy val personCollection = getCollection(PersonRepository)
   lazy val commitRepositoryCollection = getCollection(CommitRepositoryRepository)
+  lazy val tagCollection = getCollection(TagRepository)
+  lazy val resolutionCollection = getCollection(ResolutionRepository)
+  lazy val priorityCollection = getCollection(PriorityRepository)
+  lazy val severityCollection = getCollection(SeverityRepository)
+  lazy val reproducabilityCollection = getCollection(ReproducabilityRepository)
 }
 
 object Ticket extends NodeCompanion[Ticket] {
@@ -83,37 +89,20 @@ class Ticket extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
 
-  val id = intProperty("id")
+  val ticketId = intProperty("id")
   val reporter = stringProperty("reporter")
   val text = stringProperty("text")
   val title = stringProperty("title")
   val tags = optionalStringProperty("tags")
   val updateDate = dateProperty("time")
   val creationDate = dateProperty("time")
-  val blocks = stringProperty("blocks")
-  val dependsOn = stringProperty("dependsOn")
-
-  def createUpdate(number: Int) = {
-    val update = db.createNode(Update)
-    val relation = update.add(this)(Updates)
-    relation.number(number)
-    update
-  }
+  val votes = intProperty("votes")
+  val eta = intProperty("eta")
+  val environment = stringProperty("environment")
+  val build = stringProperty("build")
 }
 
-object Update extends NodeCompanion[Update] {
-  def apply = new Update
-}
 
-class Update extends Node {
-  val version = 1
-  def updateFrom(version: Int) = {}
-
-  val time = dateProperty("time")
-  val field = stringProperty("field")
-  val value = anyProperty("value")
-  val oldvalue = anyProperty("oldvalue")
-}
 
 object TicketRepositoryRepository extends NodeCompanion[TicketRepositoryRepository] {
   def apply = new TicketRepositoryRepository
@@ -136,13 +125,15 @@ class TicketRepository extends Node with HasName with EmptyNode {
   }
 }
 
+
+
 object ComponentRepository extends NodeCompanion[ComponentRepository] {
   def apply = new ComponentRepository
 }
 
 class ComponentRepository extends Node with EmptyNode with HasChildWithName[Component] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, InComponent, Component)
+    findOrCreateChild(name, Contains, Component)
 }
 
 object Component extends NodeCompanion[Component] {
@@ -151,13 +142,15 @@ object Component extends NodeCompanion[Component] {
 
 class Component extends Node with HasName with EmptyNode
 
+
+
 object VersionRepository extends NodeCompanion[VersionRepository] {
   def apply = new VersionRepository
 }
 
 class VersionRepository extends Node with EmptyNode with HasChildWithName[Version] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, InVersion, Version)
+    findOrCreateChild(name, Contains, Version)
 }
 
 object Version extends NodeCompanion[Version] {
@@ -166,13 +159,15 @@ object Version extends NodeCompanion[Version] {
 
 class Version extends Node with HasName with EmptyNode
 
+
+
 object TypeRepository extends NodeCompanion[TypeRepository] {
   def apply = new TypeRepository
 }
 
 class TypeRepository extends Node with EmptyNode with HasChildWithName[Type] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, HasType, Type)
+    findOrCreateChild(name, Contains, Type)
 }
 
 object Type extends NodeCompanion[Type] {
@@ -181,13 +176,15 @@ object Type extends NodeCompanion[Type] {
 
 class Type extends Node with HasName with EmptyNode
 
+
+
 object MilestoneRepository extends NodeCompanion[MilestoneRepository] {
   def apply = new MilestoneRepository
 }
 
 class MilestoneRepository extends Node with EmptyNode with HasChildWithName[Milestone] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, InMilestone, Milestone)
+    findOrCreateChild(name, Contains, Milestone)
 }
 
 object Milestone extends NodeCompanion[Milestone] {
@@ -196,13 +193,15 @@ object Milestone extends NodeCompanion[Milestone] {
 
 class Milestone extends Node with HasName with EmptyNode
 
+
+
 object StatusRepository extends NodeCompanion[StatusRepository] {
   def apply = new StatusRepository
 }
 
 class StatusRepository extends Node with EmptyNode with HasChildWithName[Status] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, HasStatus, Status)
+    findOrCreateChild(name, Contains, Status)
 }
 
 object Status extends NodeCompanion[Status] {
@@ -211,13 +210,15 @@ object Status extends NodeCompanion[Status] {
 
 class Status extends Node with HasName with EmptyNode
 
+
+
 object PersonRepository extends NodeCompanion[PersonRepository] {
   def apply = new PersonRepository
 }
 
 class PersonRepository extends Node with EmptyNode with HasChildWithName[Person] {
   def findOrCreateChild(name: String) =
-    findOrCreateChild(name, FromPerson, Person)
+    findOrCreateChild(name, Contains, Person)
 }
 
 object Person extends NodeCompanion[Person] {
@@ -225,6 +226,8 @@ object Person extends NodeCompanion[Person] {
 }
 
 class Person extends Node with HasName with EmptyNode
+
+
 
 object CommitRepositoryRepository extends NodeCompanion[CommitRepositoryRepository] {
   def apply = new CommitRepositoryRepository
@@ -256,6 +259,8 @@ class CommitRepository extends Node with HasName with EmptyNode {
   }
 }
 
+
+
 object Commit extends NodeCompanion[Commit] {
   def apply = new Commit
 }
@@ -264,13 +269,114 @@ class Commit extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
 
-  val id = stringProperty("id")
+  val commitId = stringProperty("id")
   val message = stringProperty("message")
   val date = dateProperty("date")
 }
+
+
 
 object File extends NodeCompanion[File] {
   def apply = new File
 }
 
 class File extends Node with EmptyNode with HasName
+
+
+
+object TagRepository extends NodeCompanion[TagRepository] {
+  def apply = new TagRepository
+}
+
+class TagRepository extends Node with EmptyNode with HasChildWithName[Tag] {
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, Tag)
+}
+
+object Tag extends NodeCompanion[Tag] {
+  def apply = new Tag
+}
+
+class Tag extends Node with EmptyNode with HasName
+
+
+
+object ResolutionRepository extends NodeCompanion[ResolutionRepository] {
+  def apply = new ResolutionRepository
+}
+
+class ResolutionRepository extends Node with EmptyNode with HasChildWithName[Resolution] {
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, Resolution)
+}
+
+object Resolution extends NodeCompanion[Resolution] {
+  def apply = new Resolution
+}
+
+class Resolution extends Node with EmptyNode with HasName
+
+
+
+object PriorityRepository extends NodeCompanion[PriorityRepository] {
+  def apply = new PriorityRepository
+}
+
+class PriorityRepository extends Node with EmptyNode with HasChildWithName[Priority] {
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, Priority)
+}
+
+object Priority extends NodeCompanion[Priority] {
+  def apply = new Priority
+}
+
+class Priority extends Node with EmptyNode with HasName
+
+
+
+object SeverityRepository extends NodeCompanion[SeverityRepository] {
+  def apply = new SeverityRepository
+}
+
+class SeverityRepository extends Node with EmptyNode with HasChildWithName[Severity] {
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, Severity)
+}
+
+object Severity extends NodeCompanion[Severity] {
+  def apply = new Severity
+}
+
+class Severity extends Node with EmptyNode with HasName
+
+
+
+object ReproducabilityRepository extends NodeCompanion[ReproducabilityRepository] {
+  def apply = new ReproducabilityRepository
+}
+
+class ReproducabilityRepository extends Node with EmptyNode with HasChildWithName[Reproducability] {
+  def findOrCreateChild(name: String) =
+    findOrCreateChild(name, Contains, Reproducability)
+}
+
+object Reproducability extends NodeCompanion[Reproducability] {
+  def apply = new Reproducability
+}
+
+class Reproducability extends Node with EmptyNode with HasName
+
+
+
+object TicketComment extends NodeCompanion[TicketComment] {
+  def apply = new TicketComment
+}
+
+class TicketComment extends Node {
+  val version = 1
+  def updateFrom(version: Int) {}
+  
+  val commentId = intProperty("id")
+  val text = stringProperty("text", "", Some("comment-text"))
+}

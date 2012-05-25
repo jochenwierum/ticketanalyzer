@@ -10,7 +10,7 @@ import scala.xml.{ NodeSeq, Elem }
 import org.joda.time.format.DateTimeFormat
 import MantisImporter.{ fromSimpleDate, fromComplexDate, MantisConstants }
 import de.jowisoftware.mining.importer.TicketData.TicketField._
-import de.jowisoftware.mining.importer.{ TicketData, TicketComment, Importer, ImportEvents }
+import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.util.XMLUtils._
 import grizzled.slf4j.Logging
@@ -54,9 +54,8 @@ class MantisImporter extends Importer with Logging {
     scraper.login(config("username"), config("password"))
 
     val items = receiveTickets(config, client)
-    processTicket(items(0), events, config("repositoryname"), scraper)
-    println(items(0).formatted)
-    //items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
+    items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
+    //println(items(0).formatted)
 
     scraper.logout
     info("Importing finished.")
@@ -78,10 +77,10 @@ class MantisImporter extends Importer with Logging {
     val allTickets = createTicketsByDate(baseTicket, changesByDate)
 
     println(allTickets)
-    //events.loadedTicket(allTickets, allComments)
+    events.loadedTicket(allTickets, allComments)
   }
 
-  private def createTicket(item: Elem, repositoryName: String, allComments: Seq[TicketComment]) = {
+  private def createTicket(item: Elem, repositoryName: String, allComments: Seq[TicketCommentData]) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
@@ -143,7 +142,7 @@ class MantisImporter extends Importer with Logging {
     case comment: Elem =>
       val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
       if (public) {
-        Some(TicketComment(
+        Some(TicketCommentData(
           id = (comment \ "id" text) toInt,
           text = comment \ "text" text,
           author = comment \ "reporter" \ "name" text,

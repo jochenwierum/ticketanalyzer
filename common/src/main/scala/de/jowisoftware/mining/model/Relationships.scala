@@ -4,19 +4,31 @@ import _root_.de.jowisoftware.neo4j.content._
 
 object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
+  
   val contains = ScalaRelationshipType("contains")
 
   val inVersion = ScalaRelationshipType("in_version")
+  val fixedInVersion = ScalaRelationshipType("fixed_in_version")
+  val targets = ScalaRelationshipType("targets")
+  
   val inComponent = ScalaRelationshipType("in_component")
   val hasType = ScalaRelationshipType("has_type")
   val inMilestone = ScalaRelationshipType("in_milestone")
   val hasStatus = ScalaRelationshipType("has_status")
   val fromPerson = ScalaRelationshipType("from_person")
+  val changedFile = ScalaRelationshipType("changed_file")
+  val changedTicket = ScalaRelationshipType("changed_ticket")
+  val hasResolution = ScalaRelationshipType("has_resolution")
+  val hasSeverity = ScalaRelationshipType("has_severity")
+  val hasReproducability = ScalaRelationshipType("has_reproducability")
+  val hasPriority = ScalaRelationshipType("has_priority")
+  
   val owns = ScalaRelationshipType("owns")
   val reportedBy = ScalaRelationshipType("reported_by")
-  val changedFile = ScalaRelationshipType("changed_file")
-  val updates = ScalaRelationshipType("updates")
-  val changedTicket = ScalaRelationshipType("changedTicket")
+  val sponsoredBy = ScalaRelationshipType("sponsored_by")
+  
+  val hasTag = ScalaRelationshipType("has_tag")
+  val hasComment = ScalaRelationshipType("has_comment")
 }
 
 
@@ -69,6 +81,36 @@ object InVersion extends RelationshipCompanion[InVersion] {
 
 class InVersion extends EmptyRelationship {
   val companion = InVersion
+}
+
+
+
+object Targets extends RelationshipCompanion[Targets] {
+  def apply = new Targets
+
+  val relationType = RelTypes.targets
+
+  type sourceType = Ticket
+  type sinkType = Version
+}
+
+class Targets extends EmptyRelationship {
+  val companion = Targets
+}
+
+
+
+object FixedInVersion extends RelationshipCompanion[FixedInVersion] {
+  def apply = new FixedInVersion
+
+  val relationType = RelTypes.fixedInVersion
+
+  type sourceType = Ticket
+  type sinkType = Version
+}
+
+class FixedInVersion extends EmptyRelationship {
+  val companion = FixedInVersion
 }
 
 
@@ -153,7 +195,7 @@ object Owns extends RelationshipCompanion[Owns] {
 
   val relationType = RelTypes.owns
 
-  type sourceType = Node
+  type sourceType = Ticket
   type sinkType = Person
 }
 
@@ -168,12 +210,27 @@ object ReportedBy extends RelationshipCompanion[ReportedBy] {
 
   val relationType = RelTypes.reportedBy
 
-  type sourceType = Node
+  type sourceType = Ticket
   type sinkType = Person
 }
 
 class ReportedBy extends EmptyRelationship {
   val companion = ReportedBy
+}
+
+
+
+object SponsoredBy extends RelationshipCompanion[SponsoredBy] {
+  def apply = new SponsoredBy
+
+  val relationType = RelTypes.sponsoredBy
+
+  type sourceType = Ticket
+  type sinkType = Person
+}
+
+class SponsoredBy extends EmptyRelationship {
+  val companion = SponsoredBy
 }
 
 
@@ -198,38 +255,125 @@ class ChangedFile extends Relationship {
 
 
 
-object Updates extends RelationshipCompanion[Updates] {
-  def apply = new Updates
-
-  val relationType = RelTypes.updates
-
-  type sourceType = Ticket
-  type sinkType = Update
-}
-
-class Updates extends Relationship {
-  val companion = Updates
-
-  val version = 1
-  def updateFrom(version: Int) = {}
-
-  val number = intProperty("number")
-}
-
-
-
 object ChangedTicket extends RelationshipCompanion[ChangedTicket] {
   def apply = new ChangedTicket
 
   val relationType = RelTypes.changedTicket
 
   type sourceType = Person
-  type sinkType = Update
+  type sinkType = Ticket
 }
 
 class ChangedTicket extends Relationship {
   val companion = ChangedTicket
 
   val version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+
+object HasTag extends RelationshipCompanion[HasTag] {
+  def apply = new HasTag
+  
+  val relationType = RelTypes.hasTag
+  
+  type sourceType = Ticket
+  type sinkType = Tag
+}
+
+class HasTag extends Relationship {
+  val companion = HasTag
+  
+  var version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+
+object HasPriority extends RelationshipCompanion[HasPriority] {
+  def apply = new HasPriority
+  
+  val relationType = RelTypes.hasPriority
+  
+  type sourceType = Ticket
+  type sinkType = Priority
+}
+
+class HasPriority extends Relationship {
+  val companion = HasPriority
+  
+  var version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+
+object HasSeverity extends RelationshipCompanion[HasSeverity] {
+  def apply = new HasSeverity
+  
+  val relationType = RelTypes.hasSeverity
+  
+  type sourceType = Ticket
+  type sinkType = Severity
+}
+
+class HasSeverity extends Relationship {
+  val companion = HasSeverity
+  
+  var version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+
+object HasReproducability extends RelationshipCompanion[HasReproducability] {
+  def apply = new HasReproducability
+  
+  val relationType = RelTypes.hasReproducability
+  
+  type sourceType = Ticket
+  type sinkType = Reproducability
+}
+
+class HasReproducability extends Relationship {
+  val companion = HasReproducability
+  
+  var version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+object HasResolution extends RelationshipCompanion[HasResolution] {
+  def apply = new HasResolution
+  
+  val relationType = RelTypes.hasResolution
+  
+  type sourceType = Ticket
+  type sinkType = Resolution
+}
+
+class HasResolution extends Relationship {
+  val companion = HasResolution
+  
+  var version = 1
+  def updateFrom(version: Int) = {}
+}
+
+
+
+object HasComment extends RelationshipCompanion[HasComment] {
+  def apply = new HasComment
+  
+  val relationType = RelTypes.hasComment
+  
+  type sourceType = Ticket
+  type sinkType = TicketComment
+}
+
+class HasComment extends Relationship {
+  val companion = HasComment
+  
+  var version = 1
   def updateFrom(version: Int) = {}
 }

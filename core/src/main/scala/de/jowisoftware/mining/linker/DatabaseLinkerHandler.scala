@@ -9,8 +9,8 @@ class DatabaseLinkerHandler extends LinkEvents {
 
   def foundLink(source: Node, link: Link) {
     println("Link from "+(source match {
-      case t: Ticket => t.id()
-      case c: Commit => c.id()
+      case t: Ticket => t.ticketId()
+      case c: Commit => c.commitId()
       case _ => "?"
     })+" to "+link)
   }

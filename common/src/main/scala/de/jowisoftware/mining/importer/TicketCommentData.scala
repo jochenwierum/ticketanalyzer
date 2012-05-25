@@ -2,7 +2,7 @@ package de.jowisoftware.mining.importer
 
 import java.util.Date
 
-case class TicketComment(
+case class TicketCommentData(
   id: Int,
   text: String,
   author: String,

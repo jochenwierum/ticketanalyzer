@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import de.jowisoftware.mining.importer.TicketData
 import java.sql.Date
 import de.jowisoftware.mining.importer.TicketUpdate
-import de.jowisoftware.mining.importer.TicketComment
+import de.jowisoftware.mining.importer.TicketCommentData
 
 class TracImporter extends Importer {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
@@ -35,7 +35,7 @@ class TracImporter extends Importer {
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map { node => (node \ "int").text.toInt }
     events.countedTickets(ticketIds.size)
-    ticketIds.foreach(tId => events.loadedTicket(getTicket(tId, config)))
+    ticketIds.foreach(tId => events.loadedTicket(List(getTicket(tId, config)), Seq()))
   }
 
   private def setupAuth(config: Map[String, String]) {
@@ -84,7 +84,7 @@ class TracImporter extends Importer {
 
   private def getHistory(history: Elem) = {
     var result: List[TicketUpdate] = List()
-    var comments: List[TicketComment] = List()
+    var comments: List[TicketCommentData] = List()
 
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \
       "value" \ "array" \ "data"
@@ -103,7 +103,7 @@ class TracImporter extends Importer {
         if (field != "comment")
           result = TicketUpdate(id, field, newValue, oldValue, author, time) :: result
         else
-          comments = TicketComment(oldValue.toInt, newValue, author, time, time) :: comments
+          comments = TicketCommentData(oldValue.toInt, newValue, author, time, time) :: comments
     }
 
     (result.reverse, comments.reverse)

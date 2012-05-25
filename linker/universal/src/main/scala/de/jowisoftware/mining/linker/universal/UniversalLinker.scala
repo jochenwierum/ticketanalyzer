@@ -21,8 +21,10 @@ class UniversalLinker extends Linker {
       if (node.isInstanceOf[Ticket])
       ticket = node.asInstanceOf[Ticket]
     } {
+      /*
       scanner.scan(ticket.dependsOn(), events, ticket, LinkType.Blocks)
       scanner.scan(ticket.blocks(), events, ticket, LinkType.DependsOn)
+      */
       progress += 1
       events.reportProgress(progress, total, "Processing tickets")
     }

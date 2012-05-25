@@ -13,4 +13,5 @@ trait DBWithTransaction[T <: Node] {
   private[neo4j] def service: AbstractGraphDatabase
 
   def createNode[T <: Node](implicit companion: NodeCompanion[T]): T
+  def getNode[T <: Node](id: Long)(implicit companion: NodeCompanion[T]): T
 }

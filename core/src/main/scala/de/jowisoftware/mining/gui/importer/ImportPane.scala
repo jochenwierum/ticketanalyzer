@@ -116,7 +116,7 @@ class ImportPane(
         try {
           db.inTransaction { transaction: DBWithTransaction[RootNode] =>
             val importer = new AsyncDatabaseImportHandler(
-              transaction.rootNode,
+              transaction,
               tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ImporterEventGui {
               var dialog = progress
             }
