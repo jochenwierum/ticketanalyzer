@@ -76,7 +76,6 @@ class MantisImporter extends Importer with Logging {
     val baseTicket = createBaseTicket(ticket, changesByDate)
     val allTickets = createTicketsByDate(baseTicket, changesByDate)
 
-    println(allTickets)
     events.loadedTicket(allTickets, allComments)
   }
 

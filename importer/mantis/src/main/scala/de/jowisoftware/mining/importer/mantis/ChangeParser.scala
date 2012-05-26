@@ -91,7 +91,7 @@ class ChangeParser extends Logging {
     def wrapDefaultInt[T](f: TicketField[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
 
     field match {
-      case "New Issue" | "Issue cloned" | "Additional Information Updated" | "Description Updated" | "Project" | "Sponsorship Updated" => None
+      case "New Issue" | "Issue cloned" | "Additional Information Updated" | "Description Updated" | "Project" | "Sponsorship Updated" | "Sponsorship Paid" => None
       case issueMonitorRegex() | noteViewStateRegex() => None
 
       case "Status" => wrapDefaultString(status)
@@ -104,6 +104,7 @@ class ChangeParser extends Logging {
       case "Target Version" => wrapDefaultString(targetVersion)
       case "Sponsorship Total" => wrapDefaultInt(votes)
       case "Summary" => wrapDefaultString(summary)
+      case "Resolution" => wrapDefaultString(resolution)
 
       case "ETA" => new SimpleChange(date, eta, ValueUtils.etaStringToInt(oldValue), ValueUtils.etaStringToInt(newValue), user)
 

@@ -31,6 +31,10 @@ trait Properties[A <: PropertyContainer] {
 
   private def index(indexName: Option[String]) = indexName match {
     case None => NullIndex
-    case Some(name) => indexCreator.create(innerDB.service, content, name);
+    case Some(name) =>
+      print("name: "); println(name)
+      print("service: "); println(innerDB)
+      print("content: "); println(content)
+      indexCreator.create(innerDB.service, content, name)
   }
 }

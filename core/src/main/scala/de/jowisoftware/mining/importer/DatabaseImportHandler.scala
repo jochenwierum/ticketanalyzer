@@ -6,7 +6,7 @@ import de.jowisoftware.neo4j.DBWithTransaction
 
 class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvents {
   private val root = db.rootNode
-  
+
   def finish() {}
   def countedTickets(count: Long) {}
   def countedCommits(count: Long) {}
@@ -15,17 +15,17 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     val commentMap = comments.map(loadComment).map {comment => (comment.commentId(), comment.id)}.toMap
     tickets.foreach(t => loadTicket(t, commentMap))
   }
-  
+
   private def loadComment(comment: TicketCommentData): TicketComment = {
     val node = db.createNode(TicketComment)
-    
+
     node
   }
-  
+
   private def loadTicket(ticketData: TicketData, commentsMap: Map[Int, Long]) {
     import TicketData.TicketField
     import TicketData.TicketField._
-    
+
     val repository = getTicketRepository(ticketData(TicketField.repository))
 
     val ticket = repository.createTicket()
@@ -38,7 +38,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     ticket.eta(ticketData(eta))
     ticket.environment(ticketData(environment))
     ticket.build(ticketData(build))
-    
+
     ticket.add(getPerson(ticketData(reporter)))(ReportedBy)
     ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
     ticket.add(getVersion(ticketData(version)))(InVersion)
@@ -52,11 +52,16 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     ticket.add(getPriority(ticketData(priority)))(HasPriority)
     ticket.add(getSeverity(ticketData(severity)))(HasSeverity)
     ticket.add(getReproducability(ticketData(reproducability)))(HasReproducability)
-    
+
     ticketData(tags).foreach(tag => ticket.add(getTag(tag))(HasTag))
     ticketData(sponsors).foreach(sponsor => ticket.add(getPerson(sponsor))(SponsoredBy))
-    
-    ticketData(comments).foreach(commentId => ticket.add(db.getNode(commentsMap(commentId))(TicketComment))(HasComment))
+
+    ticketData(comments).foreach { commentId =>
+      commentsMap.get(commentId) match {
+        case Some(id) => ticket.add(db.getNode(id)(TicketComment))(HasComment)
+        case None =>
+      }
+    }
   }
 
   def loadedCommit(commitData: CommitData) = {
@@ -83,7 +88,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     root.ticketRepositoryCollection.findOrCreateChild(name)
   def getCommitRepository(name: String) =
     root.commitRepositoryCollection.findOrCreateChild(name)
-    
+
   def getMilestone(name: String) = root.milestoneCollection.findOrCreateChild(name)
   def getVersion(name: String) = root.versionCollection.findOrCreateChild(name)
   def getType(name: String) = root.typeCollection.findOrCreateChild(name)
@@ -95,7 +100,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   def getPriority(name: String) = root.priorityCollection.findOrCreateChild(name)
   def getSeverity(name: String) = root.severityCollection.findOrCreateChild(name)
   def getReproducability(name: String) = root.reproducabilityCollection.findOrCreateChild(name)
-  
+
   def getFile(repository: CommitRepository, name: String): File =
     repository.findFile(name) match {
       case Some(file) => file

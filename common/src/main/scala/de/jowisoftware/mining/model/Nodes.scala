@@ -34,7 +34,7 @@ protected trait HasChildWithName[T <: HasName] extends Node {
 }
 
 protected trait HasName extends Node {
-  val name = stringProperty("name")
+  lazy val name = stringProperty("name")
 }
 
 protected trait EmptyNode extends Node {
@@ -89,17 +89,17 @@ class Ticket extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
 
-  val ticketId = intProperty("id")
-  val reporter = stringProperty("reporter")
-  val text = stringProperty("text")
-  val title = stringProperty("title")
-  val tags = optionalStringProperty("tags")
-  val updateDate = dateProperty("time")
-  val creationDate = dateProperty("time")
-  val votes = intProperty("votes")
-  val eta = intProperty("eta")
-  val environment = stringProperty("environment")
-  val build = stringProperty("build")
+  lazy val ticketId = intProperty("id")
+  lazy val reporter = stringProperty("reporter")
+  lazy val text = stringProperty("text")
+  lazy val title = stringProperty("title")
+  lazy val tags = optionalStringProperty("tags")
+  lazy val updateDate = dateProperty("time")
+  lazy val creationDate = dateProperty("time")
+  lazy val votes = intProperty("votes")
+  lazy val eta = intProperty("eta")
+  lazy val environment = stringProperty("environment")
+  lazy val build = stringProperty("build")
 }
 
 
@@ -269,9 +269,9 @@ class Commit extends Node {
   val version = 1
   def updateFrom(version: Int) = {}
 
-  val commitId = stringProperty("id")
-  val message = stringProperty("message")
-  val date = dateProperty("date")
+  lazy val commitId = stringProperty("id")
+  lazy val message = stringProperty("message")
+  lazy val date = dateProperty("date")
 }
 
 
@@ -376,7 +376,7 @@ object TicketComment extends NodeCompanion[TicketComment] {
 class TicketComment extends Node {
   val version = 1
   def updateFrom(version: Int) {}
-  
+
   val commentId = intProperty("id")
-  val text = stringProperty("text", "", Some("comment-text"))
+  lazy val text = stringProperty("text", "", Some("comment-text"))
 }

@@ -8,7 +8,7 @@ import scala.swing.Component
 
 class MantisOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
-    ("url" -> "http://jowisoftware.de/mant/api/soap/mantisconnect.php"),
+    ("url" -> "http://jowisoftware.de/mant/"),
     ("username" -> "administrator"), ("password" -> "test"), ("repositoryname" -> "default"),
     ("project" -> "1"))
 
