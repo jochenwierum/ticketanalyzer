@@ -59,7 +59,7 @@ subprojects {
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.contains('scala-library-2.9.2.jar') ||
             entry.path.contains('scala-swing-2.9.2.jar') ||
-            !entry.path.endsWith('.jar')
+            entry.path.endsWith('.pom')
           })
         }
       }
