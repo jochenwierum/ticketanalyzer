@@ -1,5 +1,14 @@
 description = "The shared API for all plugins"
 
 dependencies {
-  compile group: "org.neo4j", name: "neo4j", version: "1.7.M01"
+  compile (group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03") {
+    exclude module: "logback-classic"
+    exclude module: "logback-access"
+  }
 }
+
+/*
+configurations {
+	all*.exclude module: "logback-classic"
+}
+*/

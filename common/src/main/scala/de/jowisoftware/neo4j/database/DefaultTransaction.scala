@@ -21,7 +21,7 @@ private[neo4j] class DefaultTransaction[T <: Node](
 
   def createNode[S <: Node](implicit companion: NodeCompanion[S]): S =
     Node.wrapNeoNode(db.service.createNode(), this)
-    
+
   def getNode[S <: Node](id: Long)(implicit companion: NodeCompanion[S]) : S =
     Node.wrapNeoNode(db.service.getNodeById(id), this)
 }

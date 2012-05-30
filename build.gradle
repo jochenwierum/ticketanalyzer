@@ -11,7 +11,10 @@ subprojects {
   
   repositories {
     mavenCentral()
-	mavenLocal()
+    mavenLocal()
+    maven {
+      url "http://m2.neo4j.org/content/repositories/releases"
+    }
   }
   
   dependencies {
@@ -55,7 +58,8 @@ subprojects {
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/") }*.output = "build/classes/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.contains('scala-library-2.9.2.jar') ||
-            entry.path.contains('scala-swing-2.9.2.jar')
+            entry.path.contains('scala-swing-2.9.2.jar') ||
+            !entry.path.endsWith('.jar')
           })
         }
       }
