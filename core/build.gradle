@@ -1,11 +1,9 @@
 description = "The core components: plugin manager and gui"
 
 dependencies {
-  runtime (group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03", classifier: "static-web") {
-    exclude module: "logback-classic"
-    exclude module: "logback-access"
-  }
-
-  compile group: "com.sun.jersey", name: "jersey-core", version: "1.12"
-  compile group: "com.sun.jersey", name: "jersey-server", version: "1.12"
+  compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.6.5"
+  
+  runtime group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03", classifier: "static-web"
+  runtime group: "com.sun.jersey", name: "jersey-core", version: "1.12"
+  runtime group: "com.sun.jersey", name: "jersey-server", version: "1.12"
 }

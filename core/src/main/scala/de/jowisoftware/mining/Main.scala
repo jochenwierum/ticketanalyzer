@@ -9,6 +9,8 @@ import de.jowisoftware.mining.settings.Settings
 import java.io.File
 import javax.swing.UIManager
 import scala.swing.Swing
+import org.slf4j.bridge.SLF4JBridgeHandler
+import org.slf4j.bridge.SLF4JBridgeHandler
 
 object Main {
   def main(args: Array[String]) {
@@ -17,6 +19,9 @@ object Main {
     } catch {
       case e: Exception =>
     }
+
+    SLF4JBridgeHandler.removeHandlersForRootLogger()
+    SLF4JBridgeHandler.install()
 
     Swing.onEDT {
       val dbPath = System.getProperty("dbpath", "db/")
