@@ -7,6 +7,6 @@ class PluginManager {
     plugins = plugin :: plugins
   }
 
-  def getFor(pluginType: PluginType.PluginType) =
+  def getFor(pluginType: PluginType.Value) =
     plugins.filter(_.pluginType == pluginType)
 }

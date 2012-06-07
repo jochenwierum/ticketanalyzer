@@ -6,15 +6,6 @@ dependencies {
   compile group: "nu.validator.htmlparser", name: "htmlparser", version: "1.2.1"
 }
 
-jar {
-  manifest {
-    attributes(
-      "Plugin-Class": "de.jowisoftware.mining.importer.mantis.MantisImporter",
-      "Plugin-Type": "Tickets",
-      "Plugin-Name": "Mantis")
-  }
-}
-
 eclipse {
   project {
     name = 'importer-mantis'

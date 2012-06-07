@@ -2,8 +2,7 @@ package de.jowisoftware.util
 import java.io.File
 
 object FileUtils {
-  def delTree(path: String) = {
-    val dir = new File(path)
+  def delTree(dir: File) = {
     if (dir.exists()) {
       require(dir.isDirectory())
 

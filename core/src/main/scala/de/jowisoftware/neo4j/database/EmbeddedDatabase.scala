@@ -12,13 +12,14 @@ import scala.annotation.tailrec
 import org.neo4j.kernel.AbstractGraphDatabase
 import de.jowisoftware.util.FileUtils
 import de.jowisoftware.neo4j.Database
+import java.io.File
 
-class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion[T]) extends Database[T] {
+class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
   var service: AbstractGraphDatabase = _
   init()
 
   protected def init() {
-    service = new EmbeddedGraphDatabase(filepath)
+    service = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
   }
 
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {

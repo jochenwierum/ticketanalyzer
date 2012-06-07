@@ -1,8 +1,6 @@
 package de.jowisoftware.mining.plugins
 
 object PluginType extends Enumeration {
-  type PluginType = Value
-
   val SCM = Value("SCM")
   val Tickets = Value("Tickets")
   val Linker = Value("Linker")
@@ -15,4 +13,6 @@ object PluginType extends Enumeration {
         throw new RuntimeException(
           "Not a valid plugin type: "+name, e);
     }
+
+  def types = SCM :: Tickets :: Linker :: Nil
 }

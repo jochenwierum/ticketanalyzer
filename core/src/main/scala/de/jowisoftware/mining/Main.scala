@@ -10,8 +10,12 @@ import java.io.File
 import javax.swing.UIManager
 import scala.swing.Swing
 import org.slf4j.bridge.SLF4JBridgeHandler
+import scala.swing.Dialog
 
 object Main {
+  val basePath = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
+  val settings = new Settings("config.properties")
+
   def main(args: Array[String]) {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
@@ -23,20 +27,28 @@ object Main {
     SLF4JBridgeHandler.install()
 
     Swing.onEDT {
-      val dbPath = System.getProperty("dbpath", "db/")
-      val db = EmbeddedDatabase(dbPath, RootNode)
+      val dbPath = new File(basePath, settings.getString("db")).getCanonicalFile
       val pluginManager = preparePluginManager
+      checkPlugins(pluginManager)
+
+      val db = EmbeddedDatabase(dbPath, RootNode)
 
       new MainWindow(db, pluginManager).visible = true
     }
   }
 
   private def preparePluginManager = {
-    val pluginDirs = new Settings().getArray("plugindirs")
-    val pluginDirsAsFile = pluginDirs.map(new File(_))
+    val pluginDirs = settings.getArray("plugindirs")
     val pluginManager = new PluginManager()
-    val scanner = new PluginScanner(pluginDirsAsFile: _*)
+    val scanner = new PluginScanner(basePath, pluginDirs: _*)
     scanner.scan(pluginManager)
     pluginManager
+  }
+
+  private def checkPlugins(pluginManager: PluginManager) {
+    if (!PluginType.values.forall(pluginManager.getFor(_).size > 0)) {
+      Dialog.showMessage(null, "No plugins found", "Critical Error", Dialog.Message.Error, null)
+      System.exit(1)
+    }
   }
 }

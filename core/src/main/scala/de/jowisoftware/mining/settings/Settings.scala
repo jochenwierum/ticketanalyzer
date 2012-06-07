@@ -2,7 +2,9 @@ package de.jowisoftware.mining.settings
 import scala.io.Source
 import java.util.Properties
 
-class Settings {
+class Settings(file: String, classLoader: ClassLoader) {
+  def this(file: String) = this(file, getClass().getClassLoader)
+
   private val properties = loadProperties
 
   def getString(key: String) = properties.getProperty(key)
@@ -18,11 +20,12 @@ class Settings {
   }
 
   private def loadProperties = {
-    val stream = getClass().getClassLoader().getResourceAsStream("config.properties")
+    val stream = classLoader.getResourceAsStream(file)
     val properties = new Properties()
     properties.load(stream)
     stream.close()
 
+    import scala.collection.JavaConversions._
     properties
   }
 }

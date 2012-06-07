@@ -5,15 +5,6 @@ dependencies {
   compile group: "org.joda", name: "joda-convert", version: "1.2" 
 }
 
-jar {
-  manifest {
-    attributes(
-      "Plugin-Class": "de.jowisoftware.mining.importer.trac.TracImporter",
-      "Plugin-Type": "Tickets",
-      "Plugin-Name": "Trac")
-  }
-}
-
 eclipse {
   project {
     name = 'importer-trac'

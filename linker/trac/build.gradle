@@ -1,14 +1,5 @@
 description "trac linker plugin"
 
-jar {
-  manifest {
-    attributes(
-      "Plugin-Class": "de.jowisoftware.mining.linker.trac.TracStyleLinker",
-      "Plugin-Type": "Linker",
-      "Plugin-Name": "Trac-Style")
-  }
-}
-
 eclipse {
   project {
     name = 'linker-trac'
