@@ -26,7 +26,8 @@ subprojects {
     //testCompile group: "org.scalamock", name: "scalamock-support_2.9.1", version: "latest.integration"
     testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
 
-	compile 'ch.qos.logback:logback-core:1.0.3'
+	compile 'ch.qos.logback:logback-classic:1.0.5'
+	compile 'ch.qos.logback:logback-access:1.0.5'
     compile group: "org.scala-lang", name: "scala-swing", version: "2.9.2"
     compile group: "org.clapper", name: "grizzled-slf4j_2.9.2", version: "0.6.9"
     
