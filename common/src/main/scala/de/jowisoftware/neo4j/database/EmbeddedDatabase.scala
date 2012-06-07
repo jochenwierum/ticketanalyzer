@@ -11,9 +11,6 @@ import org.neo4j.server.WrappingNeoServerBootstrapper
 class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion[T]) extends Database[T] {
   val service = new EmbeddedGraphDatabase(filepath)
 
-  private val server = new WrappingNeoServerBootstrapper(service)
-  server.start()
-
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {
     val tx = service.beginTx()
     val wrapper = new DefaultTransaction(this, tx, rootCompanion)
@@ -31,13 +28,12 @@ class EmbeddedDatabase[T <: Node](filepath: String, rootCompanion: NodeCompanion
       if (n.getId != 0)
         n.delete
       else
-        n.getPropertyKeys.foreach(k => n.removeProperty(k))
+        n.getPropertyKeys.toArray.foreach(k => n.removeProperty(k))
     }
     trans.success
   }
 
   def shutdown() {
-    server.stop()
     service.shutdown()
   }
 }
