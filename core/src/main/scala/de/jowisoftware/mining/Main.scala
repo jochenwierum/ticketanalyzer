@@ -1,7 +1,7 @@
 package de.jowisoftware.mining
 
 import de.jowisoftware.mining.model.RootNode
-import de.jowisoftware.neo4j.Database
+import de.jowisoftware.neo4j.EmbeddedDatabase
 import de.jowisoftware.mining.plugins._
 import javax.swing.SwingUtilities
 import gui.MainWindow
@@ -9,7 +9,6 @@ import de.jowisoftware.mining.settings.Settings
 import java.io.File
 import javax.swing.UIManager
 import scala.swing.Swing
-import org.slf4j.bridge.SLF4JBridgeHandler
 import org.slf4j.bridge.SLF4JBridgeHandler
 
 object Main {
@@ -25,7 +24,7 @@ object Main {
 
     Swing.onEDT {
       val dbPath = System.getProperty("dbpath", "db/")
-      val db = Database(dbPath, RootNode)
+      val db = EmbeddedDatabase(dbPath, RootNode)
       val pluginManager = preparePluginManager
 
       new MainWindow(db, pluginManager).visible = true

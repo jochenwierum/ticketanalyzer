@@ -13,3 +13,4 @@ backups
 
 *.class
 *.swp
+.shell_history
