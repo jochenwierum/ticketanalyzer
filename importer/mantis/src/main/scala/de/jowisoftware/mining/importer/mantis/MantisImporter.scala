@@ -63,7 +63,7 @@ class MantisImporter extends Importer with Logging {
 
   private def processTicket(item: Elem, events: ImportEvents, repository: String, scraper: HTMLScraper) {
     val allComments = getComments(item \ "notes")
-    val ticket = createTicket(item, repository, allComments)
+    val ticket = createTicket(item, allComments)
 
     val html = scraper.readTicket(ticket(id))
     val historyTable = (html \\ "div" filter { tag => (tag \ "@id").text == "history_open" })(0)
@@ -76,17 +76,17 @@ class MantisImporter extends Importer with Logging {
     val baseTicket = createBaseTicket(ticket, changesByDate)
     val allTickets = createTicketsByDate(baseTicket, changesByDate)
 
-    events.loadedTicket(allTickets, allComments)
+    events.loadedTicket(repository, allTickets, allComments)
   }
 
-  private def createTicket(item: Elem, repositoryName: String, allComments: Seq[TicketCommentData]) = {
+  private def createTicket(item: Elem, allComments: Seq[TicketCommentData]) = {
     def subnode(name: String) = item \ name \ "name" text
     def node(name: String) = item \ name text
 
     val reporterName = subnode("reporter")
 
     import TicketData.TicketField._
-    val ticket = TicketData(repositoryName, (item \ "id").text.toInt)
+    val ticket = TicketData((item \ "id").text.toInt)
     ticket(summary) = node("summary") -> reporterName
     ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
     ticket(creationDate) = fromComplexDate(node("date_submitted")) -> reporterName
@@ -145,7 +145,7 @@ class MantisImporter extends Importer with Logging {
           id = (comment \ "id" text) toInt,
           text = comment \ "text" text,
           author = comment \ "reporter" \ "name" text,
-          submitted = fromComplexDate(comment \ "date_submitted" text),
+          created = fromComplexDate(comment \ "date_submitted" text),
           modified = fromComplexDate(comment \ "last_modified" text)))
       } else {
         None
@@ -159,7 +159,7 @@ class MantisImporter extends Importer with Logging {
       val target = (relationship \ "target_id" text) toInt
 
       ValueUtils.relationshipStringToRelationshipType(typeString) match {
-        case Some(relValue) => Some(new TicketRelationship(target.toString, relValue))
+        case Some(relValue) => Some(new TicketRelationship(target.toInt, relValue))
         case None => None
       }
     case _ => None

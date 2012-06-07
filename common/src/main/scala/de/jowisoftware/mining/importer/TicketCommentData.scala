@@ -6,5 +6,5 @@ case class TicketCommentData(
   id: Int,
   text: String,
   author: String,
-  submitted: Date = new Date,
+  created: Date = new Date,
   modified: Date = new Date)

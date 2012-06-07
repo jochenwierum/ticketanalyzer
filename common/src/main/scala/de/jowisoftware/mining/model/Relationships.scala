@@ -24,21 +24,21 @@ object RelTypes {
   val hasPriority = ScalaRelationshipType("has_priority")
 
   val owns = ScalaRelationshipType("owns")
+  val wrotes = ScalaRelationshipType("wrote")
   val reportedBy = ScalaRelationshipType("reported_by")
   val sponsoredBy = ScalaRelationshipType("sponsored_by")
 
   val hasTag = ScalaRelationshipType("has_tag")
   val hasComment = ScalaRelationshipType("has_comment")
+
+  val updates = ScalaRelationshipType("updates")
+  val references = ScalaRelationshipType("references")
 }
-
-
 
 trait EmptyRelationship extends Relationship {
   val version = 0
-  def updateFrom(version: Int) = { }
+  def updateFrom(version: Int) = {}
 }
-
-
 
 object IndexTicketRepository extends RelationshipCompanion[IndexTicketRepository] {
   def apply = new IndexTicketRepository
@@ -53,8 +53,6 @@ class IndexTicketRepository extends EmptyRelationship {
   val companion = IndexTicketRepository
 }
 
-
-
 object Contains extends RelationshipCompanion[Contains] {
   def apply = new Contains
 
@@ -67,8 +65,6 @@ object Contains extends RelationshipCompanion[Contains] {
 class Contains extends EmptyRelationship {
   val companion = Contains
 }
-
-
 
 object InVersion extends RelationshipCompanion[InVersion] {
   def apply = new InVersion
@@ -83,8 +79,6 @@ class InVersion extends EmptyRelationship {
   val companion = InVersion
 }
 
-
-
 object Targets extends RelationshipCompanion[Targets] {
   def apply = new Targets
 
@@ -97,8 +91,6 @@ object Targets extends RelationshipCompanion[Targets] {
 class Targets extends EmptyRelationship {
   val companion = Targets
 }
-
-
 
 object FixedInVersion extends RelationshipCompanion[FixedInVersion] {
   def apply = new FixedInVersion
@@ -113,8 +105,6 @@ class FixedInVersion extends EmptyRelationship {
   val companion = FixedInVersion
 }
 
-
-
 object InComponent extends RelationshipCompanion[InComponent] {
   def apply = new InComponent
 
@@ -127,8 +117,6 @@ object InComponent extends RelationshipCompanion[InComponent] {
 class InComponent extends EmptyRelationship {
   val companion = InComponent
 }
-
-
 
 object HasType extends RelationshipCompanion[HasType] {
   def apply = new HasType
@@ -143,8 +131,6 @@ class HasType extends EmptyRelationship {
   val companion = HasType
 }
 
-
-
 object InMilestone extends RelationshipCompanion[InMilestone] {
   def apply = new InMilestone
 
@@ -157,8 +143,6 @@ object InMilestone extends RelationshipCompanion[InMilestone] {
 class InMilestone extends EmptyRelationship {
   val companion = InMilestone
 }
-
-
 
 object HasStatus extends RelationshipCompanion[HasStatus] {
   def apply = new HasStatus
@@ -173,8 +157,6 @@ class HasStatus extends EmptyRelationship {
   val companion = HasStatus
 }
 
-
-
 object FromPerson extends RelationshipCompanion[FromPerson] {
   def apply = new FromPerson
 
@@ -187,8 +169,6 @@ object FromPerson extends RelationshipCompanion[FromPerson] {
 class FromPerson extends EmptyRelationship {
   val companion = FromPerson
 }
-
-
 
 object Owns extends RelationshipCompanion[Owns] {
   def apply = new Owns
@@ -203,7 +183,18 @@ class Owns extends EmptyRelationship {
   val companion = Owns
 }
 
+object Wrotes extends RelationshipCompanion[Wrotes] {
+  def apply = new Wrotes
 
+  val relationType = RelTypes.wrotes
+
+  type sourceType = TicketComment
+  type sinkType = Person
+}
+
+class Wrotes extends EmptyRelationship {
+  val companion = Wrotes
+}
 
 object ReportedBy extends RelationshipCompanion[ReportedBy] {
   def apply = new ReportedBy
@@ -218,8 +209,6 @@ class ReportedBy extends EmptyRelationship {
   val companion = ReportedBy
 }
 
-
-
 object SponsoredBy extends RelationshipCompanion[SponsoredBy] {
   def apply = new SponsoredBy
 
@@ -232,8 +221,6 @@ object SponsoredBy extends RelationshipCompanion[SponsoredBy] {
 class SponsoredBy extends EmptyRelationship {
   val companion = SponsoredBy
 }
-
-
 
 object ChangedFile extends RelationshipCompanion[ChangedFile] {
   def apply = new ChangedFile
@@ -253,8 +240,6 @@ class ChangedFile extends Relationship {
   val editType = stringProperty("editType")
 }
 
-
-
 object ChangedTicket extends RelationshipCompanion[ChangedTicket] {
   def apply = new ChangedTicket
 
@@ -271,8 +256,6 @@ class ChangedTicket extends Relationship {
   def updateFrom(version: Int) = {}
 }
 
-
-
 object HasTag extends RelationshipCompanion[HasTag] {
   def apply = new HasTag
 
@@ -282,14 +265,9 @@ object HasTag extends RelationshipCompanion[HasTag] {
   type sinkType = Tag
 }
 
-class HasTag extends Relationship {
+class HasTag extends EmptyRelationship {
   val companion = HasTag
-
-  var version = 1
-  def updateFrom(version: Int) = {}
 }
-
-
 
 object HasPriority extends RelationshipCompanion[HasPriority] {
   def apply = new HasPriority
@@ -300,14 +278,9 @@ object HasPriority extends RelationshipCompanion[HasPriority] {
   type sinkType = Priority
 }
 
-class HasPriority extends Relationship {
+class HasPriority extends EmptyRelationship {
   val companion = HasPriority
-
-  var version = 1
-  def updateFrom(version: Int) = {}
 }
-
-
 
 object HasSeverity extends RelationshipCompanion[HasSeverity] {
   def apply = new HasSeverity
@@ -318,14 +291,9 @@ object HasSeverity extends RelationshipCompanion[HasSeverity] {
   type sinkType = Severity
 }
 
-class HasSeverity extends Relationship {
+class HasSeverity extends EmptyRelationship {
   val companion = HasSeverity
-
-  var version = 1
-  def updateFrom(version: Int) = {}
 }
-
-
 
 object HasReproducability extends RelationshipCompanion[HasReproducability] {
   def apply = new HasReproducability
@@ -336,13 +304,9 @@ object HasReproducability extends RelationshipCompanion[HasReproducability] {
   type sinkType = Reproducability
 }
 
-class HasReproducability extends Relationship {
+class HasReproducability extends EmptyRelationship {
   val companion = HasReproducability
-
-  var version = 1
-  def updateFrom(version: Int) = {}
 }
-
 
 object HasResolution extends RelationshipCompanion[HasResolution] {
   def apply = new HasResolution
@@ -353,14 +317,9 @@ object HasResolution extends RelationshipCompanion[HasResolution] {
   type sinkType = Resolution
 }
 
-class HasResolution extends Relationship {
+class HasResolution extends EmptyRelationship {
   val companion = HasResolution
-
-  var version = 1
-  def updateFrom(version: Int) = {}
 }
-
-
 
 object HasComment extends RelationshipCompanion[HasComment] {
   def apply = new HasComment
@@ -371,9 +330,37 @@ object HasComment extends RelationshipCompanion[HasComment] {
   type sinkType = TicketComment
 }
 
-class HasComment extends Relationship {
+class HasComment extends EmptyRelationship {
   val companion = HasComment
+}
 
-  var version = 1
-  def updateFrom(version: Int) = {}
+object Updates extends RelationshipCompanion[Updates] {
+  def apply = new Updates
+
+  val relationType = RelTypes.updates
+
+  type sourceType = Ticket
+  type sinkType = Ticket
+}
+
+class Updates extends EmptyRelationship {
+  val companion = Updates
+}
+
+object References extends RelationshipCompanion[References] {
+  def apply = new References
+
+  val relationType = RelTypes.references
+
+  type sourceType = Ticket
+  type sinkType = Ticket
+}
+
+class References extends Relationship {
+  val companion = References
+
+  val version = 1
+  def updateFrom(oldVersion: Int) = {}
+
+  lazy val referenceType = stringProperty("referencesType")
 }

@@ -142,7 +142,7 @@ class ChangeParser extends Logging {
   private def processRelationship(change: String) = change match {
     case relationshipRegex(relationString, ticketId) =>
       ValueUtils.relationshipStringToRelationshipType(relationString) match {
-        case Some(ticketRel) => TicketRelationship(ticketId, ticketRel)
+        case Some(ticketRel) => TicketRelationship(ticketId.toInt, ticketRel)
         case None => sys.error("Unparsable Relationship: "+relationString)
       }
     case _ => sys.error("Unparsable String: "+change)

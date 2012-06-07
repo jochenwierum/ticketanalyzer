@@ -3,6 +3,7 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
+import de.jowisoftware.neo4j.traversing.Traverser
 
 trait Node extends de.jowisoftware.neo4j.content.Node {
   def id = content.getId
@@ -100,9 +101,9 @@ class Ticket extends Node {
   lazy val eta = intProperty("eta")
   lazy val environment = stringProperty("environment")
   lazy val build = stringProperty("build")
+
+  def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
 }
-
-
 
 object TicketRepositoryRepository extends NodeCompanion[TicketRepositoryRepository] {
   def apply = new TicketRepositoryRepository
@@ -123,9 +124,14 @@ class TicketRepository extends Node with HasName with EmptyNode {
     this.add(ticket)(Contains)
     ticket
   }
+
+  def findRecentVersionOf(tId: Int): Option[Ticket] = {
+    neighbors(Direction.OUTGOING).find { node =>
+      val ticket = node.asInstanceOf[Ticket]
+      ticket.ticketId() == tId && ticket.isRecentVersion
+    }.asInstanceOf[Option[Ticket]]
+  }
 }
-
-
 
 object ComponentRepository extends NodeCompanion[ComponentRepository] {
   def apply = new ComponentRepository
@@ -142,8 +148,6 @@ object Component extends NodeCompanion[Component] {
 
 class Component extends Node with HasName with EmptyNode
 
-
-
 object VersionRepository extends NodeCompanion[VersionRepository] {
   def apply = new VersionRepository
 }
@@ -158,8 +162,6 @@ object Version extends NodeCompanion[Version] {
 }
 
 class Version extends Node with HasName with EmptyNode
-
-
 
 object TypeRepository extends NodeCompanion[TypeRepository] {
   def apply = new TypeRepository
@@ -176,8 +178,6 @@ object Type extends NodeCompanion[Type] {
 
 class Type extends Node with HasName with EmptyNode
 
-
-
 object MilestoneRepository extends NodeCompanion[MilestoneRepository] {
   def apply = new MilestoneRepository
 }
@@ -192,8 +192,6 @@ object Milestone extends NodeCompanion[Milestone] {
 }
 
 class Milestone extends Node with HasName with EmptyNode
-
-
 
 object StatusRepository extends NodeCompanion[StatusRepository] {
   def apply = new StatusRepository
@@ -210,8 +208,6 @@ object Status extends NodeCompanion[Status] {
 
 class Status extends Node with HasName with EmptyNode
 
-
-
 object PersonRepository extends NodeCompanion[PersonRepository] {
   def apply = new PersonRepository
 }
@@ -226,8 +222,6 @@ object Person extends NodeCompanion[Person] {
 }
 
 class Person extends Node with HasName with EmptyNode
-
-
 
 object CommitRepositoryRepository extends NodeCompanion[CommitRepositoryRepository] {
   def apply = new CommitRepositoryRepository
@@ -259,8 +253,6 @@ class CommitRepository extends Node with HasName with EmptyNode {
   }
 }
 
-
-
 object Commit extends NodeCompanion[Commit] {
   def apply = new Commit
 }
@@ -274,15 +266,11 @@ class Commit extends Node {
   lazy val date = dateProperty("date")
 }
 
-
-
 object File extends NodeCompanion[File] {
   def apply = new File
 }
 
 class File extends Node with EmptyNode with HasName
-
-
 
 object TagRepository extends NodeCompanion[TagRepository] {
   def apply = new TagRepository
@@ -299,8 +287,6 @@ object Tag extends NodeCompanion[Tag] {
 
 class Tag extends Node with EmptyNode with HasName
 
-
-
 object ResolutionRepository extends NodeCompanion[ResolutionRepository] {
   def apply = new ResolutionRepository
 }
@@ -315,8 +301,6 @@ object Resolution extends NodeCompanion[Resolution] {
 }
 
 class Resolution extends Node with EmptyNode with HasName
-
-
 
 object PriorityRepository extends NodeCompanion[PriorityRepository] {
   def apply = new PriorityRepository
@@ -333,8 +317,6 @@ object Priority extends NodeCompanion[Priority] {
 
 class Priority extends Node with EmptyNode with HasName
 
-
-
 object SeverityRepository extends NodeCompanion[SeverityRepository] {
   def apply = new SeverityRepository
 }
@@ -349,8 +331,6 @@ object Severity extends NodeCompanion[Severity] {
 }
 
 class Severity extends Node with EmptyNode with HasName
-
-
 
 object ReproducabilityRepository extends NodeCompanion[ReproducabilityRepository] {
   def apply = new ReproducabilityRepository
@@ -367,8 +347,6 @@ object Reproducability extends NodeCompanion[Reproducability] {
 
 class Reproducability extends Node with EmptyNode with HasName
 
-
-
 object TicketComment extends NodeCompanion[TicketComment] {
   def apply = new TicketComment
 }
@@ -377,6 +355,8 @@ class TicketComment extends Node {
   val version = 1
   def updateFrom(version: Int) {}
 
-  val commentId = intProperty("id")
+  lazy val commentId = intProperty("id")
   lazy val text = stringProperty("text", "", Some("comment-text"))
+  lazy val created = dateProperty("created")
+  lazy val modified = dateProperty("modified")
 }

@@ -20,7 +20,6 @@ object TicketData {
     private var fieldList: List[TicketField[_]] = List()
     def fields = fieldList
 
-    val repository = ticketField("repository", "")
     val id = ticketField("id", 0)
     val summary = ticketField("summary", "")
     val description = ticketField("description", "")
@@ -57,9 +56,8 @@ object TicketData {
     val comments = ticketField("comments", Seq[Int]())
   }
 
-  def apply(repository: String, id: Int) = {
+  def apply(id: Int) = {
     val result = new TicketData()
-    result(TicketField.repository) = (repository, "(system)")
     result(TicketField.id) = (id, "(system)")
     result
   }
@@ -85,7 +83,7 @@ class TicketData(reference: TicketData) {
   def apply[T](field: TicketField[T]): T =
     values(field)._1.asInstanceOf[T]
 
-  override def toString = "TicketData(\n"+(SortedMap.empty(Ordering.by{k: TicketField[_] => k.name}) ++ values).map {
+  override def toString = "TicketData(\n"+(SortedMap.empty(Ordering.by { k: TicketField[_] => k.name }) ++ values).map {
     case (k, v) => "  "+k.name+"="+niceTupel(v)
   }.mkString(",\n")+"\n)"
 

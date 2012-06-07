@@ -19,8 +19,8 @@ class AsyncDatabaseImportHandler(
   abstract sealed class ImportEvent
   case class CountedTickets(count: Long) extends ImportEvent
   case class CountedCommits(count: Long) extends ImportEvent
-  case class LoadedTicket(tickets: List[TicketData], comments: Seq[TicketCommentData]) extends ImportEvent
-  case class LoadedCommit(commit: CommitData) extends ImportEvent
+  case class LoadedTicket(repository: String, tickets: List[TicketData], comments: Seq[TicketCommentData]) extends ImportEvent
+  case class LoadedCommit(repository: String, commit: CommitData) extends ImportEvent
   case object Finish extends ImportEvent
 
   private val target = self
@@ -54,13 +54,13 @@ class AsyncDatabaseImportHandler(
             dbImporter.countedTickets(t)
             ticketsCount += t
             reportProgress
-          case LoadedTicket(tickets, comments) =>
+          case LoadedTicket(repository, tickets, comments) =>
             ticketsDone += 1
-            dbImporter.loadedTicket(tickets, comments)
+            dbImporter.loadedTicket(repository, tickets, comments)
             reportProgress
-          case LoadedCommit(data) =>
+          case LoadedCommit(repository, data) =>
             commitsDone += 1
-            dbImporter.loadedCommit(data)
+            dbImporter.loadedCommit(repository, data)
             reportProgress
           case Finish =>
             toFinish = toFinish - 1
@@ -77,7 +77,11 @@ class AsyncDatabaseImportHandler(
 
   def countedTickets(count: Long) = target ! CountedTickets(count)
   def countedCommits(count: Long) = target ! CountedCommits(count)
-  def loadedTicket(tickets: List[TicketData], comments: Seq[TicketCommentData]) = target ! LoadedTicket(tickets, comments)
-  def loadedCommit(commit: CommitData) = target ! LoadedCommit(commit)
   def finish() = target ! Finish
+
+  def loadedTicket(repository: String, tickets: List[TicketData], comments: Seq[TicketCommentData]) =
+    target ! LoadedTicket(repository, tickets, comments)
+
+  def loadedCommit(repository: String, commit: CommitData) =
+    target ! LoadedCommit(repository, commit)
 }

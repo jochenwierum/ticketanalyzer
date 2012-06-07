@@ -33,16 +33,15 @@ class SVNImporter extends Importer {
     lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
       false, true, Long.MaxValue, new ISVNLogEntryHandler() {
         def handleLogEntry(entry: SVNLogEntry) {
-          events.loadedCommit(handle(entry, config("repositoryname")))
+          events.loadedCommit(config("repositoryname"), handle(entry))
         }
       })
 
     events.finish()
   }
 
-  private def handle(entry: SVNLogEntry, repositoryName: String): CommitData = {
+  private def handle(entry: SVNLogEntry): CommitData = {
     CommitData(
-      repositoryName,
       entry.getRevision().toString(),
       message = entry.getMessage(),
       date = entry.getDate(),

@@ -12,8 +12,13 @@ class AsyncImporterThread(config: Map[String, String], importer: Importer) exten
     private var finished = false
     def countedTickets(count: Long) = inner.countedTickets(count)
     def countedCommits(count: Long) = inner.countedCommits(count)
-    def loadedTicket(tickets: List[TicketData], comments: Seq[TicketCommentData]) = inner.loadedTicket(tickets, comments)
-    def loadedCommit(commit: CommitData) = inner.loadedCommit(commit)
+
+    def loadedTicket(repository: String, tickets: List[TicketData], comments: Seq[TicketCommentData]) =
+      inner.loadedTicket(repository, tickets, comments)
+
+    def loadedCommit(repository: String, commit: CommitData) =
+      inner.loadedCommit(repository, commit)
+
     def finish() {
       if (!finished) {
         finished = true

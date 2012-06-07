@@ -8,4 +8,4 @@ object TicketRelationship {
   }
 }
 
-case class TicketRelationship(toTicket: String, TicketRelationship: RelationshipType.Value)
+case class TicketRelationship(toTicket: Int, ticketRelationship: RelationshipType.Value)

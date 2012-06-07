@@ -2,7 +2,7 @@ package de.jowisoftware.neo4j.content
 
 import java.util.Date
 import org.neo4j.graphdb.PropertyContainer
-import properties.{NodeProperty, DateWrapper, CastingObjectPersister, OptionalNodeProperty}
+import properties.{ NodeProperty, DateWrapper, CastingObjectPersister, OptionalNodeProperty }
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.content.index.IndexCreator
 import de.jowisoftware.neo4j.content.index.NullIndex
@@ -32,9 +32,6 @@ trait Properties[A <: PropertyContainer] {
   private def index(indexName: Option[String]) = indexName match {
     case None => NullIndex
     case Some(name) =>
-      print("name: "); println(name)
-      print("service: "); println(innerDB)
-      print("content: "); println(content)
       indexCreator.create(innerDB.service, content, name)
   }
 }

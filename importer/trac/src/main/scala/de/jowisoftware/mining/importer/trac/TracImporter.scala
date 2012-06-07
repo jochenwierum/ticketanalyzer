@@ -35,7 +35,9 @@ class TracImporter extends Importer {
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map { node => (node \ "int").text.toInt }
     events.countedTickets(ticketIds.size)
-    ticketIds.foreach(tId => events.loadedTicket(List(getTicket(tId, config)), Seq()))
+    ticketIds.foreach { tId =>
+      events.loadedTicket(config("repositoryname"), List(getTicket(tId, config)), Seq())
+    }
   }
 
   private def setupAuth(config: Map[String, String]) {
@@ -61,7 +63,7 @@ class TracImporter extends Importer {
 
     import TicketData.TicketField._
     val ticketReporter = getNodeAsString(findNode("reporter"))
-    val ticket = TicketData(config("repositoryname"), getNodeAsInt(values(0)))
+    val ticket = TicketData(getNodeAsInt(values(0)))
     ticket(creationDate) = (getNodeAsDate(values(1)) -> ticketReporter)
     ticket(updateDate) = (getNodeAsDate(values(2)) -> ticketReporter)
     ticket(status) = (getNodeAsString(findNode("status")) -> ticketReporter)
