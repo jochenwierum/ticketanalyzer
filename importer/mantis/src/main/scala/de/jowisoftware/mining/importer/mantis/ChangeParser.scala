@@ -1,7 +1,7 @@
 package de.jowisoftware.mining.importer.mantis
 
 import scala.xml.Node
-import de.jowisoftware.mining.importer.TicketData.TicketField._
+import de.jowisoftware.mining.importer.TicketData.ticketFields._
 import java.util.Date
 import grizzled.slf4j.Logging
 import de.jowisoftware.mining.importer.TicketData
@@ -13,12 +13,12 @@ trait Change {
   def downgrade(ticket: TicketData)
 }
 
-class SimpleChange[T](val date: Date, field: TicketField[T], oldValue: T, newValue: T, user: String) extends Change {
+class SimpleChange[T](val date: Date, field: FieldDescription[T], oldValue: T, newValue: T, user: String) extends Change {
   def update(ticket: TicketData) = ticket(field) = newValue -> user
   def downgrade(ticket: TicketData) = ticket(field) = oldValue -> user
 }
 
-class SplitChange[T](val date: Date, field: TicketField[String], pos: Int, oldValue: String, newValue: String, user: String) extends Change {
+class SplitChange[T](val date: Date, field: FieldDescription[String], pos: Int, oldValue: String, newValue: String, user: String) extends Change {
   def update(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), newValue) -> user
   def downgrade(ticket: TicketData) = ticket(field) = replaceSegment(pos, ticket(field), oldValue) -> user
 
@@ -29,7 +29,7 @@ class SplitChange[T](val date: Date, field: TicketField[String], pos: Int, oldVa
   }
 }
 
-class ArrayChange[T](val date: Date, field: TicketField[Seq[T]], oldValue: Option[T], newValue: Option[T], user: String) extends Change {
+class ArrayChange[T](val date: Date, field: FieldDescription[Seq[T]], oldValue: Option[T], newValue: Option[T], user: String) extends Change {
   private def remove(ticket: TicketData, value: T) = ticket(field) = ticket(field).filterNot(_ == value) -> user
   private def add(ticket: TicketData, value: T) = ticket(field) = (ticket(field) :+ value) -> user
 
@@ -87,8 +87,8 @@ class ChangeParser extends Logging {
     val (oldValue, newValue) = guessOldNew(change)
 
     implicit def change2SomeChange[T](c: Change) = Some(c)
-    def wrapDefaultString[T](f: TicketField[String]) = new SimpleChange(date, f, oldValue, newValue, user)
-    def wrapDefaultInt[T](f: TicketField[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
+    def wrapDefaultString[T](f: FieldDescription[String]) = new SimpleChange(date, f, oldValue, newValue, user)
+    def wrapDefaultInt[T](f: FieldDescription[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
 
     field match {
       case "New Issue" | "Issue cloned" | "Additional Information Updated" | "Description Updated" | "Project" | "Sponsorship Updated" | "Sponsorship Paid" => None

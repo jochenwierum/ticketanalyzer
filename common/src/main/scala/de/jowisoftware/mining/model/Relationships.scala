@@ -24,7 +24,7 @@ object RelTypes {
   val hasPriority = ScalaRelationshipType("has_priority")
 
   val owns = ScalaRelationshipType("owns")
-  val wrotes = ScalaRelationshipType("wrote")
+  val wrote = ScalaRelationshipType("wrote")
   val reportedBy = ScalaRelationshipType("reported_by")
   val sponsoredBy = ScalaRelationshipType("sponsored_by")
 
@@ -183,17 +183,17 @@ class Owns extends EmptyRelationship {
   val companion = Owns
 }
 
-object Wrotes extends RelationshipCompanion[Wrotes] {
-  def apply = new Wrotes
+object Wrote extends RelationshipCompanion[Wrote] {
+  def apply = new Wrote
 
-  val relationType = RelTypes.wrotes
+  val relationType = RelTypes.wrote
 
   type sourceType = TicketComment
   type sinkType = Person
 }
 
-class Wrotes extends EmptyRelationship {
-  val companion = Wrotes
+class Wrote extends EmptyRelationship {
+  val companion = Wrote
 }
 
 object ReportedBy extends RelationshipCompanion[ReportedBy] {

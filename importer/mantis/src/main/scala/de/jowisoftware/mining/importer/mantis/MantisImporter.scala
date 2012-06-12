@@ -9,7 +9,8 @@ import scala.collection.SortedMap
 import scala.xml.{ NodeSeq, Elem }
 import org.joda.time.format.DateTimeFormat
 import MantisImporter.{ fromSimpleDate, fromComplexDate, MantisConstants }
-import de.jowisoftware.mining.importer.TicketData.TicketField._
+import de.jowisoftware.mining.importer.TicketData.ticketFields._
+import de.jowisoftware.mining.importer.TicketCommentData.ticketCommentFields
 import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.util.XMLUtils._
@@ -85,7 +86,7 @@ class MantisImporter extends Importer with Logging {
 
     val reporterName = subnode("reporter")
 
-    import TicketData.TicketField._
+    import TicketData.ticketFields._
     val ticket = TicketData((item \ "id").text.toInt)
     ticket(summary) = node("summary") -> reporterName
     ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
@@ -101,7 +102,7 @@ class MantisImporter extends Importer with Logging {
     ticket(severity) = subnode("severity") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
-    ticket(comments) = allComments.map(_.id) -> reporterName
+    ticket(comments) = allComments.map(_(ticketCommentFields.id)) -> reporterName
     ticket(votes) = node("sponsorship_total").toInt -> reporterName
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
     ticket(eta) = ValueUtils.etaStringToInt(subnode("eta")) -> reporterName
@@ -138,15 +139,16 @@ class MantisImporter extends Importer with Logging {
   }
 
   private def getComments(item: NodeSeq) = (item \ "item").flatMap {
-    case comment: Elem =>
-      val public = (comment \ "view_state" \ "id" text).toInt == MantisConstants.public
+    case commentNode: Elem =>
+      val public = (commentNode \ "view_state" \ "id" text).toInt == MantisConstants.public
       if (public) {
-        Some(TicketCommentData(
-          id = (comment \ "id" text) toInt,
-          text = comment \ "text" text,
-          author = comment \ "reporter" \ "name" text,
-          created = fromComplexDate(comment \ "date_submitted" text),
-          modified = fromComplexDate(comment \ "last_modified" text)))
+        val comment = new TicketCommentData()
+        val author = (commentNode \ "reporter" \ "name").text
+        comment(ticketCommentFields.id) = (commentNode \ "id" text).toInt -> author
+        comment(ticketCommentFields.text) = (commentNode \ "text").text -> author
+        comment(ticketCommentFields.created) = fromComplexDate(commentNode \ "date_submitted" text) -> author
+        comment(ticketCommentFields.modified) = fromComplexDate(commentNode \ "last_modified" text) -> author
+        Some(comment)
       } else {
         None
       }

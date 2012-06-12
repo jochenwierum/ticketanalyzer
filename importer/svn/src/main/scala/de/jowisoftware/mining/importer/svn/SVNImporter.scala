@@ -47,7 +47,8 @@ class SVNImporter extends Importer {
       date = entry.getDate(),
       author = entry.getAuthor(),
       files = createFileList(entry.getChangedPaths()
-        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]]))
+        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]]),
+      parents = Seq((entry.getRevision - 1).toString))
   }
 
   private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) = {

@@ -1,97 +1,62 @@
 package de.jowisoftware.mining.importer
 
 import java.util.Date
-import de.jowisoftware.mining.importer.TicketData.TicketField.TicketField
 import scala.collection.SortedMap
 
-object TicketData {
-  object TicketField {
-    class TicketField[T] private[TicketData] (val name: String, val default: T)(implicit manifest: Manifest[T]) {
-      val valueClass = manifest.erasure
-      override def toString = name+"["+valueClass.getSimpleName+"] = ("+default.toString+")"
-    }
+object TicketData extends FieldListCompanion {
+  object ticketFields extends FieldListData {
+    val id = field("id", 0)
+    val summary = field("summary", "")
+    val description = field("description", "")
 
-    private def ticketField[T](name: String, value: T)(implicit manifest: Manifest[T]) = {
-      val result = new TicketField(name, value)
-      fieldList = result :: fieldList
-      result
-    }
+    val creationDate = field("creationDate", new Date)
+    val updateDate = field("updateDate", new Date)
+    val status = field("status", "")
 
-    private var fieldList: List[TicketField[_]] = List()
-    def fields = fieldList
+    val version = field("version", "")
+    val fixedInVersion = field("fixedInVersion", "")
+    val targetVersion = field("targetVersion", "")
+    val milestone = field("milestone", "")
 
-    val id = ticketField("id", 0)
-    val summary = ticketField("summary", "")
-    val description = ticketField("description", "")
+    val tags = field("tags", Seq[String]())
+    val component = field("component", "")
 
-    val creationDate = ticketField("creationDate", new Date)
-    val updateDate = ticketField("updateDate", new Date)
-    val status = ticketField("status", "")
+    val reporter = field("reporter", "")
+    val owner = field("owner", "")
+    val votes = field("votes", 0)
+    val eta = field("eta", 0)
+    val sponsors = field("sponsors", Seq[String]())
 
-    val version = ticketField("version", "")
-    val fixedInVersion = ticketField("fixedInVersion", "")
-    val targetVersion = ticketField("targetVersion", "")
-    val milestone = ticketField("milestone", "")
+    val ticketType = field("ticketType", "")
+    val resolution = field("resolution", "")
+    val priority = field("priority", "")
+    val severity = field("severity", "")
+    val reproducability = field("reproducability", "")
 
-    val tags = ticketField("tags", Seq[String]())
-    val component = ticketField("component", "")
+    val relationships = field("relationships", Seq[TicketRelationship]())
 
-    val reporter = ticketField("reporter", "")
-    val owner = ticketField("owner", "")
-    val votes = ticketField("votes", 0)
-    val eta = ticketField("eta", 0)
-    val sponsors = ticketField("sponsors", Seq[String]())
+    val environment = field("environment", "")
+    val build = field("build", "")
 
-    val ticketType = ticketField("ticketType", "")
-    val resolution = ticketField("resolution", "")
-    val priority = ticketField("priority", "")
-    val severity = ticketField("severity", "")
-    val reproducability = ticketField("reproducability", "")
-
-    val relationships = ticketField("relationships", Seq[TicketRelationship]())
-
-    val environment = ticketField("environment", "")
-    val build = ticketField("build", "")
-
-    val comments = ticketField("comments", Seq[Int]())
+    val comments = field("comments", Seq[Int]())
   }
 
   def apply(id: Int) = {
     val result = new TicketData()
-    result(TicketField.id) = (id, "(system)")
+    result(ticketFields.id) = (id, "(system)")
     result
   }
 }
 
-class TicketData(reference: TicketData) {
-  import TicketData.TicketField
-  import TicketData.TicketField._
+class TicketData(reference: TicketData) extends FieldList {
+  import TicketData._
+  val fieldListData = ticketFields
 
   def this() = this(null)
 
-  private var values: Map[TicketField[_], (Any, String)] =
-    TicketField.fields.map(field => (field -> (field.default, ""))).toMap
-  values += creationDate -> (new Date(), "")
-  values += updateDate -> (new Date(), "")
+  values += ticketFields.creationDate -> (new Date(), "")
+  values += ticketFields.updateDate -> (new Date(), "")
 
   if (reference != null)
     reference.values.foreach { case (k, v) => values += k -> v }
-
-  def update[T](field: TicketField[T], value: (T, String)) =
-    values += field -> value
-
-  def apply[T](field: TicketField[T]): T =
-    values(field)._1.asInstanceOf[T]
-
-  override def toString = "TicketData(\n"+(SortedMap.empty(Ordering.by { k: TicketField[_] => k.name }) ++ values).map {
-    case (k, v) => "  "+k.name+"="+niceTupel(v)
-  }.mkString(",\n")+"\n)"
-
-  private def niceTupel(t: (Any, String)) = {
-    (t._1 match {
-      case s: String if s.length > 50 => "\""+s.substring(0, 47)+"...\""
-      case s: String => "\""+s+"\""
-      case x => x.toString
-    }).replace("\n", "\\n") + (if (t._2.isEmpty) "" else " by "+t._2)
-  }
 }

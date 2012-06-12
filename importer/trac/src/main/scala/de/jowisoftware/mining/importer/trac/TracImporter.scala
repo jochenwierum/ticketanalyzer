@@ -1,14 +1,17 @@
 package de.jowisoftware.mining.importer.trac
+
 import java.io.OutputStreamWriter
 import java.net.{ URL, PasswordAuthentication, Authenticator }
-import scala.xml.{ XML, NodeSeq, Elem }
-import org.joda.time.format.DateTimeFormat
-import de.jowisoftware.mining.importer.{ Importer, ImportEvents }
-import scala.annotation.tailrec
-import de.jowisoftware.mining.importer.TicketData
 import java.sql.Date
-import de.jowisoftware.mining.importer.TicketUpdate
-import de.jowisoftware.mining.importer.TicketCommentData
+
+import scala.annotation.tailrec
+import scala.xml.{ XML, NodeSeq, Elem }
+
+import org.joda.time.format.DateTimeFormat
+
+import de.jowisoftware.mining.importer.TicketData.ticketFields._
+import de.jowisoftware.mining.importer.TicketCommentData.ticketCommentFields
+import de.jowisoftware.mining.importer.{ TicketUpdate, TicketData, TicketCommentData, Importer, ImportEvents }
 
 class TracImporter extends Importer {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
@@ -61,7 +64,6 @@ class TracImporter extends Importer {
     val history = receiveHistory(id, config)
     val (ticketUpdates, comments) = getHistory(history)
 
-    import TicketData.TicketField._
     val ticketReporter = getNodeAsString(findNode("reporter"))
     val ticket = TicketData(getNodeAsInt(values(0)))
     ticket(creationDate) = (getNodeAsDate(values(1)) -> ticketReporter)
@@ -104,8 +106,15 @@ class TracImporter extends Importer {
 
         if (field != "comment")
           result = TicketUpdate(id, field, newValue, oldValue, author, time) :: result
-        else
-          comments = TicketCommentData(oldValue.toInt, newValue, author, time, time) :: comments
+        else {
+          val comment = new TicketCommentData()
+          comment(ticketCommentFields.id) = oldValue.toInt -> author
+          comment(ticketCommentFields.text) = newValue -> author
+          comment(ticketCommentFields.author) = author -> author
+          comment(ticketCommentFields.created) = time -> author
+          comment(ticketCommentFields.modified) = time -> author
+          comments = comment :: comments
+        }
     }
 
     (result.reverse, comments.reverse)

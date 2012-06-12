@@ -42,13 +42,13 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   }
 
   def loadedTicket(repositoryName: String, ticketVersions: List[TicketData], commentList: Seq[TicketCommentData]) = {
-    import TicketData.TicketField._
+    import TicketData.ticketFields._
 
     info("Inserting ticket "+ticketVersions.head(id)+", "+ticketVersions.size+" versions, "+commentList.size+" commments")
     val repository = getTicketRepository(repositoryName)
 
     val commentMap = commentList.map { comment =>
-      debug("Adding comment "+comment.id+"...")
+      debug("Adding comment "+comment(TicketCommentData.ticketCommentFields.id)+"...")
       createComment(comment)
     }.map(comment => (comment.commentId(), comment.id)).toMap
 
@@ -70,21 +70,21 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   }
 
   private def createComment(comment: TicketCommentData): TicketComment = {
+    import TicketCommentData.ticketCommentFields._
     val node = db.createNode(TicketComment)
 
-    node.commentId(comment.id)
-    node.text(comment.text)
-    node.created(comment.created)
-    node.modified(comment.modified)
+    node.commentId(comment(id))
+    node.text(comment(text))
+    node.created(comment(created))
+    node.modified(comment(modified))
 
-    node.add(getPerson(comment.author))(Wrotes)
+    node.add(getPerson(comment(author)))(Wrote)
 
     node
   }
 
   private def createTicket(ticketData: TicketData, commentsMap: Map[Int, Long], repository: TicketRepository) = {
-    import TicketData.TicketField
-    import TicketData.TicketField._
+    import TicketData.ticketFields._
 
     val ticket = repository.createTicket()
     ticket.ticketId(ticketData(id))
@@ -136,7 +136,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   }
 
   private def connectReferences(tickets: List[TicketData], versionNodes: List[Ticket], repository: TicketRepository) {
-    import TicketData.TicketField._
+    import TicketData.ticketFields._
 
     def connect(ticketsWithId: List[(TicketData, Ticket)]): Unit = ticketsWithId match {
       case (headTicketData, headTicket) :: tail =>
