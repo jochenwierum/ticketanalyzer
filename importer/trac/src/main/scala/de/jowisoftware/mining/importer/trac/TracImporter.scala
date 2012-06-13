@@ -9,8 +9,8 @@ import scala.xml.{ XML, NodeSeq, Elem }
 
 import org.joda.time.format.DateTimeFormat
 
-import de.jowisoftware.mining.importer.TicketData.ticketFields._
-import de.jowisoftware.mining.importer.TicketCommentData.ticketCommentFields
+import de.jowisoftware.mining.importer.TicketDataFields._
+import de.jowisoftware.mining.importer.TicketCommentDataFields
 import de.jowisoftware.mining.importer.{ TicketUpdate, TicketData, TicketCommentData, Importer, ImportEvents }
 
 class TracImporter extends Importer {
@@ -108,11 +108,11 @@ class TracImporter extends Importer {
           result = TicketUpdate(id, field, newValue, oldValue, author, time) :: result
         else {
           val comment = new TicketCommentData()
-          comment(ticketCommentFields.id) = oldValue.toInt -> author
-          comment(ticketCommentFields.text) = newValue -> author
-          comment(ticketCommentFields.author) = author -> author
-          comment(ticketCommentFields.created) = time -> author
-          comment(ticketCommentFields.modified) = time -> author
+          comment(TicketCommentDataFields.id) = oldValue.toInt -> author
+          comment(TicketCommentDataFields.text) = newValue -> author
+          comment(TicketCommentDataFields.author) = author -> author
+          comment(TicketCommentDataFields.created) = time -> author
+          comment(TicketCommentDataFields.modified) = time -> author
           comments = comment :: comments
         }
     }

@@ -1,21 +1,21 @@
 package de.jowisoftware.mining.importer.mantis
 
 import java.util.Date
+
 import scala.Option.option2Iterable
 import scala.annotation.tailrec
 import scala.collection.immutable.Stream.consWrapper
 import scala.collection.immutable.Map
 import scala.collection.SortedMap
-import scala.xml.{ NodeSeq, Elem }
+import scala.xml.{NodeSeq, Elem}
+
 import org.joda.time.format.DateTimeFormat
-import MantisImporter.{ fromSimpleDate, fromComplexDate, MantisConstants }
-import de.jowisoftware.mining.importer.TicketData.ticketFields._
-import de.jowisoftware.mining.importer.TicketCommentData.ticketCommentFields
-import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents }
+
+import MantisImporter.{fromComplexDate, MantisConstants}
+import de.jowisoftware.mining.importer.TicketDataFields._
+import de.jowisoftware.mining.importer._
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.util.XMLUtils._
 import grizzled.slf4j.Logging
-import de.jowisoftware.mining.importer.TicketRelationship
 
 object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -86,7 +86,6 @@ class MantisImporter extends Importer with Logging {
 
     val reporterName = subnode("reporter")
 
-    import TicketData.ticketFields._
     val ticket = TicketData((item \ "id").text.toInt)
     ticket(summary) = node("summary") -> reporterName
     ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
@@ -102,7 +101,7 @@ class MantisImporter extends Importer with Logging {
     ticket(severity) = subnode("severity") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
     ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
-    ticket(comments) = allComments.map(_(ticketCommentFields.id)) -> reporterName
+    ticket(comments) = allComments.map(_(TicketCommentDataFields.id)) -> reporterName
     ticket(votes) = node("sponsorship_total").toInt -> reporterName
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
     ticket(eta) = ValueUtils.etaStringToInt(subnode("eta")) -> reporterName
@@ -144,10 +143,10 @@ class MantisImporter extends Importer with Logging {
       if (public) {
         val comment = new TicketCommentData()
         val author = (commentNode \ "reporter" \ "name").text
-        comment(ticketCommentFields.id) = (commentNode \ "id" text).toInt -> author
-        comment(ticketCommentFields.text) = (commentNode \ "text").text -> author
-        comment(ticketCommentFields.created) = fromComplexDate(commentNode \ "date_submitted" text) -> author
-        comment(ticketCommentFields.modified) = fromComplexDate(commentNode \ "last_modified" text) -> author
+        comment(TicketCommentDataFields.id) = (commentNode \ "id" text).toInt -> author
+        comment(TicketCommentDataFields.text) = (commentNode \ "text").text -> author
+        comment(TicketCommentDataFields.created) = fromComplexDate(commentNode \ "date_submitted" text) -> author
+        comment(TicketCommentDataFields.modified) = fromComplexDate(commentNode \ "last_modified" text) -> author
         Some(comment)
       } else {
         None

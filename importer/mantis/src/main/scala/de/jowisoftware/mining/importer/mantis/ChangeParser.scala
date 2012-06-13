@@ -1,7 +1,8 @@
 package de.jowisoftware.mining.importer.mantis
 
 import scala.xml.Node
-import de.jowisoftware.mining.importer.TicketData.ticketFields._
+import de.jowisoftware.mining.importer.TicketDataFields._
+import de.jowisoftware.mining.importer.TicketDataFields
 import java.util.Date
 import grizzled.slf4j.Logging
 import de.jowisoftware.mining.importer.TicketData

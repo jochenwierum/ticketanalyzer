@@ -2,20 +2,18 @@ package de.jowisoftware.mining.importer
 
 import scala.collection.SortedMap
 
-abstract class FieldList {
-  protected val fieldListData: FieldListCompanion#FieldListData
+abstract class FieldList[A <: FieldListData](val values: A) {
+  protected var data: Map[values.FieldDescription[_], (Any, String)] =
+    values.fields.map(field => (field -> (field.default, ""))).toMap
 
-  protected var values: Map[fieldListData.FieldDescription[_], (Any, String)] =
-    fieldListData.fields.map(field => (field -> (field.default, ""))).toMap
+  def update[T](field: values.FieldDescription[T], value: (T, String)) =
+    data += field -> value
 
-  def update[T](field: fieldListData.FieldDescription[T], value: (T, String)) =
-    values += field -> value
-
-  def apply[T](field: fieldListData.FieldDescription[T]): T =
-    values(field)._1.asInstanceOf[T]
+  def apply[T](field: values.FieldDescription[T]): T =
+    data(field)._1.asInstanceOf[T]
 
   override def toString = getClass().getSimpleName+"(\n"+(
-    SortedMap.empty(Ordering.by { k: fieldListData.FieldDescription[_] => k.name }) ++ values).map {
+    SortedMap.empty(Ordering.by { k: values.FieldDescription[_] => k.name }) ++ data).map {
       case (k, v) => "  "+k.name+"="+niceTupel(v)
     }.mkString(",\n")+"\n)"
 
