@@ -10,7 +10,7 @@ import de.jowisoftware.mining.gui.components.Link
 import java.net.URI
 
 class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
-  private val engine = new ExecutionEngine(db);
+  private val engine = new ExecutionEngine(db)
 
   private val textInput = new TextArea
   textInput.text = "START f=node(20)\nMATCH f-[x]->to\nRETURN f, to, x, type(x)"

@@ -26,7 +26,7 @@ trait Versionable {
 
     if (nodeVersion < version) {
       updateFrom(nodeVersion)
-      content.setProperty(".version", version);
+      content.setProperty(".version", version)
     }
   }
 

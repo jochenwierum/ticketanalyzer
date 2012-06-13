@@ -49,12 +49,12 @@ class ImportPane(
     layout += pluginList -> Position.North
     layout += pluginDetails -> Position.Center
     layout += addButton -> Position.South
-  };
+  }
 
   rightComponent = new BorderPanel() {
     layout += taskList -> Position.Center
     layout += buttons -> Position.South
-  };
+  }
 
   addButton.enabled = false
   dividerLocation = .75

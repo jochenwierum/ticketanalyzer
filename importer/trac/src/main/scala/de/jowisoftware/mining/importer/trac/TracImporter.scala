@@ -56,7 +56,7 @@ class TracImporter extends Importer {
   private def getTicket(id: Int, config: Map[String, String]): TicketData = {
     val xml = receiveTicket(id, config)
     val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
-    val subValues = values \ "struct" \ "member";
+    val subValues = values \ "struct" \ "member"
 
     def findNode(name: String) =
       subValues.filter(node => (node \ "name").text == name) \ "value"

@@ -15,7 +15,7 @@ abstract class NodeProperty[A, B <: PropertyContainer] private[neo4j](
     require(newValue != null, "Can't set null value - use OptionalNodeProperty instead")
     val value = obj2Persist(newValue)
     parent.content.setProperty(name, value)
-    index.index(value);
+    index.index(value)
   }
 
   def apply(): A = if (parent.content.hasProperty(name))

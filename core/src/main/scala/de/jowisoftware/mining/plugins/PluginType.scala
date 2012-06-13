@@ -11,7 +11,7 @@ object PluginType extends Enumeration {
     } catch {
       case e: Exception =>
         throw new RuntimeException(
-          "Not a valid plugin type: "+name, e);
+          "Not a valid plugin type: "+name, e)
     }
 
   def types = SCM :: Tickets :: Linker :: Nil

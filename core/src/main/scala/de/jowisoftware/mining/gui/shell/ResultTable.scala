@@ -28,8 +28,8 @@ class ResultTable extends Table { that =>
 
   private def calcLineHeight(fm: FontMetrics) {
     val lines = for {
-      row <- 0 until model.getRowCount;
-      col <- 0 until model.getColumnCount;
+      row <- 0 until model.getRowCount
+      col <- 0 until model.getColumnCount
       v = model.getValueAt(row, col).asInstanceOf[CellData].shortText
     } yield v.count(_ == '\n') + 1
 
