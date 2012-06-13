@@ -1,12 +1,13 @@
 package de.jowisoftware.mining.importer.svn
+
 import scala.collection.JavaConversions.asScalaSet
-import org.tmatesoft.svn.core.wc.{ SVNRevision, SVNClientManager }
-import org.tmatesoft.svn.core.{ SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler }
-import de.jowisoftware.mining.importer.{ Importer, ImportEvents }
-import de.jowisoftware.mining.importer.CommitData
+
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager
-import org.tmatesoft.svn.core.wc.SVNWCClient
-import org.tmatesoft.svn.core.wc.SVNWCUtil
+import org.tmatesoft.svn.core.wc.{SVNWCUtil, SVNRevision, SVNClientManager}
+import org.tmatesoft.svn.core.{SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler}
+
+import de.jowisoftware.mining.importer.CommitData.commitFields._
+import de.jowisoftware.mining.importer.{Importer, ImportEvents, CommitData}
 
 class SVNImporter extends Importer {
   def userOptions = new SVNOptions
@@ -41,14 +42,15 @@ class SVNImporter extends Importer {
   }
 
   private def handle(entry: SVNLogEntry): CommitData = {
-    CommitData(
-      entry.getRevision().toString(),
-      message = entry.getMessage(),
-      date = entry.getDate(),
-      author = entry.getAuthor(),
-      files = createFileList(entry.getChangedPaths()
-        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]]),
-      parents = Seq((entry.getRevision - 1).toString))
+    val author = entry.getAuthor()
+    val data = CommitData(entry.getRevision().toString())
+    data(message) = entry.getMessage -> author
+    data(CommitData.commitFields.author) = author -> author
+    data(date) = entry.getDate -> author
+    data(files) = (createFileList(entry.getChangedPaths()
+        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]])) -> author
+    data(parents) = Seq((entry.getRevision - 1).toString) -> author
+    data
   }
 
   private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) = {

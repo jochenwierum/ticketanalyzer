@@ -9,12 +9,18 @@ import grizzled.slf4j.Logging
 class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvents with Logging {
   private val root = db.rootNode
 
-  /** Missing Links in the format repository -> (ticketId -> (nodeId, type)) */
-  private var missingLinks: Map[String, mutable.Map[Int, List[(Long, String)]]] = Map()
+  /** Missing ticket links in the format: repository -> (ticketId -> (nodeId, type)) */
+  private var missingTicketLinks: Map[String, mutable.Map[Int, List[(Long, String)]]] = Map()
+
+  /** Missing commit links in the format: repository -> commitId -> nodeId */
+  private var missingCommitLinks: Map[String, mutable.Map[Int, List[Long]]] = Map()
 
   def finish() {
-    if (missingLinks.exists(p => !p._2.isEmpty)) {
-      error("There are unresolved links which could not be imported:\n"+missingLinks.toString)
+    if (missingTicketLinks.exists(p => !p._2.isEmpty)) {
+      error("There are unresolved ticket links which could not be imported:\n"+missingTicketLinks.toString)
+    }
+    if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
+      error("There are unresolved commit parents which could not be imported:\n"+missingCommitLinks.toString)
     }
   }
 
@@ -22,16 +28,23 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   def countedCommits(count: Long) {}
 
   def loadedCommit(repositoryName: String, commitData: CommitData) = {
+    import de.jowisoftware.mining.importer.CommitData.commitFields._
     val repository = getCommitRepository(repositoryName)
 
+    info("Inserting commit "+commitData(id))
+    createCommit(commitData, repository)
+  }
+
+  private def createCommit(commitData: CommitData, repository: CommitRepository): Unit = {
+    import de.jowisoftware.mining.importer.CommitData.commitFields._
     val commit = repository.createCommit()
-    commit.commitId(commitData.id)
-    commit.date(commitData.date)
-    commit.message(commitData.message)
+    commit.commitId(commitData(id))
+    commit.date(commitData(date))
+    commit.message(commitData(message))
 
-    commit.add(getPerson(commitData.author))(Owns)
+    commit.add(getPerson(commitData(author)))(Owns)
 
-    commitData.files.foreach {
+    commitData(files).foreach {
       case (filename, value) =>
         val file = getFile(repository, filename)
         val relation = commit.add(file)(ChangedFile)
@@ -65,7 +78,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     debug("Connecting references from ticket "+ticketVersions.head(id))
     connectReferences(ticketVersions, versionNodes, repository)
     debug("Catching up missing links to this ticket...")
-    connectMissingLinks(versionNodes.last, repository)
+    connectmissingTicketLinks(versionNodes.last, repository)
     debug("ticket "+ticketVersions.head(id)+" finished")
   }
 
@@ -152,7 +165,7 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
               ref.referenceType(rel.ticketRelationship.toString)
             case None =>
               trace("Ticket "+targetId+" is not known yet - queuing operation up")
-              val repositoryLinks = accuireMissingLinksForRepository(repository.name())
+              val repositoryLinks = accuiremissingTicketLinksForRepository(repository.name())
               repositoryLinks(targetId) = (headTicket.id, rel.ticketRelationship.toString) :: repositoryLinks.getOrElse(targetId, Nil)
           }
         }
@@ -162,8 +175,8 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
     connect(tickets.zip(versionNodes))
   }
 
-  private def connectMissingLinks(recentTicket: Ticket, repository: TicketRepository) {
-    missingLinks.get(repository.name()) match {
+  private def connectmissingTicketLinks(recentTicket: Ticket, repository: TicketRepository) {
+    missingTicketLinks.get(repository.name()) match {
       case None =>
       case Some(map) =>
         map.get(recentTicket.ticketId()) match {
@@ -210,11 +223,11 @@ class DatabaseImportHandler(db: DBWithTransaction[RootNode]) extends ImportEvent
   private def findTicket(repository: TicketRepository, id: Int) =
     repository.findRecentVersionOf(id)
 
-  private def accuireMissingLinksForRepository(name: String) = missingLinks.get(name) match {
+  private def accuiremissingTicketLinksForRepository(name: String) = missingTicketLinks.get(name) match {
     case Some(map) => map
     case None =>
       val newMap: mutable.Map[Int, List[(Long, String)]] = mutable.Map()
-      missingLinks += name -> newMap
+      missingTicketLinks += name -> newMap
       newMap
   }
 }
