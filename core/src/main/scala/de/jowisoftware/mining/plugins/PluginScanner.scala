@@ -52,11 +52,12 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
   private def expandPath(base: File, path: String): Seq[File] = {
     val segments = path.split("""\\|/""").toList
 
-    def appendMatchingPathes(base: File, segments: List[String]): List[File] = segments match {
-      case Nil => List(base)
+    def appendMatchingPathes(base: File, segments: List[String]): List[File] =
+      segments match {
+      case Nil => base :: Nil
       case head :: tail =>
         if (!head.contains('*')) {
-          val file = new File(base, head)
+          val file = new File(base, head).getCanonicalFile
           if (file.exists)
             return appendMatchingPathes(file, tail)
           else

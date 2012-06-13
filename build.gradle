@@ -117,24 +117,6 @@ task writeShellScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.appl
   outputDir = mkdir(new File(dist, "bin"))
 }
 
-writeShellScripts { doLast {
-  def bashFile = new File(getOutputDir(),applicationName)
-  String bashContent = bashFile.text
-  bashFile.text = bashContent.replaceFirst("DEFAULT_JVM_OPTS=\"\"", "DEFAULT_JVM_OPTS=\"-Ddbpath=../db/\"")
-  def batchFile = new File(getOutputDir(),applicationName+".bat")
-  String batchContent = batchFile.text
-  batchFile.text = batchContent.replaceFirst("set DEFAULT_JVM_OPTS=", "set DEFAULT_JVM_OPTS=-Ddbpath=../db/")
-}}
-
-writeStartScripts << {
-  def bashFile = new File(getOutputDir(),applicationName)
-  String bashContent = bashFile.text
-  bashFile.text = bashContent.replaceFirst("DEFAULT_JVM_OPTS=\"\"", "DEFAULT_JVM_OPTS=\"-Ddbpath=../db/\"")
-  def batchFile = new File(getOutputDir(),applicationName+".bat")
-  String batchContent = batchFile.text
-  batchFile.text = batchContent.replaceFirst("set DEFAULT_JVM_OPTS=", "set DEFAULT_JVM_OPTS=-Ddbpath=../db/")
-}
-
 task dist(dependsOn: [copyDistFiles, writeStartScripts, writeShellScripts])
 
 task start() {
