@@ -42,7 +42,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     connectReferences(ticketVersions, versionNodes, repository)
     debug("Catching up missing links to this ticket...")
     connectMissingLinks(versionNodes.last, repository)
-    debug("ticket "+ticketVersions.head(id)+" finished")
+    debug("Ticket "+ticketVersions.head(id)+" finished")
   }
 
   private def createComment(comment: TicketCommentData): TicketComment = {
@@ -143,7 +143,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
               ref.referenceType(rel.ticketRelationship.toString)
             case None =>
               trace("Ticket "+targetId+" is not known yet - queuing operation up")
-              val repositoryLinks = accquiremissingTicketLinksForRepository(repository.name())
+              val repositoryLinks = acquiremissingTicketLinksForRepository(repository.name())
               repositoryLinks(targetId) = (headTicket.id, rel.ticketRelationship.toString) :: repositoryLinks.getOrElse(targetId, Nil)
           }
         }
@@ -153,7 +153,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     connect(tickets.zip(versionNodes))
   }
 
-  private def accquiremissingTicketLinksForRepository(name: String) = missingTicketLinks.get(name) match {
+  private def acquiremissingTicketLinksForRepository(name: String) = missingTicketLinks.get(name) match {
     case Some(map) => map
     case None =>
       val newMap: mutable.Map[Int, List[(Long, String)]] = mutable.Map()
