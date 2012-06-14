@@ -51,6 +51,7 @@ subprojects {
         logging.setLevel(oldLevel)
   }
 
+  tasks.eclipse.dependsOn(cleanEclipse)
   eclipse {
     classpath {
       file {
@@ -123,11 +124,7 @@ task writeShellScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.appl
 
 task dist(dependsOn: [copyDistFiles, writeStartScripts, writeShellScripts])
 
-task start() {
-  subprojects.each { dependsOn("${it.path}:build") }
-}
-
-start << {
+task start(dependsOn: copyDistFiles) << {
   javaexec{
     main = "de.jowisoftware.mining.Main"
     classpath = project(':core').sourceSets.test.runtimeClasspath
