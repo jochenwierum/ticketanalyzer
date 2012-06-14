@@ -28,6 +28,7 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
   private def mapToPlugins(classLoader: ClassLoader,
     resources: java.util.Enumeration[URL]): Iterator[Plugin] =
     resources.flatMap { url =>
+      info("processing plugin information in "+url)
       val properties = new Properties
       properties.load(url.openStream)
 
@@ -44,7 +45,7 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
         }
       } catch {
         case e: Exception =>
-          warn("Error while inspecting plugin, skipping it", e)
+          error("Error while inspecting plugin, skipping it", e)
           None
       }
     }
@@ -59,7 +60,7 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
         if (!head.contains('*')) {
           val file = new File(base, head).getCanonicalFile
           if (file.exists)
-            return appendMatchingPathes(file, tail)
+            appendMatchingPathes(file, tail)
           else
             Nil
         } else {

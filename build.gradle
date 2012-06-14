@@ -55,8 +55,12 @@ subprojects {
     classpath {
       file {
         whenMerged { cp ->
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/") }*.output = "build/classes/main"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/") }*.output = "build/classes/test"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/resources") }*.output = "build/resources/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.contains('scala-library-2.9.2.jar') ||
             entry.path.contains('scala-swing-2.9.2.jar') ||
@@ -126,7 +130,7 @@ task start() {
 start << {
   javaexec{
     main = "de.jowisoftware.mining.Main"
-    classpath = files(subprojects.collect{ p -> p.sourceSets.test.runtimeClasspath}.flatten())
+    classpath = project(':core').sourceSets.test.runtimeClasspath
   }
 }
 

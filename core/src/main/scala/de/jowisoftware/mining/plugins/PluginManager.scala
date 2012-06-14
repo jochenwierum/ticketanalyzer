@@ -1,9 +1,12 @@
 package de.jowisoftware.mining.plugins
 
-class PluginManager {
+import grizzled.slf4j.Logging
+
+class PluginManager extends Logging {
   private var plugins: List[Plugin] = List()
 
   def addPlugin(plugin: Plugin) {
+    warn("Found plugin: "+plugin)
     plugins = plugin :: plugins
   }
 
