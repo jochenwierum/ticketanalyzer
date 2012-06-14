@@ -238,6 +238,18 @@ object CommitRepository extends NodeCompanion[CommitRepository] {
 
 class CommitRepository extends Node with HasName with EmptyNode {
   def createCommit(): Commit = db.createNode(Commit)
+  def findCommit(id: String) = neighbors(Direction.OUTGOING, Seq(Contains.relationType)).find {
+    case node: Commit => node.commitId == id
+  }
+
+  def files: FileRepository = getOrCreate(Direction.OUTGOING, ContainsFiles)(FileRepository)
+}
+
+object FileRepository extends NodeCompanion[FileRepository] {
+  def apply = new FileRepository
+}
+
+class FileRepository extends Node with EmptyNode {
   def createFile(): File = db.createNode(File)
 
   def findFile(name: String): Option[File] = {

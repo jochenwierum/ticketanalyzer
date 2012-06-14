@@ -63,16 +63,30 @@ trait Node extends Versionable with Properties[NeoNode] {
         n => Node.neoNode2Node(n.getOtherNode(innerNode), innerDB))) yield node
   }
 
-  def getFirstRelationship[T <: Node](direction: Direction=Direction.BOTH, relTypes: RelationshipType)
+  def getFirstRelationship[T <: Node](direction: Direction=Direction.BOTH, relType: RelationshipType)
       (implicit nodeType: NodeCompanion[T]): Option[T] = {
     val targetClass = nodeType.apply().getClass().getName()
-    innerNode.getRelationships(relTypes, direction).map {
+    innerNode.getRelationships(relType, direction).map {
       _.getOtherNode(innerNode)
     }.find {otherNode =>
         otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
     } match {
       case Some(node) => Some(Node.wrapNeoNode(node, innerDB))
       case _ => None
+    }
+  }
+
+  def getOrCreate[A <: Node, B <: Relationship]
+    (direction: Direction=Direction.BOTH, relType: RelationshipCompanion[B])
+    (implicit nodeType: NodeCompanion[A]): A = {
+    getFirstRelationship(direction, relType.relationType) getOrElse {
+      val node = db.createNode
+      if (direction == Direction.INCOMING) {
+        node.add(this)(relType)
+      } else {
+        this.add(node)(relType)
+      }
+      node
     }
   }
 

@@ -6,6 +6,7 @@ object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
 
   val contains = ScalaRelationshipType("contains")
+  val containsFiles = ScalaRelationshipType("containsFiles")
 
   val inVersion = ScalaRelationshipType("in_version")
   val fixedInVersion = ScalaRelationshipType("fixed_in_version")
@@ -33,6 +34,8 @@ object RelTypes {
 
   val updates = ScalaRelationshipType("updates")
   val references = ScalaRelationshipType("references")
+
+  val childOf = ScalaRelationshipType("child_of")
 }
 
 trait EmptyRelationship extends Relationship {
@@ -60,6 +63,19 @@ object Contains extends RelationshipCompanion[Contains] {
 
   type sourceType = Node
   type sinkType = Node
+}
+
+class ContainsFiles extends EmptyRelationship {
+  val companion = ContainsFiles
+}
+
+object ContainsFiles extends RelationshipCompanion[ContainsFiles] {
+  def apply = new ContainsFiles
+
+  val relationType = RelTypes.containsFiles
+
+  type sourceType = Node
+  type sinkType = FileRepository
 }
 
 class Contains extends EmptyRelationship {
@@ -363,4 +379,17 @@ class References extends Relationship {
   def updateFrom(oldVersion: Int) = {}
 
   lazy val referenceType = stringProperty("referencesType")
+}
+
+object ChildOf extends RelationshipCompanion[ChildOf] {
+  def apply = new ChildOf
+
+  val relationType = RelTypes.childOf
+
+  type sourceType = Commit
+  type sinkType = Commit
+}
+
+class ChildOf extends EmptyRelationship {
+  val companion = ChildOf
 }

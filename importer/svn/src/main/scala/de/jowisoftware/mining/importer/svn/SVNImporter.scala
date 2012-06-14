@@ -29,6 +29,7 @@ class SVNImporter extends Importer {
 
     events.countedCommits(latestRevision.getNumber())
 
+    var tmp: List[SVNLogEntry] = Nil
     lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
       false, true, Long.MaxValue, new ISVNLogEntryHandler() {
         def handleLogEntry(entry: SVNLogEntry) {
@@ -47,17 +48,12 @@ class SVNImporter extends Importer {
     data(date) = entry.getDate -> author
     data(files) = (createFileList(entry.getChangedPaths()
         .asInstanceOf[java.util.Map[String, SVNLogEntryPath]])) -> author
-    data(parents) = Seq((entry.getRevision - 1).toString) -> author
+    data(parents) = (if (entry.getRevision > 1) Seq((entry.getRevision - 1).toString) else Nil) -> author
     data
   }
 
-  private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) = {
-    var result: Map[String, String] = Map()
-
-    pathMap.entrySet().foreach { entry =>
-      result += (entry.getKey() -> entry.getValue().getType().toString)
-    }
-
-    result
-  }
+  private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) =
+    pathMap.entrySet().map {
+      entry => (entry.getKey() -> entry.getValue().getType().toString)
+    }.toMap
 }
