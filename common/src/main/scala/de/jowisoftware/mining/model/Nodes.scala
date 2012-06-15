@@ -94,7 +94,6 @@ class Ticket extends Node {
   lazy val reporter = stringProperty("reporter")
   lazy val text = stringProperty("text")
   lazy val title = stringProperty("title")
-  lazy val tags = optionalStringProperty("tags")
   lazy val updateDate = dateProperty("time")
   lazy val creationDate = dateProperty("time")
   lazy val votes = intProperty("votes")
