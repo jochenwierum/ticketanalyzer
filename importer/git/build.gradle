@@ -1,0 +1,17 @@
+description = "git importer plugin"
+
+repositories {
+  maven {
+    url "http://maven.tmatesoft.com/content/repositories/releases/"
+  }
+}
+
+dependencies {
+  compile 'org.eclipse.jgit:org.eclipse.jgit:1.3.0.201202151440-r'
+}
+
+eclipse {
+  project {
+    name = 'importer-git'
+  }
+}
