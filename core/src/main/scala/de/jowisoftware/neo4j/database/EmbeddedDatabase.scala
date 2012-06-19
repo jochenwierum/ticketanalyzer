@@ -33,6 +33,11 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     }
   }
 
+  def startTransaction: DBWithTransaction[T] = {
+    val tx = service.beginTx()
+    new AutonomousTransaction(this, tx, rootCompanion)
+  }
+
   def deleteContent = {
     shutdown()
     FileUtils.delTree(filepath)

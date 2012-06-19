@@ -1,7 +1,11 @@
 package de.jowisoftware.neo4j.content
 
-import org.neo4j.graphdb.{Node => NeoNode, Relationship => NeoRelationship,
-  Direction, RelationshipType}
+import org.neo4j.graphdb.{
+  Node => NeoNode,
+  Relationship => NeoRelationship,
+  Direction,
+  RelationshipType
+}
 import org.neo4j.graphdb.Traverser.Order
 import scala.collection.JavaConversions._
 import properties.Versionable
@@ -10,13 +14,11 @@ import de.jowisoftware.neo4j.content.index.NodeIndexCreator
 
 object Node {
   def wrapNeoNode[T <: Node](
-      neoNode: NeoNode,
-      db: DBWithTransaction[_ <: Node]
-    )(
-      implicit companion: NodeCompanion[T]
-    ): T = {
+    neoNode: NeoNode,
+    db: DBWithTransaction[_ <: Node])(
+      implicit companion: NodeCompanion[T]): T = {
     val node = companion()
-    node initWith(neoNode, db)
+    node initWith (neoNode, db)
     node
   }
 
@@ -24,7 +26,7 @@ object Node {
     try {
       val clazz = node.getProperty(".class").asInstanceOf[String]
       val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
-      obj initWith(node, db)
+      obj initWith (node, db)
       Some(obj)
     } catch {
       case e: Exception => None
@@ -39,6 +41,8 @@ trait Node extends Versionable with Properties[NeoNode] {
   def content: NeoNode = innerNode
   protected def db = innerDB
 
+  protected final def getIndex = db.service.index.forNodes(getClass().getName)
+
   private[neo4j] final def initWith(node: NeoNode, db: DBWithTransaction[_ <: Node]) {
     this.innerNode = node
     this.innerDB = db
@@ -52,34 +56,33 @@ trait Node extends Versionable with Properties[NeoNode] {
     relationship
   }
 
-  def neighbors2(direction: Direction=Direction.BOTH, relTypes: Seq[RelationshipCompanion[_]]=List()) =
-    neighbors(direction, relTypes.map{_.relationType})
+  def neighbors2(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipCompanion[_]] = List()) =
+    neighbors(direction, relTypes.map { _.relationType })
 
-  def neighbors(direction: Direction=Direction.BOTH, relTypes: Seq[RelationshipType]=List()) = {
+  def neighbors(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipType] = List()) = {
     val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
-    else innerNode.getRelationships(direction, relTypes:_*)
+    else innerNode.getRelationships(direction, relTypes: _*)
 
-    for (Some(node) <- nodes.map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode), innerDB))) yield node
+    for (
+      Some(node) <- nodes.map(
+        n => Node.neoNode2Node(n.getOtherNode(innerNode), innerDB))
+    ) yield node
   }
 
-  def getFirstRelationship[T <: Node](direction: Direction=Direction.BOTH, relType: RelationshipType)
-      (implicit nodeType: NodeCompanion[T]): Option[T] = {
+  def getFirstNeighbor[T <: Node](direction: Direction = Direction.BOTH, relType: RelationshipType)(implicit nodeType: NodeCompanion[T]): Option[T] = {
     val targetClass = nodeType.apply().getClass().getName()
     innerNode.getRelationships(relType, direction).map {
       _.getOtherNode(innerNode)
-    }.find {otherNode =>
-        otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
+    }.find { otherNode =>
+      otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
     } match {
       case Some(node) => Some(Node.wrapNeoNode(node, innerDB))
       case _ => None
     }
   }
 
-  def getOrCreate[A <: Node, B <: Relationship]
-    (direction: Direction=Direction.BOTH, relType: RelationshipCompanion[B])
-    (implicit nodeType: NodeCompanion[A]): A = {
-    getFirstRelationship(direction, relType.relationType) getOrElse {
+  def getOrCreate[A <: Node, B <: Relationship](direction: Direction = Direction.BOTH, relType: RelationshipCompanion[B])(implicit nodeType: NodeCompanion[A]): A = {
+    getFirstNeighbor(direction, relType.relationType) getOrElse {
       val node = db.createNode
       if (direction == Direction.INCOMING) {
         node.add(this)(relType)
@@ -92,8 +95,8 @@ trait Node extends Versionable with Properties[NeoNode] {
 
   def delete = innerNode.delete()
   def forceDelete = {
-   innerNode.getRelationships().foreach(_.delete())
-   delete
+    innerNode.getRelationships().foreach(_.delete())
+    delete
   }
 
   override def toString() = toString(innerNode.getId(), innerNode)

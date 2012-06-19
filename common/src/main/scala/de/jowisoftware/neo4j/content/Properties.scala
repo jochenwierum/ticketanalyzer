@@ -13,25 +13,23 @@ trait Properties[A <: PropertyContainer] {
 
   private[neo4j] var innerDB: DBWithTransaction[_ <: Node] = _
 
-  protected def stringProperty(name: String, default: String = "", indexName: Option[String] = None) =
-    new NodeProperty[String, A](this, name, default, index(indexName)) with CastingObjectPersister[String]
+  protected def stringProperty(name: String, default: String = "", indexed: Boolean = false) =
+    new NodeProperty[String, A](this, name, default, index(indexed, name)) with CastingObjectPersister[String]
 
-  protected def intProperty(name: String, default: Int = 0, indexName: Option[String] = None) =
-    new NodeProperty[Int, A](this, name, default, index(indexName)) with CastingObjectPersister[Int]
+  protected def intProperty(name: String, default: Int = 0, indexed: Boolean = false) =
+    new NodeProperty[Int, A](this, name, default, index(indexed, name)) with CastingObjectPersister[Int]
 
-  protected def anyProperty(name: String, default: Any = null, indexName: Option[String] = None) =
-    new NodeProperty[Any, A](this, name, default, index(indexName)) with CastingObjectPersister[Any]
+  protected def anyProperty(name: String, default: Any = null, indexed: Boolean = false) =
+    new NodeProperty[Any, A](this, name, default, index(indexed, name)) with CastingObjectPersister[Any]
 
-  protected def dateProperty(name: String, default: Date = new Date(), indexName: Option[String] = None) =
-    new NodeProperty[Date, A](this, name, default, index(indexName)) with DateWrapper
+  protected def dateProperty(name: String, default: Date = new Date(), indexed: Boolean = false) =
+    new NodeProperty[Date, A](this, name, default, index(indexed, name)) with DateWrapper
 
-  protected def optionalStringProperty(name: String, indexName: Option[String] = None) = {
-    new OptionalNodeProperty[String, A](this, name, index(indexName)) with CastingObjectPersister[String]
+  protected def optionalStringProperty(name: String, indexed: Boolean = false) = {
+    new OptionalNodeProperty[String, A](this, name, index(indexed, name)) with CastingObjectPersister[String]
   }
 
-  private def index(indexName: Option[String]) = indexName match {
-    case None => NullIndex
-    case Some(name) =>
-      indexCreator.create(innerDB.service, content, name)
-  }
+  private def index(realIndex: Boolean, name: String) =
+    if (!realIndex) NullIndex
+    else indexCreator.create(innerDB, content, getClass().getSimpleName, name)
 }

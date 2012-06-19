@@ -1,18 +1,14 @@
 package de.jowisoftware.mining.importer.async
 
 import scala.actors.Actor.self
+
+import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents, DatabaseImportHandler, CommitData }
 import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
 import grizzled.slf4j.Logging
-import de.jowisoftware.mining.importer.TicketData
-import de.jowisoftware.mining.importer.Importer
-import de.jowisoftware.mining.importer.ImportEvents
-import de.jowisoftware.mining.importer.CommitData
-import de.jowisoftware.mining.importer.DatabaseImportHandler
-import de.jowisoftware.mining.importer.TicketCommentData
-import de.jowisoftware.neo4j.DBWithTransaction
 
 class AsyncDatabaseImportHandler(
-  db: DBWithTransaction[RootNode],
+  db: Database[RootNode],
   importer: (Importer, Map[String, String])*)
     extends ImportEvents with Logging {
 

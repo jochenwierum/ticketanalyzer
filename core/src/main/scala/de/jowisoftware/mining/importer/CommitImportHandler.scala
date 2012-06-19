@@ -23,16 +23,18 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
   def loadedCommit(repositoryName: String, commitData: CommitData) = {
     val repository = getCommitRepository(repositoryName)
 
-    info("Inserting commit "+commitData(id) + " with "+commitData(files).size + " files")
+    info("Inserting commit "+commitData(id)+" with "+commitData(files).size+" files")
     val node = createCommit(commitData, repository)
 
-    debug("Connecting parents of commit "+commitData(id) + ": "+commitData(parents))
+    debug("Connecting parents of commit "+commitData(id)+": "+commitData(parents))
     connectParents(commitData, node, repository)
 
     debug("Catching up missing links to this commit...")
     connectMissingCommits(node, repository)
 
     debug("Commit "+commitData(id)+" finished")
+
+    safePointReached
   }
 
   private def createCommit(commitData: CommitData, repository: CommitRepository) = {
@@ -40,6 +42,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     commit.commitId(commitData(id))
     commit.date(commitData(date))
     commit.message(commitData(message))
+    commit.uid(repository.name()+"-"+commitData(id))
 
     commit.add(getPerson(commitData(author)))(Owns)
 
@@ -63,9 +66,10 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     repository.files.findFile(name) match {
       case Some(file) => file
       case None =>
-        trace("Creating entry for file "+ name)
+        trace("Creating entry for file "+name)
         val file = repository.files.createFile()
         file.name(name)
+        file.uid(repository.name()+"-"+name)
         repository.files.add(file)(Contains)
         file
     }
@@ -79,19 +83,19 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     }
 
   private def addMissingLink(repository: CommitRepository, parentId: String, childNodeId: Long) {
-    trace("Commit "+parentId+" of node "+ childNodeId +" is not known yet - queuing operation up")
+    trace("Commit "+parentId+" of node "+childNodeId+" is not known yet - queuing operation up")
     val repositoryMap = acquireMissingCommitLinksForRepository(repository)
     repositoryMap += parentId -> (childNodeId :: repositoryMap.getOrElse(parentId, Nil))
   }
 
   private def acquireMissingCommitLinksForRepository(repository: CommitRepository) =
     missingCommitLinks.get(repository.name()) match {
-    case Some(value) => value
-    case None =>
-      val map = mutable.Map[String, List[Long]]()
-      missingCommitLinks += repository.name() -> map
-      map
-  }
+      case Some(value) => value
+      case None =>
+        val map = mutable.Map[String, List[Long]]()
+        missingCommitLinks += repository.name() -> map
+        map
+    }
 
   def connectMissingCommits(recentCommit: Commit, repository: CommitRepository) {
     missingCommitLinks.get(repository.name()) match {
@@ -102,7 +106,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
           case Some(list) =>
             list.foreach { id =>
               trace("Adding reference from already visited node "+id)
-              db.getNode(id)(Commit).add(recentCommit)(ChildOf)
+              transaction.getNode(id)(Commit).add(recentCommit)(ChildOf)
             }
             map.remove(recentCommit.commitId())
         }

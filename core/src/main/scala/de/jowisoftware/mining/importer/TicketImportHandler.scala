@@ -43,11 +43,13 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     debug("Catching up missing links to this ticket...")
     connectMissingLinks(versionNodes.last, repository)
     debug("Ticket "+ticketVersions.head(id)+" finished")
+
+    safePointReached
   }
 
   private def createComment(comment: TicketCommentData): TicketComment = {
 
-    val node = db.createNode(TicketComment)
+    val node = transaction.createNode(TicketComment)
 
     node.commentId(comment(TicketCommentDataFields.id))
     node.text(comment(TicketCommentDataFields.text))
@@ -90,7 +92,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
 
     ticketData(comments).foreach { commentId =>
       commentsMap.get(commentId) match {
-        case Some(id) => ticket.add(db.getNode(id)(TicketComment))(HasComment)
+        case Some(id) => ticket.add(transaction.getNode(id)(TicketComment))(HasComment)
         case None =>
       }
     }
@@ -108,14 +110,13 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
             list.foreach {
               case (id, referenceType) =>
                 trace("Adding reference from already visited node "+id)
-                val ref = db.getNode(id)(Ticket).add(recentTicket)(References)
+                val ref = transaction.getNode(id)(Ticket).add(recentTicket)(References)
                 ref.referenceType(referenceType)
             }
             map.remove(recentTicket.ticketId())
         }
     }
   }
-
 
   private def connectVersions(ticketVersions: List[Ticket]) {
     def connect(next: Seq[Ticket]): Unit = next match {

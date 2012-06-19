@@ -52,7 +52,7 @@ class RootNode extends Node {
   def updateFrom(version: Int) = {}
 
   private def getCollection[T <: Node](implicit nodeType: NodeCompanion[T]): T = {
-    val node = getFirstRelationship(Direction.OUTGOING, Contains.relationType)(nodeType)
+    val node = getFirstNeighbor(Direction.OUTGOING, Contains.relationType)(nodeType)
 
     node match {
       case Some(node) => node
@@ -237,11 +237,9 @@ object CommitRepository extends NodeCompanion[CommitRepository] {
 
 class CommitRepository extends Node with HasName with EmptyNode {
   def createCommit(): Commit = db.createNode(Commit)
-  def findCommit(id: String) = neighbors(Direction.OUTGOING, Seq(Contains.relationType)).find {
-    case node: Commit => node.commitId == id
-  }
 
-  def files: FileRepository = getOrCreate(Direction.OUTGOING, ContainsFiles)(FileRepository)
+  def findCommit(id: String) = Commit.find(db, name(), id)
+  lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles)(FileRepository)
 }
 
 object FileRepository extends NodeCompanion[FileRepository] {
@@ -249,23 +247,24 @@ object FileRepository extends NodeCompanion[FileRepository] {
 }
 
 class FileRepository extends Node with EmptyNode {
-  def createFile(): File = db.createNode(File)
+  private lazy val parentName = getFirstNeighbor(Direction.INCOMING, ContainsFiles)(CommitRepository).get.name()
 
-  def findFile(name: String): Option[File] = {
-    neighbors(Direction.OUTGOING, Seq(Contains.relationType)) find {
-      _ match {
-        case f: File => f.name == name
-        case _ => false
-      }
-    } match {
-      case None => None
-      case Some(file: File) => Some(file)
-    }
-  }
+  def createFile(): File = db.createNode(File)
+  def findFile(name: String) = File.find(db, parentName, name)
 }
 
 object Commit extends NodeCompanion[Commit] {
   def apply = new Commit
+
+  def find(db: DBWithTransaction[RootNode], repository: String, id: String) = {
+    val uid = repository+"-"+id
+    val result = getIndex(db).query("uid", uid).getSingle
+
+    if (result == null)
+      None
+    else
+      Some(Node.wrapNeoNode(result, db)(this))
+  }
 }
 
 class Commit extends Node {
@@ -273,15 +272,31 @@ class Commit extends Node {
   def updateFrom(version: Int) = {}
 
   lazy val commitId = stringProperty("id")
+  lazy val uid = stringProperty("uid", "", true)
   lazy val message = stringProperty("message")
   lazy val date = dateProperty("date")
 }
 
 object File extends NodeCompanion[File] {
   def apply = new File
+
+  def find(db: DBWithTransaction[RootNode], repository: String, name: String) = {
+    val uid = repository+"-"+name
+    val result = getIndex(db).query("uid", uid).getSingle
+
+    if (result == null)
+      None
+    else
+      Some(Node.wrapNeoNode(result, db)(this))
+  }
 }
 
-class File extends Node with EmptyNode with HasName
+class File extends Node with HasName {
+  def updateFrom(version: Int) {}
+  val version = 1
+
+  lazy val uid = stringProperty("uid", "", true)
+}
 
 object TagRepository extends NodeCompanion[TagRepository] {
   def apply = new TagRepository
@@ -367,7 +382,7 @@ class TicketComment extends Node {
   def updateFrom(version: Int) {}
 
   lazy val commentId = intProperty("id")
-  lazy val text = stringProperty("text", "", Some("comment-text"))
+  lazy val text = stringProperty("text", "", true)
   lazy val created = dateProperty("created")
   lazy val modified = dateProperty("modified")
 }

@@ -17,7 +17,7 @@
     </encoder>
   </appender>
 
-  <logger name="de.jowisoftware" level="TRACE"/>
+  <logger name="de.jowisoftware" level="WARN"/>
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />
