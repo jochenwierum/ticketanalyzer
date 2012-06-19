@@ -24,7 +24,7 @@ object Node {
 
   def neoNode2Node(node: NeoNode, db: DBWithTransaction[_ <: Node]): Option[Node] = {
     try {
-      val clazz = node.getProperty(".class").asInstanceOf[String]
+      val clazz = node.getProperty("_class").asInstanceOf[String]
       val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
       obj initWith (node, db)
       Some(obj)
@@ -74,7 +74,7 @@ trait Node extends Versionable with Properties[NeoNode] {
     innerNode.getRelationships(relType, direction).map {
       _.getOtherNode(innerNode)
     }.find { otherNode =>
-      otherNode.hasProperty(".class") && otherNode.getProperty(".class") == targetClass
+      otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
     } match {
       case Some(node) => Some(Node.wrapNeoNode(node, innerDB))
       case _ => None

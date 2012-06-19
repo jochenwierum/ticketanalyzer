@@ -6,7 +6,7 @@ object RelTypes {
   case class ScalaRelationshipType(val name: String) extends RelationshipType
 
   val contains = ScalaRelationshipType("contains")
-  val containsFiles = ScalaRelationshipType("containsFiles")
+  val containsFiles = ScalaRelationshipType("contains_files")
 
   val inVersion = ScalaRelationshipType("in_version")
   val fixedInVersion = ScalaRelationshipType("fixed_in_version")
