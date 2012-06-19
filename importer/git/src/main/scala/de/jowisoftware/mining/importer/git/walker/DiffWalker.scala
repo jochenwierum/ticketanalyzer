@@ -7,6 +7,9 @@ object DiffWalker {
   def createList(walk: TreeWalk): Map[String, String] = {
     if (!walk.next) {
       Map()
+    } else if (walk.isSubtree) {
+      walk.enterSubtree
+      createList(walk)
     } else {
       val entry = (walk.getPathString -> identifyChange(walk))
       createList(walk) + entry
