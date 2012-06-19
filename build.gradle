@@ -141,3 +141,7 @@ task help() << {
     println("  gradle eclipse - create eclipse plugins for all projects")
     println("  gradle tasks   - show all supported tasks")
 }
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '1.0'
+}
