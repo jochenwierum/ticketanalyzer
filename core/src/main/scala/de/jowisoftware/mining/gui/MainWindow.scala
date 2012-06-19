@@ -50,6 +50,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
 
     db.shutdown
     scala.actors.Scheduler.shutdown()
+    System.exit(0)
   }
 
   def updateView() {
