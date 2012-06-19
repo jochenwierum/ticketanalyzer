@@ -47,13 +47,28 @@ class SVNImporter extends Importer {
     data(CommitDataFields.author) = author -> author
     data(date) = entry.getDate -> author
     data(files) = (createFileList(entry.getChangedPaths()
-        .asInstanceOf[java.util.Map[String, SVNLogEntryPath]])) -> author
+      .asInstanceOf[java.util.Map[String, SVNLogEntryPath]])) -> author
     data(parents) = (if (entry.getRevision > 1) Seq((entry.getRevision - 1).toString) else Nil) -> author
     data
   }
 
   private def createFileList(pathMap: java.util.Map[String, SVNLogEntryPath]) =
     pathMap.entrySet().map {
-      entry => (entry.getKey() -> entry.getValue().getType().toString)
+      entry => (getRealPath(entry.getKey()) -> entry.getValue().getType().toString)
     }.toMap
+
+  private def getRealPath(fileName: String) = {
+    val segs = fileName.split("/")
+
+    val path = if (segs.contains("trunk"))
+      segs.slice(segs.indexOf("trunk") + 1, segs.length)
+    else if (segs.contains("tags"))
+      segs.slice(segs.indexOf("tags") + 2, segs.length)
+    else if (segs.contains("branches"))
+      segs.slice(segs.indexOf("branches") + 2, segs.length)
+    else
+      segs
+
+    path.mkString("/")
+  }
 }
