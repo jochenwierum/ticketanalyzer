@@ -1,0 +1,2 @@
+start r=node(0) match r-->crr-->cr where crr._class =~ /.*CommitRepositoryRepository/ AND cr._class =~ /.*CommitRepository/ return cr;
+start r=node(0) match r-[:contains]->crr-[:contains]->cr-[:containsFiles]->files-->file return file.name order by file.name;
