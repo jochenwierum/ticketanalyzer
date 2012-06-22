@@ -1,5 +1,6 @@
 package de.jowisoftware.mining.model.nodes
 
+import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 

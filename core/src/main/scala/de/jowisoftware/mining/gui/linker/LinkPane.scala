@@ -7,7 +7,8 @@ import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.{ ProgressDialog, LeftAlignedLabel }
 import de.jowisoftware.mining.linker.Linker
-import de.jowisoftware.mining.model.nodes.{ RootNode, Contains }
+import de.jowisoftware.mining.model.nodes.{ RootNode }
+import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasName }
 import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
 import de.jowisoftware.mining.UserOptions

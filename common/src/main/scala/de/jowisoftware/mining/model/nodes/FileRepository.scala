@@ -2,6 +2,7 @@ package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.{RelationshipType, Direction}
 
+import de.jowisoftware.mining.model.relationships.{ Contains, ContainsFiles }
 import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._

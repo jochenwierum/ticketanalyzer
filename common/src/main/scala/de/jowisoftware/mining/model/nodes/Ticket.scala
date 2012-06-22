@@ -1,5 +1,6 @@
 package de.jowisoftware.mining.model.nodes
 
+import de.jowisoftware.mining.model.relationships.{ Contains, Updates }
 import org.neo4j.graphdb.Direction
 
 import de.jowisoftware.neo4j.content.NodeCompanion

@@ -2,7 +2,8 @@ package de.jowisoftware.mining.linker.trac
 
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.linker.{ Linker, LinkEvents }
-import de.jowisoftware.mining.model.nodes.{ TicketRepository, Contains, CommitRepository, Commit, Ticket }
+import de.jowisoftware.mining.model.nodes.{ TicketRepository, CommitRepository, Commit, Ticket }
+import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.UserOptions
 
 class TracStyleLinker extends Linker {
