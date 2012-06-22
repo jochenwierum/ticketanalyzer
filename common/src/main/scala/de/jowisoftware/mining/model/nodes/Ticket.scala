@@ -31,5 +31,13 @@ class Ticket extends MiningNode {
 
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
 
-  def findComment(id: Int) = TicketComment.find(db, uid()+"-"+id)
+  def findComment(id: Int) = TicketComment.find(db, createCommentUid(id))
+
+  def createComment(id: Int) = {
+    val node = db.createNode(TicketComment)
+    node.uid(createCommentUid(id))
+    node
+  }
+
+  private def createCommentUid(id: Int) = uid().substring(0, uid().lastIndexOf('-') + 1) + id
 }

@@ -48,14 +48,12 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
       case Some(comment) => comment
       case None =>
         debug("Adding comment "+comment(TicketCommentDataFields.id)+"...")
-        createComment(comment, ticket.uid())
+        createComment(ticket, comment)
     }
   }
 
-  private def createComment(comment: TicketCommentData, ticketUid: String): TicketComment = {
-    val node = transaction.createNode(TicketComment)
-
-    node.uid(ticketUid+"-"+TicketCommentDataFields.id)
+  private def createComment(ticket: Ticket, comment: TicketCommentData): TicketComment = {
+    val node = ticket.createComment(comment(TicketCommentDataFields.id))
     node.commentId(comment(TicketCommentDataFields.id))
     node.text(comment(TicketCommentDataFields.text))
     node.created(comment(TicketCommentDataFields.created))
