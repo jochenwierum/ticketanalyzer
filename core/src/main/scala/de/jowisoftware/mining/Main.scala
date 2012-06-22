@@ -11,6 +11,7 @@ import javax.swing.UIManager
 import scala.swing.Swing
 import org.slf4j.bridge.SLF4JBridgeHandler
 import scala.swing.Dialog
+import de.jowisoftware.neo4j.database.EmbeddedDatabaseWithConsole
 
 object Main {
   val basePath = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
@@ -31,7 +32,7 @@ object Main {
       val pluginManager = preparePluginManager
       checkPlugins(pluginManager)
 
-      val db = new EmbeddedDatabase(dbPath, RootNode)
+      val db = new EmbeddedDatabaseWithConsole(dbPath, RootNode)
 
       new MainWindow(db, pluginManager).visible = true
     }
