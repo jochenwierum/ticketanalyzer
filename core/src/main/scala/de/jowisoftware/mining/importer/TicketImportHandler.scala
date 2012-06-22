@@ -29,9 +29,9 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     }.map(comment => (comment.commentId(), comment.id)).toMap
 
     val versionNodes = ticketVersions.zipWithIndex.map {
-      case (t, i) =>
-        debug("Adding ticket version "+i+"...")
-        val ticket = createTicket(t, commentMap, repository)
+      case (ticketData, version) =>
+        debug("Adding ticket version "+version+"...")
+        val ticket = createTicket(ticketData, version, commentMap, repository)
         trace("Ticket node: "+ticket.id)
         ticket
     }
@@ -61,9 +61,9 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     node
   }
 
-  private def createTicket(ticketData: TicketData, commentsMap: Map[Int, Long], repository: TicketRepository) = {
-    val ticket = repository.createTicket()
-    ticket.ticketId(ticketData(id))
+  private def createTicket(ticketData: TicketData, ticketVersion: Int,
+      commentsMap: Map[Int, Long], repository: TicketRepository) = {
+    val ticket = repository.obtainTicket(ticketData(id), ticketVersion)
     ticket.title(ticketData(summary))
     ticket.text(ticketData(description))
     ticket.creationDate(ticketData(creationDate))

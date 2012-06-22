@@ -7,7 +7,8 @@ import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.{ ProgressDialog, LeftAlignedLabel }
 import de.jowisoftware.mining.linker.Linker
-import de.jowisoftware.mining.model.{ RootNode, Node, HasName, Contains }
+import de.jowisoftware.mining.model.{ RootNode, Contains }
+import de.jowisoftware.mining.model.helper.{ MiningNode, HasName }
 import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
@@ -59,7 +60,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
   }.toSeq)
 
-  def namesOfChildren(repository: Node) = {
+  def namesOfChildren(repository: MiningNode) = {
     val nodes = repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
     nodes.map { node => node.asInstanceOf[HasName].name() }
   }

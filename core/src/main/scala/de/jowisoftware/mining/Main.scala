@@ -1,7 +1,7 @@
 package de.jowisoftware.mining
 
 import de.jowisoftware.mining.model.RootNode
-import de.jowisoftware.neo4j.EmbeddedDatabase
+import de.jowisoftware.neo4j.database.EmbeddedDatabase
 import de.jowisoftware.mining.plugins._
 import javax.swing.SwingUtilities
 import gui.MainWindow
@@ -31,7 +31,7 @@ object Main {
       val pluginManager = preparePluginManager
       checkPlugins(pluginManager)
 
-      val db = EmbeddedDatabase(dbPath, RootNode)
+      val db = new EmbeddedDatabase(dbPath, RootNode)
 
       new MainWindow(db, pluginManager).visible = true
     }
