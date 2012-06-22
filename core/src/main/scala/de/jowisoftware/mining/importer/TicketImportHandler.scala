@@ -67,7 +67,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
   }
 
   private def createTicket(ticketData: TicketData, ticketVersion: Int,
-      comments: Seq[TicketCommentData], repository: TicketRepository) = {
+    commentList: Seq[TicketCommentData], repository: TicketRepository) = {
     val ticket = repository.obtainTicket(ticketData(id), ticketVersion)
     ticket.title(ticketData(summary))
     ticket.text(ticketData(description))
@@ -96,9 +96,11 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticketData(sponsors).foreach(sponsor => ticket.add(getPerson(sponsor))(SponsoredBy))
 
     ticketData(comments).foreach { commentId =>
-      commentsMap.get(commentId) match {
-        case Some(id) => ticket.add(transaction.getNode(id)(TicketComment))(HasComment)
-        case None =>
+      commentList.indexWhere(_(TicketCommentDataFields.id) == commentId) match {
+        case -1 =>
+        case position =>
+          val commentNode = obtainComment(ticket, commentList(position))
+          ticket.add(commentNode)(HasComment)
       }
     }
 
