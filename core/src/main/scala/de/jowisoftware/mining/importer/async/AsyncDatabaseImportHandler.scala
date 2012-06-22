@@ -3,7 +3,7 @@ package de.jowisoftware.mining.importer.async
 import scala.actors.Actor.self
 
 import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents, DatabaseImportHandler, CommitData }
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
 import grizzled.slf4j.Logging
 

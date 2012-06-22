@@ -3,7 +3,7 @@ package de.jowisoftware.mining.linker.trac
 import de.jowisoftware.mining.linker.ScmLink
 import de.jowisoftware.mining.linker.TicketLink
 import de.jowisoftware.mining.linker.LinkEvents
-import de.jowisoftware.mining.model.helper.MiningNode
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
 
 private[trac] class TextScanner {
   def scan(text: String, events: LinkEvents, node: MiningNode): Unit = {

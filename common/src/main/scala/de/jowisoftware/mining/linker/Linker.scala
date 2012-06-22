@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.linker
 
-import de.jowisoftware.mining.model.{ TicketRepository, CommitRepository }
+import de.jowisoftware.mining.model.nodes.{ TicketRepository, CommitRepository }
 import de.jowisoftware.mining.UserOptions
 
 trait Linker {

@@ -1,6 +1,6 @@
 package de.jowisoftware.mining
 
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.database.EmbeddedDatabase
 import de.jowisoftware.mining.plugins._
 import javax.swing.SwingUtilities

@@ -7,7 +7,7 @@ import de.jowisoftware.neo4j.Database
 import scala.swing.event.ButtonClicked
 import scala.swing.Button
 import scala.swing.Frame
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 
 class DeletePane(val db: Database[RootNode], parent: Frame) extends BoxPanel(Orientation.Vertical) {

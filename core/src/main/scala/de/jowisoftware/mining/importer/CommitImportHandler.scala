@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.importer
 
-import de.jowisoftware.mining.model._
+import de.jowisoftware.mining.model.nodes._
 import CommitDataFields._
 import java.util.Date
 import scala.collection.mutable

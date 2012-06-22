@@ -6,7 +6,7 @@ import scala.swing.{ TabbedPane, Frame, Alignment }
 import MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.importer.ImportPane
 import de.jowisoftware.mining.gui.shell.ShellPane
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.plugins.PluginManager
 import de.jowisoftware.neo4j.Database
 import scala.swing.SplitPane

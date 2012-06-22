@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.importer
 
-import de.jowisoftware.mining.model._
+import de.jowisoftware.mining.model.nodes._
 import TicketDataFields._
 import grizzled.slf4j.Logging
 import scala.collection.mutable

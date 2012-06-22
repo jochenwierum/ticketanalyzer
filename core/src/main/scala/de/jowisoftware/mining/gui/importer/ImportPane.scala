@@ -8,7 +8,7 @@ import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.{ ProgressDialog }
 import de.jowisoftware.mining.importer.async.{ AsyncDatabaseImportHandler, ConsoleProgressReporter }
 import de.jowisoftware.mining.importer.Importer
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.plugins.{ Plugin, PluginType, PluginManager }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.neo4j.{ Database, DBWithTransaction }

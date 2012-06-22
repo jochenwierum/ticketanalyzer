@@ -1,8 +1,7 @@
 package de.jowisoftware.mining.linker
 
-import de.jowisoftware.mining.model.Ticket
-import de.jowisoftware.mining.model.helper.MiningNode
-import de.jowisoftware.mining.model.Commit
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.model.nodes._
 
 class DatabaseLinkerHandler extends LinkEvents {
   def reportProgress(progress: Long, max: Long, message: String): Unit = {}

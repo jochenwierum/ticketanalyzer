@@ -2,7 +2,7 @@ package de.jowisoftware.mining.importer
 
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.model.RootNode
+import de.jowisoftware.mining.model.nodes.RootNode
 
 private[importer] object GeneralImportHelper {
   val transactionThreshould = 50
