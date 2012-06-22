@@ -12,11 +12,16 @@ object TicketRepository extends NodeCompanion[TicketRepository] {
 
 class TicketRepository extends MiningNode with HasName with EmptyNode {
   def obtainTicket(id: Int, version: Int): Ticket = {
-    val ticket = db.createNode(Ticket)
-    ticket.ticketId(id)
-    ticket.uid(name()+"-"+id+"-"+version)
-    this.add(ticket)(Contains)
-    ticket
+    val uid = name()+"-"+id+"-"+version
+    Ticket.find(db, uid) match {
+      case Some(ticket) => ticket
+      case None =>
+        val ticket = db.createNode(Ticket)
+        ticket.ticketId(id)
+        ticket.uid(uid)
+        this.add(ticket)(Contains)
+        ticket
+    }
   }
 
   def findRecentVersionOf(tId: Int): Option[Ticket] = {

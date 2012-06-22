@@ -20,7 +20,8 @@ trait Versionable {
 
   private def checkProperties(content: PropertyContainer) {
     val className = content.getProperty("_class")
-    require(className == getClass.getName())
+    require(className == getClass.getName(), "Expected node '" + getClass.getName + "' had type '"+
+        className+"'")
 
     val nodeVersion = content.getProperty("_version").asInstanceOf[Int]
 

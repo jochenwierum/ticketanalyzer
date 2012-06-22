@@ -7,15 +7,8 @@ import helper._
 object File extends NodeCompanion[File] {
   def apply = new File
 
-  def find(db: DBWithTransaction[RootNode], repository: String, name: String) = {
-    val uid = repository+"-"+name
-    val result = getIndex(db).query("uid", uid).getSingle
-
-    if (result == null)
-      None
-    else
-      Some(Node.wrapNeoNode(result, db)(this))
-  }
+  private[model] def find(db: DBWithTransaction[RootNode], repository: String, name: String) =
+    findInIndex(db, "uid", repository+"-"+name)
 }
 
 class File extends MiningNode with HasName {

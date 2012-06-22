@@ -24,15 +24,10 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     info("Inserting ticket "+ticketVersions.head(id)+", "+ticketVersions.size+" versions, "+commentList.size+" commments")
     val repository = getTicketRepository(repositoryName)
 
-    val commentMap = commentList.map { comment =>
-      debug("Adding comment "+comment(TicketCommentDataFields.id)+"...")
-      createComment(comment)
-    }.map(comment => (comment.commentId(), comment.id)).toMap
-
     val versionNodes = ticketVersions.zipWithIndex.map {
       case (ticketData, version) =>
         debug("Adding ticket version "+version+"...")
-        val ticket = createTicket(ticketData, version, commentMap, repository)
+        val ticket = createTicket(ticketData, version, commentList, repository)
         trace("Ticket node: "+ticket.id)
         ticket
     }
@@ -48,10 +43,19 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     safePointReached
   }
 
-  private def createComment(comment: TicketCommentData): TicketComment = {
+  private def obtainComment(ticket: Ticket, comment: TicketCommentData) = {
+    ticket.findComment(comment(TicketCommentDataFields.id)) match {
+      case Some(comment) => comment
+      case None =>
+        debug("Adding comment "+comment(TicketCommentDataFields.id)+"...")
+        createComment(comment, ticket.uid())
+    }
+  }
 
+  private def createComment(comment: TicketCommentData, ticketUid: String): TicketComment = {
     val node = transaction.createNode(TicketComment)
 
+    node.uid(ticketUid+"-"+TicketCommentDataFields.id)
     node.commentId(comment(TicketCommentDataFields.id))
     node.text(comment(TicketCommentDataFields.text))
     node.created(comment(TicketCommentDataFields.created))
@@ -63,7 +67,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
   }
 
   private def createTicket(ticketData: TicketData, ticketVersion: Int,
-      commentsMap: Map[Int, Long], repository: TicketRepository) = {
+      comments: Seq[TicketCommentData], repository: TicketRepository) = {
     val ticket = repository.obtainTicket(ticketData(id), ticketVersion)
     ticket.title(ticketData(summary))
     ticket.text(ticketData(description))

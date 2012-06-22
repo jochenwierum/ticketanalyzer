@@ -7,15 +7,8 @@ import helper._
 object Commit extends NodeCompanion[Commit] {
   def apply = new Commit
 
-  private[model] def find(db: DBWithTransaction[RootNode], repository: String, id: String) = {
-    val uid = repository+"-"+id
-    val result = getIndex(db).query("uid", uid).getSingle
-
-    if (result == null)
-      None
-    else
-      Some(Node.wrapNeoNode(result, db)(this))
-  }
+  private[model] def find(db: DBWithTransaction[RootNode], repository: String, id: String) =
+    findInIndex(db, "uid", repository+"-"+id)
 }
 
 class Commit extends MiningNode {

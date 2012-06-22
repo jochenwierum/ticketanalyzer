@@ -8,12 +8,16 @@ import helper._
 
 object TicketComment extends NodeCompanion[TicketComment] {
   def apply = new TicketComment
+
+  private[nodes] def find(db: DBWithTransaction[RootNode], uid: String) =
+    findInIndex(db, "uid", uid)
 }
 
 class TicketComment extends MiningNode {
   val version = 1
   def updateFrom(version: Int) {}
 
+  lazy val uid = stringProperty("uid", "", true)
   lazy val commentId = intProperty("id")
   lazy val text = stringProperty("text", "", true)
   lazy val created = dateProperty("created")

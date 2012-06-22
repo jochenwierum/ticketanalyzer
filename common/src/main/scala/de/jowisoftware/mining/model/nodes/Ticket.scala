@@ -2,12 +2,15 @@ package de.jowisoftware.mining.model.nodes
 
 import de.jowisoftware.mining.model.relationships.{ Contains, Updates }
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
+import de.jowisoftware.neo4j.DBWithTransaction
 
 object Ticket extends NodeCompanion[Ticket] {
   def apply = new Ticket
+
+  def find(db: DBWithTransaction[RootNode], uid: String) =
+    findInIndex(db, "uid", uid)
 }
 
 class Ticket extends MiningNode {
@@ -27,4 +30,6 @@ class Ticket extends MiningNode {
   lazy val build = stringProperty("build")
 
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
+
+  def findComment(id: Int) = TicketComment.find(db, uid()+"-"+id)
 }
