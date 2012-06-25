@@ -39,18 +39,15 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
   }
 
   private def createCommit(commitData: CommitData, repository: CommitRepository) = {
-    val commit = repository.createCommit()
-    commit.commitId(commitData(id))
+    val commit = repository.obtainCommit(commitData(id))
     commit.date(commitData(date))
     commit.message(commitData(message))
-    commit.uid(repository.name()+"-"+commitData(id))
 
     commit.add(getPerson(commitData(author)))(Owns)
 
     debug("Adding files...")
     addFiles(commitData, repository, commit)
 
-    repository.add(commit)(Contains)
     commit
   }
 
