@@ -54,11 +54,15 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     pluginManager.getFor(PluginType.Linker)
 
   def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
-    namesOfChildren(transaction.rootNode.commitRepositoryCollection)
+    val result = namesOfChildren(transaction.rootNode.commitRepositoryCollection)
+    transaction.success
+    result
   }.toSeq)
 
   def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
-    namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
+    val result = namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
+    transaction.success
+    result
   }.toSeq)
 
   def namesOfChildren(repository: MiningNode) = {
@@ -86,7 +90,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   def doLink() {
-    val progressD = new ProgressDialog(parent)
+    val dialog = new ProgressDialog(parent)
     new Thread("linker-thread") {
       override def run() {
         val options = importerOptions.getUserInput
@@ -96,7 +100,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
             selectedPlugin.link(getSelectedTicketRepository(transaction),
               getSelectedCommitRepository(transaction), options,
               new DatabaseLinkerHandler() with ConsoleProgressReporter with LinkerEventGui {
-                val progressDialog = progressD
+                val progressDialog = dialog
               })
 
             if (transaction.rootNode.state() < 2) {
@@ -106,14 +110,14 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
             transaction.success
           } finally {
             Swing.onEDT {
-              progressD.hide()
+              dialog.hide()
               parent.publish(DatabaseUpdated)
             }
           }
         }
       }
     }.start()
-    progressD.show()
+    dialog.show()
   }
 
   def getSelectedTicketRepository(transaction: DBWithTransaction[RootNode]) =

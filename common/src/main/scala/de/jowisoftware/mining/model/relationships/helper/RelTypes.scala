@@ -26,8 +26,8 @@ object RelTypes {
 
   val owns = ScalaRelationshipType("owns")
   val wrote = ScalaRelationshipType("wrote")
-  val reportedBy = ScalaRelationshipType("reported_by")
-  val sponsoredBy = ScalaRelationshipType("sponsored_by")
+  val reported = ScalaRelationshipType("reported")
+  val sponsors = ScalaRelationshipType("sponsors")
 
   val hasTag = ScalaRelationshipType("has_tag")
   val hasComment = ScalaRelationshipType("has_comment")

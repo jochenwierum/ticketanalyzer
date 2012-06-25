@@ -14,7 +14,7 @@ object ChangedFile extends RelationshipCompanion[ChangedFile] {
 }
 
 class ChangedFile extends Relationship {
-  val companion = ReportedBy
+  val companion = ChangedFile
 
   val version = 1
   def updateFrom(version: Int) = {}

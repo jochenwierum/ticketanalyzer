@@ -8,4 +8,6 @@ trait RelationshipCompanion[+T <: Relationship] {
   def apply(): T
   protected[neo4j] type sourceType <: Node
   protected[neo4j] type sinkType <: Node
+
+  val allowDuplicates = false
 }

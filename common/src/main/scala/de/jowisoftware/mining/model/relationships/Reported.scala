@@ -4,15 +4,15 @@ import de.jowisoftware.mining.model.nodes._
 import de.jowisoftware.neo4j.content._
 import helper._
 
-object Owns extends RelationshipCompanion[Owns] {
-  def apply = new Owns
+object Reported extends RelationshipCompanion[Reported] {
+  def apply = new Reported
 
-  val relationType = RelTypes.owns
+  val relationType = RelTypes.reported
 
   type sourceType = Person
   type sinkType = Ticket
 }
 
-class Owns extends EmptyRelationship {
-  val companion = Owns
+class Reported extends EmptyRelationship {
+  val companion = Reported
 }

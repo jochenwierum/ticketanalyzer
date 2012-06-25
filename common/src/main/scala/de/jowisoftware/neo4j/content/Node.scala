@@ -50,10 +50,25 @@ trait Node extends Versionable with Properties[NeoNode] {
   }
 
   def add[T <: Relationship](other: Node)(implicit relType: RelationshipCompanion[T]): T = {
-    val relationship = relType()
-    val neoRelationship = innerNode.createRelationshipTo(other.innerNode, relType.relationType)
-    relationship.initWith(neoRelationship, db)
-    relationship
+    def createRelationship(neoRelationship: Option[NeoRelationship]) = {
+      val result = relType()
+      val initRelationship = neoRelationship match {
+        case Some(relationship) => relationship
+        case None =>
+          System.err.println("Creating Link from " + innerNode + " to " + other)
+          innerNode.createRelationshipTo(other.innerNode, relType.relationType)
+      }
+      result.initWith(initRelationship, db)
+      result
+    }
+
+    if (!relType.allowDuplicates) {
+      val relations = innerNode.getRelationships(relType.relationType, Direction.OUTGOING)
+      val existingRelation = relations.find(_.getEndNode.getId == other.innerNode.getId)
+      createRelationship(existingRelation)
+    } else {
+      createRelationship(None)
+    }
   }
 
   def neighbors2(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipCompanion[_]] = List()) =
@@ -71,12 +86,11 @@ trait Node extends Versionable with Properties[NeoNode] {
 
   def getFirstNeighbor[T <: Node](direction: Direction = Direction.BOTH, relType: RelationshipType)(implicit nodeType: NodeCompanion[T]): Option[T] = {
     val targetClass = nodeType.apply().getClass().getName()
-    innerNode.getRelationships(relType, direction).map {
-      _.getOtherNode(innerNode)
-    }.find { otherNode =>
+    innerNode.getRelationships(relType, direction).find { rel =>
+      val otherNode = rel.getOtherNode(innerNode)
       otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
     } match {
-      case Some(node) => Some(Node.wrapNeoNode(node, innerDB))
+      case Some(node) => Some(Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB))
       case _ => None
     }
   }

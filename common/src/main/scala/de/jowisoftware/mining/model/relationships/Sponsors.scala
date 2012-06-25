@@ -4,15 +4,15 @@ import de.jowisoftware.mining.model.nodes._
 import de.jowisoftware.neo4j.content._
 import helper._
 
-object SponsoredBy extends RelationshipCompanion[SponsoredBy] {
-  def apply = new SponsoredBy
+object Sponsors extends RelationshipCompanion[Sponsors] {
+  def apply = new Sponsors
 
-  val relationType = RelTypes.sponsoredBy
+  val relationType = RelTypes.sponsors
 
   type sourceType = Ticket
   type sinkType = Person
 }
 
-class SponsoredBy extends EmptyRelationship {
-  val companion = SponsoredBy
+class Sponsors extends EmptyRelationship {
+  val companion = Sponsors
 }

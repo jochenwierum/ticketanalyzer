@@ -76,7 +76,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticket.environment(ticketData(environment))
     ticket.build(ticketData(build))
 
-    ticket.add(getPerson(ticketData(reporter)))(ReportedBy)
+    getPerson(ticketData(reporter)).add(ticket)(Reported)
     ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
     ticket.add(getVersion(ticketData(version)))(InVersion)
     ticket.add(getVersion(ticketData(fixedInVersion)))(FixedInVersion)
@@ -84,14 +84,14 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticket.add(getType(ticketData(ticketType)))(HasType)
     ticket.add(getComponent(ticketData(component)))(InComponent)
     ticket.add(getStatus(ticketData(status)))(HasStatus)
-    ticket.add(getPerson(ticketData(owner)))(Owns)
+    getPerson(ticketData(owner)).add(ticket)(Owns)
     ticket.add(getResolution(ticketData(resolution)))(HasResolution)
     ticket.add(getPriority(ticketData(priority)))(HasPriority)
     ticket.add(getSeverity(ticketData(severity)))(HasSeverity)
     ticket.add(getReproducability(ticketData(reproducability)))(HasReproducability)
 
     ticketData(tags).foreach(tag => ticket.add(getTag(tag))(HasTag))
-    ticketData(sponsors).foreach(sponsor => ticket.add(getPerson(sponsor))(SponsoredBy))
+    ticketData(sponsors).foreach(sponsor => getPerson(sponsor).add(ticket)(Sponsors))
 
     ticketData(comments).foreach { commentId =>
       commentList.indexWhere(_(TicketCommentDataFields.id) == commentId) match {
@@ -127,7 +127,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     def connect(next: Seq[Ticket]): Unit = next match {
       case recent :: head :: tail =>
         trace("Connecting node "+recent.id+" with Node "+head.id)
-        recent.add(head)(Updates)
+        head.add(recent)(Updates)
         connect(head :: tail)
       case recent :: Nil =>
     }
