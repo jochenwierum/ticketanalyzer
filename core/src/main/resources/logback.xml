@@ -19,6 +19,10 @@
 
   <logger name="de.jowisoftware" level="INFO"/>
   <!-- <logger name="de.jowisoftware.mining.importer.DatabaseImportHandler" level="TRACE"/> -->
+  
+  <logger name="org.mortbay.log" level="WARN"/>
+  <logger name="org.neo4j" level="WARN"/>
+  <logger name="com.sun.jersey" level="WARN"/>
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />
