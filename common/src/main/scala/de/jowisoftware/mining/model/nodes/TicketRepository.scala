@@ -24,10 +24,11 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
     }
   }
 
-  def findRecentVersionOf(tId: Int): Option[Ticket] = {
-    neighbors(Direction.OUTGOING).find { node =>
-      val ticket = node.asInstanceOf[Ticket]
-      ticket.ticketId() == tId && ticket.isRecentVersion
-    }.asInstanceOf[Option[Ticket]]
-  }
+  def findRecentVersionOf(tId: Int): Option[Ticket] =
+    Ticket.findAll(db, name()+"-"+tId+"-*").reduceOption{
+      (t1, t2) =>
+      val v1 = t1.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
+      val v2 = t2.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
+      if (v1 > v2) t1 else t2
+    }
 }

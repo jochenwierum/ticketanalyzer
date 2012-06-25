@@ -11,6 +11,9 @@ object Ticket extends NodeCompanion[Ticket] {
 
   def find(db: DBWithTransaction[RootNode], uid: String) =
     findInIndex(db, "uid", uid)
+
+  def findAll(db: DBWithTransaction[RootNode], uidQuery: String) =
+    findMultipleInIndex(db, "uid", uidQuery)
 }
 
 class Ticket extends MiningNode {

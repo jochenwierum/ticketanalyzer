@@ -55,7 +55,6 @@ trait Node extends Versionable with Properties[NeoNode] {
       val initRelationship = neoRelationship match {
         case Some(relationship) => relationship
         case None =>
-          System.err.println("Creating Link from " + innerNode + " to " + other)
           innerNode.createRelationshipTo(other.innerNode, relType.relationType)
       }
       result.initWith(initRelationship, db)

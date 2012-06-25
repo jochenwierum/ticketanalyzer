@@ -4,6 +4,8 @@ import de.jowisoftware.neo4j.DBWithTransaction
 import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.{ Node => NeoNode }
 
+import scala.collection.JavaConversions._
+
 trait NodeCompanion[T <: Node] {
   def apply(): T
 
@@ -20,4 +22,8 @@ trait NodeCompanion[T <: Node] {
     else
       Some(Node.wrapNeoNode(result, db)(this))
   }
+
+  protected def findMultipleInIndex[A <: Node](db: DBWithTransaction[A], indexName: String, value: String)
+    (implicit manifest: Manifest[T]) =
+    getIndex(db)(manifest).query(indexName, value).iterator.map {result => Node.wrapNeoNode(result, db)(this)}
 }
