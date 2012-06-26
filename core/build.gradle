@@ -5,4 +5,5 @@ dependencies {
   
   runtime group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03", classifier: "static-web"
   runtime group: "com.sun.jersey", name: "jersey-core", version: "1.9"
+  runtime group: "org.fusesource.jansi", name: "jansi", version: "1.8"
 }

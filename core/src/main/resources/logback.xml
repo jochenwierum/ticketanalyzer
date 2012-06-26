@@ -4,6 +4,7 @@
   </contextListener>
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <withJansi>true</withJansi>
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %highlight(%-5level %logger{36} - %msg) %n</pattern>
     </encoder>
@@ -18,11 +19,17 @@
   </appender>
 
   <logger name="de.jowisoftware" level="INFO"/>
-  <!-- <logger name="de.jowisoftware.mining.importer.DatabaseImportHandler" level="TRACE"/> -->
   
   <logger name="org.mortbay.log" level="WARN"/>
   <logger name="org.neo4j" level="WARN"/>
   <logger name="com.sun.jersey" level="WARN"/>
+
+  <!-- 
+  	org.neo4j.server.logging.Logger logs either to a log file, or to stdout if the log level
+  	is ignored by the logger. Better log all in the same format then mix logs and stdout,
+  	so we use "DBEUG" here.
+   -->
+  <logger name="org.neo4j.server" level="DEBUG"/>
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />
