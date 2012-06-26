@@ -2,18 +2,20 @@ package de.jowisoftware.mining.importer.trac
 
 import java.io.OutputStreamWriter
 import java.net.{ URL, PasswordAuthentication, Authenticator }
-import java.sql.Date
-
+import java.util.Date
 import scala.annotation.tailrec
 import scala.xml.{ XML, NodeSeq, Elem }
-
 import org.joda.time.format.DateTimeFormat
-
 import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer.TicketCommentDataFields
-import de.jowisoftware.mining.importer.{ TicketUpdate, TicketData, TicketCommentData, Importer, ImportEvents }
+import de.jowisoftware.mining.importer._
+import de.jowisoftware.util.XMLUtils
 
 class TracImporter extends Importer {
+  sealed abstract class UpdateInfo { val time: Date; val user: String }
+  case class Comment(time: Date, user: String, text: String) extends UpdateInfo
+  case class FieldUpdate(time: Date, user: String, field: String /*?*/, value: String) extends UpdateInfo
+
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
 
   def userOptions = new TracOptions()
@@ -74,7 +76,6 @@ class TracImporter extends Importer {
     ticket(resolution) = (getNodeAsString(findNode("resolution")) -> ticketReporter)
     ticket(component) = (getNodeAsString(findNode("component")) -> ticketReporter)
     ticket(tags) = (getNodeAsString(findNode("keywords")).split(" ").toSeq -> ticketReporter)
-    //ticket(blocking) = (getNodeAsString(findNode("blocking")) -> ticketReporter)
     ticket(priority) = (getNodeAsString(findNode("priority")) -> ticketReporter)
     ticket(summary) = (getNodeAsString(findNode("summary")) -> ticketReporter)
     ticket(ticketType) = (getNodeAsString(findNode("type")) -> ticketReporter)
@@ -86,17 +87,13 @@ class TracImporter extends Importer {
     ticket
   }
 
-  private def getHistory(history: Elem) = {
-    var result: List[TicketUpdate] = List()
-    var comments: List[TicketCommentData] = List()
-
+  private def parseHistory(history: Elem): Seq[UpdateInfo] = {
     val entries = history \ "params" \ "param" \ "value" \ "array" \ "data" \
       "value" \ "array" \ "data"
 
-    entries.view.zipWithIndex.foreach {
+    entries.zipWithIndex.map {
       case (entry, id) =>
         val value = entry \ "value"
-        var subResult: Map[String, Any] = Map()
 
         val time = getNodeAsDate(value(0))
         val author = getNodeAsString(value(1))
@@ -105,19 +102,10 @@ class TracImporter extends Importer {
         val newValue = getNodeAsString(value(4))
 
         if (field != "comment")
-          result = TicketUpdate(id, field, newValue, oldValue, author, time) :: result
-        else {
-          val comment = new TicketCommentData()
-          comment(TicketCommentDataFields.id) = oldValue.toInt -> author
-          comment(TicketCommentDataFields.text) = newValue -> author
-          comment(TicketCommentDataFields.author) = author -> author
-          comment(TicketCommentDataFields.created) = time -> author
-          comment(TicketCommentDataFields.modified) = time -> author
-          comments = comment :: comments
-        }
+          FieldUpdate(time, author, field, newValue)
+        else
+          Comment(time, author, newValue)
     }
-
-    (result.reverse, comments.reverse)
   }
 
   private def getNodeAsDate(parent: NodeSeq, default: Date = null) = {
