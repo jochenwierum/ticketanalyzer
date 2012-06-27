@@ -7,11 +7,11 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Stream.consWrapper
 import scala.collection.immutable.Map
 import scala.collection.SortedMap
-import scala.xml.{NodeSeq, Elem}
+import scala.xml.{ NodeSeq, Elem }
 
 import org.joda.time.format.DateTimeFormat
 
-import MantisImporter.{fromComplexDate, MantisConstants}
+import MantisImporter.{ fromComplexDate, MantisConstants }
 import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer._
 import de.jowisoftware.mining.UserOptions
@@ -56,7 +56,6 @@ class MantisImporter extends Importer with Logging {
 
     val items = receiveTickets(config, client)
     items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
-    //println(items(0).formatted)
 
     scraper.logout
     info("Importing finished.")
@@ -75,7 +74,7 @@ class MantisImporter extends Importer with Logging {
     val changesByDate = SortedMap.empty[Date, Seq[Change]] ++ changes.groupBy(_.date)
 
     val baseTicket = createBaseTicket(ticket, changesByDate)
-    val allTickets = createTicketsByDate(baseTicket, changesByDate)
+    val allTickets = createTicketUpdates(baseTicket, changesByDate)
 
     events.loadedTicket(repository, allTickets, allComments)
   }
@@ -124,7 +123,7 @@ class MantisImporter extends Importer with Logging {
     ticket
   }
 
-  private def createTicketsByDate(baseTicket: TicketData, changes: SortedMap[Date, Seq[Change]]) = {
+  private def createTicketUpdates(baseTicket: TicketData, changes: SortedMap[Date, Seq[Change]]) = {
     def nextTickets(ticket: TicketData, changes: List[(Date, Seq[Change])]): List[TicketData] = changes match {
       case Nil => Nil
       case head :: tail =>

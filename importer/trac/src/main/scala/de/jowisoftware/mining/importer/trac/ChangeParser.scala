@@ -1,103 +1,96 @@
-package de.jowisoftware.mining.importer.mantis
+package de.jowisoftware.mining.importer.trac
 
-import scala.xml.Node
-import de.jowisoftware.mining.importer.TicketDataFields._
-import de.jowisoftware.mining.importer.TicketDataFields
 import java.util.Date
-import grizzled.slf4j.Logging
-import de.jowisoftware.mining.importer.TicketData
+
+import de.jowisoftware.mining.importer._
+import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer.TicketRelationship
+import de.jowisoftware.mining.importer.TicketRelationship.RelationshipType
+import grizzled.slf4j.Logging
 
-trait Change {
-  val date: Date
-  def update(ticket: TicketData)
-  def downgrade(ticket: TicketData)
+object ChangeParser {
+  private val commentParentRegex = """(?:(\d+)\.)?(\d+)""".r
+  private val ignoreComment = """_comment\d+""".r
 }
 
-class SimpleChange[T](val date: Date, field: FieldDescription[T], oldValue: T, newValue: T, user: String) extends Change {
-  def update(ticket: TicketData) = ticket(field) = newValue -> user
-  def downgrade(ticket: TicketData) = ticket(field) = oldValue -> user
-}
+class ChangeParser extends Logging {
+  private var currentBlockReferences: Set[Int] = Set()
 
-class ArrayChange[T](val date: Date, field: FieldDescription[Seq[T]], oldValue: Option[T], newValue: Option[T], user: String) extends Change {
-  private def remove(ticket: TicketData, value: T) = ticket(field) = ticket(field).filterNot(_ == value) -> user
-  private def add(ticket: TicketData, value: T) = ticket(field) = (ticket(field) :+ value) -> user
+  def createComment(
+    date: Date,
+    user: String,
+    field: String,
+    oldValue: String,
+    newValue: String) =
 
-  private def replace(ticket: TicketData, oldValue: T, newValue: T) =
-    ticket(field) = ticket(field).map { value => if (value == oldValue) newValue else value } -> user
-
-  def update(ticket: TicketData) =
-    if (newValue == None)
-      remove(ticket, oldValue.get)
-    else if (oldValue == None)
-      add(ticket, newValue.get)
-    else
-      replace(ticket, oldValue.get, newValue.get)
-
-  def downgrade(ticket: TicketData) =
-    if (oldValue == None)
-      remove(ticket, newValue.get)
-    else if (newValue == None)
-      add(ticket, oldValue.get)
-    else
-      replace(ticket, newValue.get, oldValue.get)
-}
-
-object ChangeParser extends Logging {
+    oldValue match {
+      case ChangeParser.commentParentRegex(parentId, id) =>
+        val comment = new TicketCommentData
+        comment(TicketCommentDataFields.id) = id.toInt -> user
+        comment(TicketCommentDataFields.text) = newValue -> user
+        comment(TicketCommentDataFields.author) = user -> user
+        comment(TicketCommentDataFields.created) = date -> user
+        comment(TicketCommentDataFields.modified) = date -> user
+        if (parentId != null) {
+          comment(TicketCommentDataFields.parent) = Some(parentId.toInt) -> user
+        } else {
+          comment(TicketCommentDataFields.parent) = None -> user
+        }
+        comment
+      case _ =>
+        sys.error("Unexpected ticket comment id: "+oldValue)
+    }
 
   def wrapChange(
     date: Date,
     user: String,
     field: String,
-    change: String,
+    oldValue: String,
+    newValue: String,
     ticket: TicketData): Option[Change] = {
-    val (oldValue, newValue) = guessOldNew(change)
 
     implicit def change2SomeChange[T](c: Change) = Some(c)
-    def wrapDefaultString[T](f: FieldDescription[String]) = new SimpleChange(date, f, oldValue, newValue, user)
-    def wrapDefaultInt[T](f: FieldDescription[Int]) = new SimpleChange(date, f, oldValue.toInt, newValue.toInt, user)
+    def wrap[T](f: FieldDescription[String]) = new SimpleChange(date, f, oldValue, newValue, user)
 
     field match {
-      case "New Issue" | "Issue cloned" | "Additional Information Updated" | "Description Updated" | "Project" | "Sponsorship Updated" | "Sponsorship Paid" => None
-      case issueMonitorRegex() | noteViewStateRegex() => None
+      case "component" => wrap(component)
+      case "description" => wrap(description)
+      case "keywords" => new SimpleChange(date, tags, oldValue.split(' ').toSeq.sorted, newValue.split(' ').toSeq.sorted, user)
+      case "milestone" => wrap(milestone)
+      case "owner" => wrap(owner)
+      case "priority" => wrap(priority)
+      case "reporter" => wrap(reporter)
+      case "status" => wrap(status)
+      case "summary" => wrap(summary)
+      case "type" => wrap(ticketType)
+      case "version" => wrap(version)
+      case "resolution" => wrap(resolution)
+      case "comment" => new ArrayChange(date, comments, None, Some(newValue.toInt), user)
+      case "blocking" if newValue.nonEmpty =>
+        val allValues = newValue.split("""\s*,\s*""").map(_.toInt).toSet
+        val newValues = (allValues -- currentBlockReferences).map(
+          ticketId => TicketRelationship(ticketId, RelationshipType.blocks))
+        val removedValues = (currentBlockReferences -- allValues).map(
+          ticketId => TicketRelationship(ticketId, RelationshipType.blocks))
+        currentBlockReferences = allValues
+        new SetChange(date, relationships, removedValues, newValues, user)
 
-      case "Status" => wrapDefaultString(status)
-      case "Assigned To" => wrapDefaultString(owner)
-      case "Reproducibility" => wrapDefaultString(reproducability)
-      case "Category" => wrapDefaultString(component)
-      case "version" => wrapDefaultString(version)
-      case "Build" => wrapDefaultString(build)
-      case "Fixed in Version" => wrapDefaultString(fixedInVersion)
-      case "Target Version" => wrapDefaultString(targetVersion)
-      case "Sponsorship Total" => wrapDefaultInt(votes)
-      case "Summary" => wrapDefaultString(summary)
-      case "Resolution" => wrapDefaultString(resolution)
+      case "blocking" =>
+        val oldReferences = currentBlockReferences.map(
+          ticketId => TicketRelationship(ticketId, RelationshipType.blocks))
+        currentBlockReferences = Set()
+        new SetChange(date, relationships, oldReferences, Set.empty, user)
+      // these are just ignored (the other ticket will already add a "blocking" dependency)
+      case "blockedby" => None
 
-      case "ETA" => new SimpleChange(date, eta, ValueUtils.etaStringToInt(oldValue), ValueUtils.etaStringToInt(newValue), user)
+      case "cc" => new SimpleChange(date, sponsors,
+        oldValue.split("""\s*,\s*""").toSeq.sorted, newValue.split("""\s*,\s*""").toSeq.sorted, user)
 
-      case "Platform" => new SplitChange(date, environment, 0, oldValue, newValue, user)
-      case "OS" => new SplitChange(date, environment, 1, oldValue, newValue, user)
-      case "OS Version" => new SplitChange(date, environment, 2, oldValue, newValue, user)
-
-      case "Relationship added" => new ArrayChange(date, relationships, None, Some(processRelationship(change)), user)
-      case "Sponsorship Added" => new ArrayChange(date, sponsors, None, Some(findSponsor(change)), user)
-      case noteAddRegex(id) => new ArrayChange(date, comments, None, Some(id.toInt), user)
-      case noteDeletedRegex(id) => new ArrayChange(date, comments, Some(id.toInt), None, user)
-      case tagAddedRegex(tag) => new ArrayChange(date, tags, None, Some(tag), user)
-      case tagDetachedRegex(tag) => new ArrayChange(date, tags, Some(tag), None, user)
+      case ChangeParser.ignoreComment() => None
 
       case unknown =>
         warn("Unknown field: "+unknown+" (\""+oldValue+"\" -> \""+newValue+"\")")
         None
     }
-  }
-
-  private def processRelationship(change: String) = change match {
-    case relationshipRegex(relationString, ticketId) =>
-      ValueUtils.relationshipStringToRelationshipType(relationString) match {
-        case Some(ticketRel) => TicketRelationship(ticketId.toInt, ticketRel)
-        case None => sys.error("Unparsable Relationship: "+relationString)
-      }
-    case _ => sys.error("Unparsable String: "+change)
   }
 }

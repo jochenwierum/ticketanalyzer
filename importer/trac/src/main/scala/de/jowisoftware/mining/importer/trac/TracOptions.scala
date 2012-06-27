@@ -6,7 +6,7 @@ import scala.swing.event.KeyPressed
 
 class TracOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
-    ("url" -> "http://jowisoftware.de/trac/ssh/login/xmlrpc"),
+    ("url" -> "http://jowisoftware.de/trac/test/login/xmlrpc"),
     ("username" -> "test"), ("password" -> "test"), ("repositoryname" -> "default"))
 
   def getPanel(): Panel = new GridPanel(4, 2) {
