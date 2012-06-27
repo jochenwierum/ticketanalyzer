@@ -8,7 +8,7 @@ trait ConsoleProgressReporter extends LinkEvents {
 
     if (lastTotal != total) {
       println("%s: %.1f %% done: %s of %s Operations".
-        format(message, total / 10.0, num(progress), num(progress), num(max)))
+        format(message, total / 10.0, num(progress), num(max), num(max)))
       lastTotal = total
     }
 
