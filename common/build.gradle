@@ -1,5 +1,9 @@
 description = "The shared API for all plugins"
 
 dependencies {
-  compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03"
+  if (project.hasProperty("compact") && project.property("compact") == "true") {
+    compile group: "org.neo4j", name: "neo4j", version: "1.8.M03"
+  } else {
+    compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03"
+  }
 }

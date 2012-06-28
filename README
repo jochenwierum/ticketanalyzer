@@ -4,9 +4,10 @@ Initial Setup
 After cheking out, please do the following steps:
 
 1) create eclipse projects for all plugins by running
-$ gradle cleanEclipse eclipse
+$ ./gradlew eclipse
 
-2) setup git by running
+2) optional (to ensure better code quality):
+setup git by running
 $ cat > .git/hooks/pre-commit
 #!/bin/bash
 
@@ -17,6 +18,10 @@ $ chmod 755 .git/hooks/pre-commit
 
 3) Test everything by running
 $ export GRADLE_OPTS=-XX:MaxPermSize=512M
-$ gradle dist
+$ ./gradlew dist
 and
-$ gradle start
+$ ./gradlew start
+
+run
+$ ./gradlew
+for a list of options

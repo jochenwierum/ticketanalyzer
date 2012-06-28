@@ -133,13 +133,16 @@ task start(dependsOn: copyDistFiles) << {
 
 task help() << {
     println("Userfull tasks:")
-    println("  gradle clean   - remove all generated files")
-    println("  gradle start   - execute the application")
-    println("  gradle test    - execute only the tests")
+    println("  gradle clean   - remove all generated files *")
+    println("  gradle start   - execute the application *")
+    println("  gradle test    - execute only the tests *")
     println("  gradle dist    - compile everything you need to distribute")
-    println("                   the application into build/dist/")
+    println("                   the application into build/dist/ *")
     println("  gradle eclipse - create eclipse plugins for all projects")
     println("  gradle tasks   - show all supported tasks")
+	println("")
+	println("*: you can add '-Pcompact=true' to these commands to produce smaller")
+	println("   artifacts which run without the neo4j web interface")
 }
 
 task wrapper(type: Wrapper) {

@@ -17,6 +17,13 @@ object Main {
   val basePath = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
   val settings = new Settings("config.properties")
 
+  lazy val compactMode = try {
+    Class.forName("org.neo4j.server.WrappingNeoServerBootstrapper")
+    false
+  } catch {
+    case _ => true
+  }
+
   def main(args: Array[String]) {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
@@ -32,7 +39,10 @@ object Main {
       val pluginManager = preparePluginManager
       checkPlugins(pluginManager)
 
-      val db = new EmbeddedDatabaseWithConsole(dbPath, RootNode)
+      val db = if (compactMode)
+        new EmbeddedDatabase(dbPath, RootNode)
+      else
+        new EmbeddedDatabaseWithConsole(dbPath, RootNode)
 
       new MainWindow(db, pluginManager).visible = true
     }

@@ -8,6 +8,7 @@ import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.kernel.AbstractGraphDatabase
 import de.jowisoftware.mining.gui.components.Link
 import java.net.URI
+import de.jowisoftware.mining.{ Main => MainApp }
 
 class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
   private val engine = new ExecutionEngine(db)
@@ -20,7 +21,10 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
   private val textPanel = new BorderPanel() {
     layout(textInput) = Position.Center
     layout(startButton) = Position.East
-    layout(link) = Position.South
+
+    if (!MainApp.compactMode) {
+      layout(link) = Position.South
+    }
   }
   private val resultTable = new ResultTablePane
 
