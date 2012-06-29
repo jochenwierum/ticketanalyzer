@@ -1,8 +1,8 @@
 package de.jowisoftware.mining.importer.trac
 
-import scala.swing.{ TextField, PasswordField, Panel, Label, GridPanel }
+import scala.swing.{Panel, GridPanel}
+
 import de.jowisoftware.mining.UserOptions
-import scala.swing.event.KeyPressed
 
 class TracOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
