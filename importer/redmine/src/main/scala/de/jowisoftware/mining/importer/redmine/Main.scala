@@ -5,7 +5,8 @@ object Main {
     val config = Map(
         "url" -> "http://jowisoftware.de:3000/",
         "key" -> "2ae8befe0e72f5cc5c3f0e8f364fe1c34ee340b5",
-        "repositoryname" -> "default")
+        "repositoryname" -> "default",
+        "project" -> "1")
 
     new RedmineImporter().importAll(config, null)
   }
