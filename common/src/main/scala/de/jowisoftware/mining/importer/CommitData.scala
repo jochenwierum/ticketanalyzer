@@ -6,5 +6,5 @@ object CommitData {
 }
 
 class CommitData private(id: String) extends FieldList(CommitDataFields) {
-  this(CommitDataFields.id) = id -> "(system)"
+  this(CommitDataFields.id) = id
 }

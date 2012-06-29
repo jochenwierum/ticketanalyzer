@@ -86,27 +86,27 @@ class MantisImporter extends Importer with Logging {
     val reporterName = subnode("reporter")
 
     val ticket = TicketData((item \ "id").text.toInt)
-    ticket(summary) = node("summary") -> reporterName
-    ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information")) -> reporterName
-    ticket(creationDate) = fromComplexDate(node("date_submitted")) -> reporterName
-    ticket(updateDate) = fromComplexDate(node("last_updated")) -> reporterName
-    ticket(version) = node("version") -> reporterName
-    ticket(build) = node("build") -> reporterName
-    ticket(status) = subnode("status") -> reporterName
-    ticket(priority) = subnode("priority") -> reporterName
-    ticket(reporter) = subnode("reporter") -> reporterName
-    ticket(component) = node("category") -> reporterName
-    ticket(resolution) = subnode("resolution") -> reporterName
-    ticket(severity) = subnode("severity") -> reporterName
-    ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
-    ticket(fixedInVersion) = subnode("fixed_in_version") -> reporterName
-    ticket(comments) = allComments.map(_(TicketCommentDataFields.id)) -> reporterName
-    ticket(votes) = node("sponsorship_total").toInt -> reporterName
-    ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild")) -> reporterName
-    ticket(eta) = ValueUtils.etaStringToInt(subnode("eta")) -> reporterName
-    ticket(reproducability) = subnode("reproducability") -> reporterName
-    ticket(owner) = subnode("handler") -> reporterName
-    ticket(relationships) = getRelationships(item \ "relationships") -> reporterName
+    ticket(summary) = node("summary")
+    ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information"))
+    ticket(creationDate) = fromComplexDate(node("date_submitted"))
+    ticket(updateDate) = fromComplexDate(node("last_updated"))
+    ticket(version) = node("version")
+    ticket(build) = node("build")
+    ticket(status) = subnode("status")
+    ticket(priority) = subnode("priority")
+    ticket(reporter) = subnode("reporter")
+    ticket(component) = node("category")
+    ticket(resolution) = subnode("resolution")
+    ticket(severity) = subnode("severity")
+    ticket(fixedInVersion) = subnode("fixed_in_version")
+    ticket(fixedInVersion) = subnode("fixed_in_version")
+    ticket(comments) = allComments.map(_(TicketCommentDataFields.id))
+    ticket(votes) = node("sponsorship_total").toInt
+    ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild"))
+    ticket(eta) = ValueUtils.etaStringToInt(subnode("eta"))
+    ticket(reproducability) = subnode("reproducability")
+    ticket(owner) = subnode("handler")
+    ticket(relationships) = getRelationships(item \ "relationships")
 
     ticket
   }
@@ -119,7 +119,8 @@ class MantisImporter extends Importer with Logging {
       }
     }
 
-    ticket(updateDate) = ticket(creationDate) -> "(system)"
+    ticket(updateDate) = ticket(creationDate)
+    ticket(editor) = Some(reversedChanges.valuesIterator.next()(0).editor)
     ticket
   }
 
@@ -129,7 +130,8 @@ class MantisImporter extends Importer with Logging {
       case head :: tail =>
         val newTicket = new TicketData(ticket)
         head._2.foreach(_.update(newTicket))
-        newTicket(updateDate) = head._1 -> "(system)"
+        newTicket(editor) = Some(head._2(0).editor)
+        newTicket(updateDate) = head._1
         newTicket :: nextTickets(newTicket, tail)
     }
 
@@ -142,10 +144,10 @@ class MantisImporter extends Importer with Logging {
       if (public) {
         val comment = new TicketCommentData()
         val author = (commentNode \ "reporter" \ "name").text
-        comment(TicketCommentDataFields.id) = (commentNode \ "id" text).toInt -> author
-        comment(TicketCommentDataFields.text) = (commentNode \ "text").text -> author
-        comment(TicketCommentDataFields.created) = fromComplexDate(commentNode \ "date_submitted" text) -> author
-        comment(TicketCommentDataFields.modified) = fromComplexDate(commentNode \ "last_modified" text) -> author
+        comment(TicketCommentDataFields.id) = (commentNode \ "id" text).toInt
+        comment(TicketCommentDataFields.text) = (commentNode \ "text").text
+        comment(TicketCommentDataFields.created) = fromComplexDate(commentNode \ "date_submitted" text)
+        comment(TicketCommentDataFields.modified) = fromComplexDate(commentNode \ "last_modified" text)
         Some(comment)
       } else {
         None

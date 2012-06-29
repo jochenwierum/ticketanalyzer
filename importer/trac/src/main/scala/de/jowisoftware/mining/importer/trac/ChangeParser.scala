@@ -26,15 +26,15 @@ class ChangeParser extends Logging {
     oldValue match {
       case ChangeParser.commentParentRegex(parentId, id) =>
         val comment = new TicketCommentData
-        comment(TicketCommentDataFields.id) = id.toInt -> user
-        comment(TicketCommentDataFields.text) = newValue -> user
-        comment(TicketCommentDataFields.author) = user -> user
-        comment(TicketCommentDataFields.created) = date -> user
-        comment(TicketCommentDataFields.modified) = date -> user
+        comment(TicketCommentDataFields.id) = id.toInt
+        comment(TicketCommentDataFields.text) = newValue
+        comment(TicketCommentDataFields.author) = user
+        comment(TicketCommentDataFields.created) = date
+        comment(TicketCommentDataFields.modified) = date
         if (parentId != null) {
-          comment(TicketCommentDataFields.parent) = Some(parentId.toInt) -> user
+          comment(TicketCommentDataFields.parent) = Some(parentId.toInt)
         } else {
-          comment(TicketCommentDataFields.parent) = None -> user
+          comment(TicketCommentDataFields.parent) = None
         }
         comment
       case _ =>

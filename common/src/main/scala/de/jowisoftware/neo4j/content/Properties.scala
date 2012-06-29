@@ -25,9 +25,11 @@ trait Properties[A <: PropertyContainer] {
   protected def dateProperty(name: String, default: Date = new Date(), indexed: Boolean = false) =
     new NodeProperty[Date, A](this, name, default, index(indexed, name)) with DateWrapper
 
-  protected def optionalStringProperty(name: String, indexed: Boolean = false) = {
+  protected def optionalStringProperty(name: String, indexed: Boolean = false) =
     new OptionalNodeProperty[String, A](this, name, index(indexed, name)) with CastingObjectPersister[String]
-  }
+
+  protected def stringArrayProperty(name: String) =
+    new NodeProperty[Array[String], A](this, name, Array[String](), NullIndex) with CastingObjectPersister[Array[String]]
 
   private def index(realIndex: Boolean, name: String) =
     if (!realIndex) NullIndex

@@ -18,4 +18,6 @@ class ChangedTicket extends Relationship {
 
   val version = 1
   def updateFrom(version: Int) = {}
+
+  lazy val changes = stringArrayProperty("changes")
 }

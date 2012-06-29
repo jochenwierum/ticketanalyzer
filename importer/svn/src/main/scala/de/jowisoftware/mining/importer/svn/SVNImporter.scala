@@ -48,21 +48,21 @@ class SVNImporter extends Importer {
   private def handle(entry: SVNLogEntry, parentCommitMap: mutable.Map[String, Long]): CommitData = {
     val author = entry.getAuthor()
     val data = CommitData(entry.getRevision().toString())
-    data(message) = entry.getMessage -> author
-    data(CommitDataFields.author) = author -> author
-    data(date) = entry.getDate -> author
+    data(message) = entry.getMessage
+    data(CommitDataFields.author) = author
+    data(date) = entry.getDate
 
 
     val changes = entry.getChangedPaths().asInstanceOf[java.util.Map[String, SVNLogEntryPath]].toMap
     val splitChanges = changes.map {case (file, state) => splitPath(file) -> state}
 
-    data(files) = createFileList(splitChanges) -> author
+    data(files) = createFileList(splitChanges)
 
     val usedParents = findParents(splitChanges.keySet)
     val parentCommits = usedParents.flatMap(parentCommitMap.get).map(_.toString)
     usedParents.foreach(path => parentCommitMap.put(path, entry.getRevision))
 
-    data(parents) = parentCommits.toList -> author
+    data(parents) = parentCommits.toList
     data
   }
 

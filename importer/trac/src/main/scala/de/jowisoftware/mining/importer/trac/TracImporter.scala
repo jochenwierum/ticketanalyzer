@@ -74,20 +74,20 @@ class TracImporter extends Importer {
 
     val ticketReporter = getNodeAsString(findNode("reporter"))
     val ticket = TicketData(getNodeAsInt(values(0)))
-    ticket(creationDate) = (getNodeAsDate(values(1)) -> ticketReporter)
-    ticket(updateDate) = (getNodeAsDate(values(2)) -> ticketReporter)
-    ticket(status) = (getNodeAsString(findNode("status")) -> ticketReporter)
-    ticket(description) = (getNodeAsString(findNode("description")) -> ticketReporter)
-    ticket(reporter) = (getNodeAsString(findNode("reporter")) -> ticketReporter)
-    ticket(resolution) = (getNodeAsString(findNode("resolution")) -> ticketReporter)
-    ticket(component) = (getNodeAsString(findNode("component")) -> ticketReporter)
-    ticket(tags) = (getNodeAsString(findNode("keywords")).split(' ').toSeq.sorted -> ticketReporter)
-    ticket(priority) = (getNodeAsString(findNode("priority")) -> ticketReporter)
-    ticket(summary) = (getNodeAsString(findNode("summary")) -> ticketReporter)
-    ticket(ticketType) = (getNodeAsString(findNode("type")) -> ticketReporter)
-    ticket(owner) = (getNodeAsString(findNode("owner")) -> ticketReporter)
-    ticket(milestone) = (getNodeAsString(findNode("milestone")) -> ticketReporter)
-    ticket(version) = (getNodeAsString(findNode("version")) -> ticketReporter)
+    ticket(creationDate) = getNodeAsDate(values(1))
+    ticket(updateDate) = getNodeAsDate(values(2))
+    ticket(status) = getNodeAsString(findNode("status"))
+    ticket(description) = getNodeAsString(findNode("description"))
+    ticket(reporter) = getNodeAsString(findNode("reporter"))
+    ticket(resolution) = getNodeAsString(findNode("resolution"))
+    ticket(component) = getNodeAsString(findNode("component"))
+    ticket(tags) = getNodeAsString(findNode("keywords")).split(' ').toSeq.sorted
+    ticket(priority) = getNodeAsString(findNode("priority"))
+    ticket(summary) = getNodeAsString(findNode("summary"))
+    ticket(ticketType) = getNodeAsString(findNode("type"))
+    ticket(owner) = getNodeAsString(findNode("owner"))
+    ticket(milestone) = getNodeAsString(findNode("milestone"))
+    ticket(version) = getNodeAsString(findNode("version"))
     ticket
   }
 
@@ -135,7 +135,8 @@ class TracImporter extends Importer {
       }
     }
 
-    ticket(updateDate) = ticket(creationDate) -> "(system)"
+    ticket(updateDate) = ticket(creationDate)
+    ticket(editor) = Some(reversedChanges.valuesIterator.next()(0).editor)
     ticket
   }
 
@@ -145,7 +146,8 @@ class TracImporter extends Importer {
       case head :: tail =>
         val newTicket = new TicketData(ticket)
         head._2.foreach(_.update(newTicket))
-        newTicket(updateDate) = head._1 -> "(system)"
+        newTicket(updateDate) = head._1
+        newTicket(editor) = Some(head._2(0).editor)
         newTicket :: nextTickets(newTicket, tail)
     }
 

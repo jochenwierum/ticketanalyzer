@@ -59,7 +59,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     node.created(comment(TicketCommentDataFields.created))
     node.modified(comment(TicketCommentDataFields.modified))
 
-    node.add(getPerson(comment(TicketCommentDataFields.author)))(Wrote)
+    node.add(getPerson(comment(TicketCommentDataFields.author)))(Created)
 
     node
   }
@@ -92,6 +92,13 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
 
     ticketData(tags).foreach(tag => ticket.add(getTag(tag))(HasTag))
     ticketData(sponsors).foreach(sponsor => getPerson(sponsor).add(ticket)(Sponsors))
+
+    ticketData(editor) match {
+      case Some(user) =>
+        val relationship = getPerson(user).add(ticket)(ChangedTicket)
+        relationship.changes(ticketData.updatedFields.filter(_ != "editor").toArray)
+      case None =>
+    }
 
     ticketData(comments).foreach { commentId =>
       commentList.indexWhere(_(TicketCommentDataFields.id) == commentId) match {

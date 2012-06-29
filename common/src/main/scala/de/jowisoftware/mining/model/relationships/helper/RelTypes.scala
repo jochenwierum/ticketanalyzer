@@ -25,7 +25,7 @@ object RelTypes {
   val hasPriority = ScalaRelationshipType("has_priority")
 
   val owns = ScalaRelationshipType("owns")
-  val wrote = ScalaRelationshipType("wrote")
+  val created = ScalaRelationshipType("created")
   val reported = ScalaRelationshipType("reported")
   val sponsors = ScalaRelationshipType("sponsors")
 

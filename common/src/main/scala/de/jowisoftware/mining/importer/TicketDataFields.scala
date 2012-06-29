@@ -3,6 +3,8 @@ package de.jowisoftware.mining.importer
 import java.util.Date
 
 object TicketDataFields extends FieldListData {
+  val editor = field[Option[String]]("user", None)
+
   val id = field("id", 0)
   val summary = field("summary", "")
   val description = field("description", "")

@@ -7,7 +7,7 @@ import TicketDataFields._
 object TicketData {
   def apply(id: Int) = {
     val result = new TicketData()
-    result(TicketDataFields.id) = (id, "(system)")
+    result(TicketDataFields.id) = id
     result
   }
 }

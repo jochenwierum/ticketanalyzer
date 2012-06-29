@@ -45,17 +45,17 @@ class GitImporter extends Importer {
     val commitData = CommitData(commit.getName)
     val commitAuthor = commit.getAuthorIdent.getName
 
-    commitData(author) = commitAuthor -> commitAuthor
-    commitData(date) = new Date(commit.getCommitTime) -> commitAuthor
-    commitData(message) = commit.getFullMessage -> commitAuthor
-    commitData(parents) = commit.getParents.map(_.getName).toSeq -> commitAuthor
+    commitData(author) = commitAuthor
+    commitData(date) = new Date(commit.getCommitTime)
+    commitData(message) = commit.getFullMessage
+    commitData(parents) = commit.getParents.map(_.getName).toSeq
 
     val walk = new TreeWalk(repository)
     walk.addTree(commit.getTree)
     commit.getParents.foreach(parent => walk.addTree(parent.getTree))
     walk.setFilter(TreeFilter.ANY_DIFF)
 
-    commitData(files) = DiffWalker.createList(walk) -> commitAuthor
+    commitData(files) = DiffWalker.createList(walk)
 
     events.loadedCommit(config("repositoryname"), commitData)
   }
