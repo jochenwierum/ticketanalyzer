@@ -203,7 +203,7 @@ class TracImporter extends Importer {
     XML.load(connection.getInputStream())
   }
 
-  private def sendRequest(data: String, connection: URLConnection): Unit = {
+  private def sendRequest(data: String, connection: URLConnection) {
     connection.setDoOutput(true)
     connection.setRequestProperty("Content-Type", "application/xml")
     val writer = new OutputStreamWriter(connection.getOutputStream())

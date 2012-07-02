@@ -1,14 +1,21 @@
 package de.jowisoftware.mining.importer.redmine
 
 import java.net.{URLEncoder, URL}
-
+import scala.Option.option2Iterable
 import scala.annotation.tailrec
 import scala.xml.{XML, Node}
+import org.joda.time.format.DateTimeFormat
+import de.jowisoftware.mining.importer.TicketDataFields.{updateDate, ticketType, summary, status, startDate, spentTime, reporter, relationships, progress, owner, id, eta, dueDate, description, creationDate, component}
+import de.jowisoftware.mining.importer.{TicketRelationship, TicketDataFields, TicketData, Importer, ImportEvents}
+import de.jowisoftware.util.XMLUtils.{NodeSeq2EnrichedNodeSeq, Node2EnrichedNode}
+import scala.xml.NodeSeq
 
-import de.jowisoftware.mining.importer.{Importer, ImportEvents}
-import de.jowisoftware.util.XMLUtils.XML2FormatableXML
+object RedmineImporter {
+  val dateParser = DateTimeFormat.forPattern("yyyy-MM-dd")
+  val timeParser = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
+}
 
-class RedmineImporter extends Importer {
+class RedmineImporter extends Importer with CachedItems {
   def userOptions = new RedmineOptions()
 
   def importAll(config: Map[String, String], events: ImportEvents) {
@@ -44,7 +51,52 @@ class RedmineImporter extends Importer {
   }
 
   def processTicket(ticketXML: Node, config: Map[String, String], events: ImportEvents) {
+    val baseTicket = createBaseTicket(ticketXML, config)
+    println(baseTicket)
+  }
+
+  def createBaseTicket(ticketXML: Node, config: Map[String, String]) = {
+    val ticket = new TicketData()
+    val nodeId = (ticketXML \ "id" text).toInt
+    ticket(id) = nodeId
+
     println(ticketXML.formatted)
+
+    def conditionalSet[T](desc: TicketDataFields.FieldDescription[T],
+        selector: Node => NodeSeq, evaluator: NodeSeq => T) {
+      val result = selector(ticketXML)
+      if (result.length > 0 && result.text != "") {
+        ticket(desc) = evaluator(result)
+      }
+    }
+
+    conditionalSet(ticketType, _ \ "tracker" \ "@id", id => getTracker(id.intText, config))
+    conditionalSet(status, _ \ "status" \ "@id", id => getStatus(id.intText, config))
+    conditionalSet(reporter, _ \ "author" \ "@id", id => getUser(id.intText, config))
+    conditionalSet(owner, _ \ "assigned_to" \ "@id", id => getUser(id.intText, config))
+    conditionalSet(component, _ \ "category" \ "@id", id => getCategory(id.intText, config))
+    conditionalSet(summary, _ \ "subject", _.text)
+    conditionalSet(description, _ \ "description", _.text)
+    conditionalSet(startDate, _ \ "start_date", ts => RedmineImporter.dateParser.parseDateTime(ts text).toDate)
+    conditionalSet(dueDate, _ \ "due_at", ts => RedmineImporter.dateParser.parseDateTime(ts text).toDate)
+    conditionalSet(progress, _ \ "done_ratio", _.intText)
+    conditionalSet(eta, _ \ "estimated_hours", _.intText)
+    conditionalSet(spentTime, _ \ "spent_hours", _.floatText)
+    conditionalSet(creationDate, _ \"created_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
+    conditionalSet(updateDate, _ \"update_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
+
+    ticket(relationships) = ((ticketXML \ "children" \ "issue") map {
+      node => TicketRelationship(node \ "@id" intText, TicketRelationship.RelationshipType.parentOf)
+    }) ++ ((ticketXML \ "relations" \ "relation") flatMap {
+      node =>
+        if (node \ "@issue_id" == nodeId)
+          Some(TicketRelationship(node \ "@id" intText,
+              RedmineParser.parseRelation(node \ "@relation_type" text)))
+        else
+          None
+    })
+
+    ticket
   }
 
   def retrieveXML(file: String, request: Map[String, String], config: Map[String, String]) = {

@@ -4,7 +4,7 @@ import de.jowisoftware.mining.importer.TicketRelationship.RelationshipType
 
 object TicketRelationship {
   object RelationshipType extends Enumeration {
-    val duplicates, duplicatedBy, references, parentOf, childOf, blocks = Value
+    val duplicates, duplicatedBy, references, parentOf, childOf, blocks, follows, precedes = Value
   }
 }
 

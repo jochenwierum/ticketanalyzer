@@ -11,7 +11,10 @@ object TicketDataFields extends FieldListData {
 
   val creationDate = field("creationDate", new Date)
   val updateDate = field("updateDate", new Date)
+  val startDate = field("startDate", new Date)
+  val dueDate = field("dueDate", new Date)
   val status = field("status", "")
+  val progress = field("progress", 0)
 
   val version = field("version", "")
   val fixedInVersion = field("fixedInVersion", "")
@@ -26,6 +29,7 @@ object TicketDataFields extends FieldListData {
   val votes = field("votes", 0)
   val eta = field("eta", 0)
   val sponsors = field("sponsors", Seq[String]())
+  val spentTime = field("spentTime", 0.0f)
 
   val ticketType = field("ticketType", "")
   val resolution = field("resolution", "")
