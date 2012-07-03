@@ -5,6 +5,7 @@ import scala.xml.Elem
 import scala.xml.Node
 import de.jowisoftware.util.XMLUtils._
 import scala.xml.NodeSeq
+import scala.annotation.tailrec
 
 trait CachedItems { this: RedmineImporter =>
   private var cachedUsers: mutable.Map[Int, String] = mutable.Map()
@@ -24,12 +25,12 @@ trait CachedItems { this: RedmineImporter =>
     ((node \ "@id" intText), (node \ "@name" text))
 
   def getStatus(id: Int, config: Map[String, String]) = {
-    fillMap(cachedStatus, "issue_statuses.xml", config, collectNode(_ \ "issue_status", getIdNameTupleFromNodes))
+    ensureFilledMap(cachedStatus, "issue_statuses.xml", config, collectNode(_ \ "issue_status", getIdNameTupleFromNodes))
     cachedStatus(id)
   }
 
   def getTracker(id: Int, config: Map[String, String]) = {
-    fillMap(cachedTracker, "projects/"+config("project")+".xml", config,
+    ensureFilledMap(cachedTracker, "projects/"+config("project")+".xml", config,
       collectNode(_ \ "trackers" \ "tracker", getIdNameTupleFromAttributes),
       Map("include" -> "trackers,issue_categories"))
 
@@ -37,34 +38,54 @@ trait CachedItems { this: RedmineImporter =>
   }
 
   def getCategory(id: Int, config: Map[String, String]) = {
-    fillMap(cachedCategories, "projects/"+config("project")+"/issue_categories.xml", config,
-        collectNode(_ \ "issue_category" , getIdNameTupleFromNodes))
+    ensureFilledMap(cachedCategories, "projects/"+config("project")+"/issue_categories.xml", config,
+      collectNode(_ \ "issue_category", getIdNameTupleFromNodes))
     cachedCategories(id)
   }
 
   def getProject(id: Int, config: Map[String, String]) = {
-    fillMap(cachedProjects, "projects.xml", config, collectNode(_ \ "project", getIdNameTupleFromNodes))
+    ensureFilledMap(cachedProjects, "projects.xml", config, collectNode(_ \ "project", getIdNameTupleFromNodes))
     cachedProjects(id)
   }
 
   def getIssue(id: Int, config: Map[String, String]) = {
-    fillMap(cachedTracker, "issue_statuses.xml", config, collectNode(_ \ "issue_status", getIdNameTupleFromNodes))
+    ensureFilledMap(cachedTracker, "issue_statuses.xml", config, collectNode(_ \ "issue_status", getIdNameTupleFromNodes))
     cachedIssues(id)
   }
 
   def getUser(id: Int, config: Map[String, String]) = {
-    fillMap(cachedUsers, "users.xml", config, collectNode(_ \ "user", {
+    ensureFilledMap(cachedUsers, "users.xml", config, collectNode(_ \ "user", {
       node => ((node \ "id" intText), (node \ "login" text))
     }))
 
     cachedUsers(id)
   }
 
-  def fillMap(map: mutable.Map[Int, String], url: => String, config: Map[String, String],
-      extractor: Elem => Seq[(Int, String)], args: Map[String, String] = Map()) =
+  def ensureFilledMap(map: mutable.Map[Int, String], url: => String, config: Map[String, String],
+    extractor: Elem => Seq[(Int, String)], args: Map[String, String] = Map()) =
     if (map.isEmpty) {
-      val xml = retrieveXML(url, args, config)
-      println(xml.formatted)
-      extractor(xml) foreach { entry => map += entry }
+      recFillMap(map, url, extractor, config, args, 0)
     }
+
+  @tailrec private def recFillMap(map: mutable.Map[Int, String], url: => String,
+    extractor: Elem => Seq[(Int, String)],
+    config: Map[String, String], args: Map[String, String] = Map(),
+    start: Int) {
+
+    val page = retrieveXML(url,
+      args ++ Map(
+        "offset" -> start.toString,
+        "limit" -> "25"),
+      config)
+
+    extractor(page) foreach { entry => map += entry }
+
+    val isPaged = (page \ "@limit").length > 0
+    val total = if (isPaged) (page \ "@total_count" intText) else 0
+    val newOffset = if (isPaged) ((page \ "@offset" intText) + (page \ "@limit" intText)) else 0
+
+    if (newOffset < total) {
+      recFillMap(map, url, extractor, config, args, newOffset)
+    }
+  }
 }
