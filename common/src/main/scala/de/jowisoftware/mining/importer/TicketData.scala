@@ -15,9 +15,6 @@ object TicketData {
 class TicketData(reference: TicketData) extends FieldList(TicketDataFields) {
   def this() = this(null)
 
-  data += creationDate -> (new Date(), "")
-  data += updateDate -> (new Date(), "")
-
   if (reference != null)
-    reference.data.foreach { case (k, v) => data += k -> v }
+    reference.data.foreach { data += _ }
 }
