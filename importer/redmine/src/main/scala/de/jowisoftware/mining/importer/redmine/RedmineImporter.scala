@@ -1,63 +1,101 @@
 package de.jowisoftware.mining.importer.redmine
 
-import java.net.{ URLEncoder, URL }
 import scala.Option.option2Iterable
-import scala.annotation.tailrec
-import scala.xml.{ XML, Node }
+import scala.xml.{ NodeSeq, Node, Elem }
 import org.joda.time.format.DateTimeFormat
-import de.jowisoftware.mining.importer.TicketDataFields.{ updateDate, ticketType, summary, status, startDate, spentTime, reporter, relationships, progress, owner, id, eta, dueDate, description, creationDate, component }
-import de.jowisoftware.mining.importer.{ TicketRelationship, TicketDataFields, TicketData, Importer, ImportEvents }
-import de.jowisoftware.util.XMLUtils.{ NodeSeq2EnrichedNodeSeq, Node2EnrichedNode }
-import scala.xml.NodeSeq
+import de.jowisoftware.mining.importer._
+import de.jowisoftware.mining.importer.TicketDataFields._
+import de.jowisoftware.mining.importer.TicketRelationship
+import de.jowisoftware.util.XMLUtils._
+import grizzled.slf4j.Logging
 
 object RedmineImporter {
   val dateParser = DateTimeFormat.forPattern("yyyy-MM-dd")
   val timeParser = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
 }
 
-class RedmineImporter extends Importer with CachedItems {
-  def userOptions = new RedmineOptions()
+private[redmine] class RedmineImporter(config: Map[String, String], events: ImportEvents)
+    extends Logging {
+  require(config contains "url")
+  require(config contains "key")
+  require(config contains "project")
+  require(config contains "repositoryname")
 
-  def importAll(config: Map[String, String], events: ImportEvents) {
-    processAllTickets(config, events)
+  private val client = new RedmineClient(config("url"), config("key"))
+  private val resolver = new CachedResolver(client)
+
+  def run() {
+    info("Counting tickets...")
+    countTickets
+    info("Importing tickets...")
+    importTickets
+    info("Importing finished.")
+    events.finish
   }
 
-  @tailrec private def processAllTickets(config: Map[String, String], events: ImportEvents, start: Int = 0) {
-    val page = retrieveXML("issues.xml",
-      Map("offset" -> start.toString,
-        "limit" -> "25",
-        "project_id" -> config("project")),
-      config)
-
-    page \ "issue" foreach { node =>
-      val xml = receiveTicket(node, config)
-      processTicket(xml, config, events)
-    }
-
-    val total = (page \ "@total_count" text).toInt
-    val newOffset = ((page \ "@offset" text).toInt + (page \ "@limit" text).toInt)
-
-    if (newOffset < total) {
-      processAllTickets(config, events, newOffset)
-    }
+  private def countTickets {
+    var count = 0L
+    client.retrivePagedXML("issues.xml", Map("project_id" -> config("project")),
+      node => count += (node \ "issue").length)
+    events.countedTickets(count)
   }
 
-  def receiveTicket(ticketXML: Node, config: Map[String, String]) = {
+  private def importTickets =
+    client.retrivePagedXML("issues.xml", Map("project_id" -> config("project")), { page =>
+      page \ "issue" foreach { node =>
+        val id = (node \ "id" text).toInt
+        val ticketXML = client.retrieveXML("issues/"+id+".xml", Map(
+          "include" -> "children,attachments,relations,changesets,journals"))
+        processTicket(ticketXML)
+      }
+    })
+
+  private def receiveTicket(ticketXML: Node) = {
     val id = (ticketXML \ "id" text).toInt
 
-    retrieveXML("issues/"+id+".xml", Map(
-      "include" -> "children,attachments,relations,changesets,journals"),
-      config)
+    client.retrieveXML("issues/"+id+".xml", Map(
+      "include" -> "children,attachments,relations,changesets,journals"))
   }
 
-  def processTicket(ticketXML: Node, config: Map[String, String], events: ImportEvents) {
-    val baseTicket = createBaseTicket(ticketXML, config)
-    println(baseTicket)
+  private def processTicket(ticketXML: Node) {
+    val project = (ticketXML \ "project" \ "@id" text)
+    debug("Import ticket "+(ticketXML \ "id" text)+" in project "+project)
+
+    val ticket = createTicket(ticketXML, project)
+    val comments = findComments(ticketXML)
+    debug("Parsing history")
+    val updates = createUpdates(ticketXML, comments, project)
+
+    debug("Creating history")
+    val baseTicket = createBaseTicket(ticket, updates)
+    val ticketHistory = createTicketHistory(ticket, updates)
+
+    events.loadedTicket(config("repositoryname"), ticketHistory, comments)
   }
 
-  def createBaseTicket(ticketXML: Node, config: Map[String, String]) = {
+  private def createBaseTicket(ticket: TicketData, updates: Seq[Seq[Change]]) = {
+    val baseTicket = new TicketData(ticket)
+    updates.reverse.foreach(_.reverse.foreach {
+      _.downgrade(baseTicket)
+    })
+    baseTicket
+  }
+
+  private def createTicketHistory(ticket: TicketData, updates: Seq[Seq[Change]]) = {
+    def createTickets(lastTicket: TicketData, updates: List[Seq[Change]]): List[TicketData] = updates match {
+      case changes :: tail =>
+        val newTicket = new TicketData(lastTicket)
+        changes.foreach(_.update(newTicket))
+        newTicket :: createTickets(newTicket, tail)
+      case Nil => Nil
+    }
+
+    ticket :: createTickets(ticket, updates.toList)
+  }
+
+  private def createTicket(ticketXML: Node, project: String) = {
     val ticket = new TicketData()
-    val nodeId = (ticketXML \ "id" text).toInt
+    val nodeId = (ticketXML \ "id" intText)
     ticket(id) = nodeId
 
     def conditionalSet[T](desc: TicketDataFields.FieldDescription[T],
@@ -68,20 +106,21 @@ class RedmineImporter extends Importer with CachedItems {
       }
     }
 
-    conditionalSet(ticketType, _ \ "tracker" \ "@id", id => getTracker(id.intText, config))
-    conditionalSet(status, _ \ "status" \ "@id", id => getStatus(id.intText, config))
-    conditionalSet(reporter, _ \ "author" \ "@id", id => getUser(id.intText, config))
-    conditionalSet(owner, _ \ "assigned_to" \ "@id", id => getUser(id.intText, config))
-    conditionalSet(component, _ \ "category" \ "@id", id => getCategory(id.intText, config))
+    conditionalSet(ticketType, _ \ "tracker" \ "@id", id => resolver.getTracker(project)(id.intText))
+    conditionalSet(status, _ \ "status" \ "@id", id => resolver.getStatus(id.intText))
+    conditionalSet(reporter, _ \ "author" \ "@id", id => resolver.getUser(id.intText))
+    conditionalSet(owner, _ \ "assigned_to" \ "@id", id => resolver.getUser(id.intText))
+    conditionalSet(component, _ \ "category" \ "@id", id => resolver.getCategory(id.intText))
     conditionalSet(summary, _ \ "subject", _.text)
     conditionalSet(description, _ \ "description", _.text)
     conditionalSet(startDate, _ \ "start_date", ts => RedmineImporter.dateParser.parseDateTime(ts text).toDate)
     conditionalSet(dueDate, _ \ "due_at", ts => RedmineImporter.dateParser.parseDateTime(ts text).toDate)
     conditionalSet(progress, _ \ "done_ratio", _.intText)
-    conditionalSet(eta, _ \ "estimated_hours", _.intText)
+    conditionalSet(eta, _ \ "estimated_hours", _.floatText)
     conditionalSet(spentTime, _ \ "spent_hours", _.floatText)
     conditionalSet(creationDate, _ \ "created_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
-    conditionalSet(updateDate, _ \ "update_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
+    conditionalSet(updateDate, _ \ "updated_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
+    conditionalSet(fixedInVersion, _ \ "fixed_version" \ "@id", id => resolver.getVersion(id.intText))
 
     ticket(relationships) = ((ticketXML \ "children" \ "issue") map {
       node => TicketRelationship(node \ "@id" intText, TicketRelationship.RelationshipType.parentOf)
@@ -97,18 +136,33 @@ class RedmineImporter extends Importer with CachedItems {
     ticket
   }
 
-  def retrieveXML(file: String, request: Map[String, String], config: Map[String, String]) = {
-    def encode(s: String) = URLEncoder.encode(s, "UTF-8")
-    val params = request map { case (key, value) => encode(key)+"="+encode(value) } mkString "&"
+  private def findComments(ticketXML: Node) = {
+    ticketXML \ "journals" \ "journal" flatMap { node =>
+      val text = (node \ "notes" text)
 
-    val rpcUrl = new URL(config("url") +
-      (if (!config("url").endsWith("/")) "/" else "") +
-      file +
-      (if (params.isEmpty) "" else "?"+params))
+      if (text.nonEmpty) {
+        val id = (node \ "@id" intText)
+        val author = resolver.getUser(node \ "user" \ "@id" intText)
+        val created = RedmineImporter.timeParser.parseDateTime(node \ "created_on" text).toDate
 
-    val connection = rpcUrl.openConnection()
-    connection.setRequestProperty("Content-Type", "application/xml")
-    connection.setRequestProperty("X-Redmine-API-Key", config("key"))
-    XML.load(connection.getInputStream())
+        val comment = new TicketCommentData()
+        comment(TicketCommentDataFields.id) = id
+        comment(TicketCommentDataFields.author) = author
+        comment(TicketCommentDataFields.modified) = created
+        comment(TicketCommentDataFields.created) = created
+        comment(TicketCommentDataFields.text) = text
+        Some(comment)
+      } else {
+        None
+      }
+    }
+  }
+
+  private def createUpdates(ticketXML: Node, comments: Seq[TicketCommentData], project: String) = {
+    ticketXML \ "journals" \ "journal" map { node =>
+      val id = (node \ "@id" intText)
+      val hasComment = comments.find(_(TicketCommentDataFields.id) == id).isDefined
+      new ChangeParser(resolver, project).createChangesList(hasComment, node)
+    }
   }
 }

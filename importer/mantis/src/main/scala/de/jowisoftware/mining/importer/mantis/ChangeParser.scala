@@ -59,7 +59,7 @@ class ChangeParser extends Logging {
       case "Summary" => wrapDefaultString(summary)
       case "Resolution" => wrapDefaultString(resolution)
 
-      case "ETA" => new SimpleChange(date, eta, ValueUtils.etaStringToInt(oldValue), ValueUtils.etaStringToInt(newValue), user)
+      case "ETA" => new SimpleChange(date, eta, ValueUtils.etaStringToFloat(oldValue), ValueUtils.etaStringToFloat(newValue), user)
 
       case "Platform" => new SplitChange(date, environment, 0, oldValue, newValue, user)
       case "OS" => new SplitChange(date, environment, 1, oldValue, newValue, user)

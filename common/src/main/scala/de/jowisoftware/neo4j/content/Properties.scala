@@ -19,6 +19,9 @@ trait Properties[A <: PropertyContainer] {
   protected def intProperty(name: String, default: Int = 0, indexed: Boolean = false) =
     new NodeProperty[Int, A](this, name, default, index(indexed, name)) with CastingObjectPersister[Int]
 
+  protected def floatProperty(name: String, default: Float = 0, indexed: Boolean = false) =
+    new NodeProperty[Float, A](this, name, default, index(indexed, name)) with CastingObjectPersister[Float]
+
   protected def anyProperty(name: String, default: Any = null, indexed: Boolean = false) =
     new NodeProperty[Any, A](this, name, default, index(indexed, name)) with CastingObjectPersister[Any]
 

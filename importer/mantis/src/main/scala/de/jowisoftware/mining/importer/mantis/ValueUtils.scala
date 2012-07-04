@@ -6,15 +6,15 @@ object ValueUtils {
   private val etaRegex = """([<>]?)\s*(\d+)\s*(.*)""".r
   private val etaRangeRegex = """(\d+)-(\d+)\s*(.*)""".r
 
-  def etaStringToInt(eta: String): Int = eta match {
+  def etaStringToFloat(eta: String): Float = eta match {
     case etaRegex(minMax, span, spanString) =>
-      val base = span.toInt * stringToFactor(spanString)
+      val base = span.toFloat * stringToFactor(spanString)
       minMax match {
         case ">" => base + 1
         case _ => base
       }
-    case etaRangeRegex(minSpan, maxSpan, spanString) => maxSpan.toInt * stringToFactor(spanString)
-    case _ => 0
+    case etaRangeRegex(minSpan, maxSpan, spanString) => maxSpan.toFloat * stringToFactor(spanString)
+    case _ => 0f
   }
 
   private def stringToFactor(s: String) = s match {

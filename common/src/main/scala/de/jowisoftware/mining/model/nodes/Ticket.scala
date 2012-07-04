@@ -28,7 +28,7 @@ class Ticket extends MiningNode {
   lazy val updateDate = dateProperty("time")
   lazy val creationDate = dateProperty("time")
   lazy val votes = intProperty("votes")
-  lazy val eta = intProperty("eta")
+  lazy val eta = floatProperty("eta")
   lazy val environment = stringProperty("environment")
   lazy val build = stringProperty("build")
 

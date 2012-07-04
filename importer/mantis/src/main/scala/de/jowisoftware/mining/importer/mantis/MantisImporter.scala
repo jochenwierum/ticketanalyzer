@@ -103,7 +103,7 @@ class MantisImporter extends Importer with Logging {
     ticket(comments) = allComments.map(_(TicketCommentDataFields.id))
     ticket(votes) = node("sponsorship_total").toInt
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild"))
-    ticket(eta) = ValueUtils.etaStringToInt(subnode("eta"))
+    ticket(eta) = ValueUtils.etaStringToFloat(subnode("eta"))
     ticket(reproducability) = subnode("reproducability")
     ticket(owner) = subnode("handler")
     ticket(relationships) = getRelationships(item \ "relationships")

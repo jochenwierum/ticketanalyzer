@@ -27,8 +27,8 @@ object TicketDataFields extends FieldListData {
   val reporter = field("reporter", "")
   val owner = field("owner", "")
   val votes = field("votes", 0)
-  val eta = field("eta", 0)
   val sponsors = field("sponsors", Seq[String]())
+  val eta = field("eta", 0.0f)
   val spentTime = field("spentTime", 0.0f)
 
   val ticketType = field("ticketType", "")
