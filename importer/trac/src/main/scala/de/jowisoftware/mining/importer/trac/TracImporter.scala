@@ -76,6 +76,7 @@ class TracImporter extends Importer {
     val ticket = TicketData(getNodeAsInt(values(0)))
     ticket(creationDate) = getNodeAsDate(values(1))
     ticket(updateDate) = getNodeAsDate(values(2))
+    ticket(startDate) = ticket(creationDate)
     ticket(status) = getNodeAsString(findNode("status"))
     ticket(description) = getNodeAsString(findNode("description"))
     ticket(reporter) = getNodeAsString(findNode("reporter"))

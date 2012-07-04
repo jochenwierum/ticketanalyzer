@@ -89,6 +89,7 @@ class MantisImporter extends Importer with Logging {
     ticket(summary) = node("summary")
     ticket(description) = (node("description")+"\n"+node("steps_to_reproduce")+"\n"+node("additional_information"))
     ticket(creationDate) = fromComplexDate(node("date_submitted"))
+    ticket(startDate) = ticket(creationDate)
     ticket(updateDate) = fromComplexDate(node("last_updated"))
     ticket(version) = node("version")
     ticket(build) = node("build")

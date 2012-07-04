@@ -25,12 +25,16 @@ class Ticket extends MiningNode {
   lazy val reporter = stringProperty("reporter")
   lazy val text = stringProperty("text")
   lazy val title = stringProperty("title")
-  lazy val updateDate = dateProperty("time")
-  lazy val creationDate = dateProperty("time")
+  lazy val updateDate = dateProperty("updateDate")
+  lazy val creationDate = dateProperty("creationDate")
+  lazy val startDate = dateProperty("startDate")
+  lazy val dueDate = dateProperty("dueDate")
   lazy val votes = intProperty("votes")
   lazy val eta = floatProperty("eta")
   lazy val environment = stringProperty("environment")
   lazy val build = stringProperty("build")
+  lazy val progress = intProperty("progress")
+  lazy val spentTime = floatProperty("spentTime")
 
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
 

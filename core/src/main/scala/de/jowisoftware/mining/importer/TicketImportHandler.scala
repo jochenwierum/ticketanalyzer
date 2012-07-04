@@ -75,6 +75,10 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticket.eta(ticketData(eta))
     ticket.environment(ticketData(environment))
     ticket.build(ticketData(build))
+    ticket.startDate(ticketData(startDate))
+    ticket.dueDate(ticketData(dueDate))
+    ticket.progress(ticketData(progress))
+    ticket.spentTime(ticketData(spentTime))
 
     getPerson(ticketData(reporter)).add(ticket)(Reported)
     ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
