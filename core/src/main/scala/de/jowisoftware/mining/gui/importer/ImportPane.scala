@@ -16,11 +16,12 @@ import scala.swing.BoxPanel
 import javax.swing.BoxLayout
 import javax.swing.Box
 import scala.swing.Swing
+import grizzled.slf4j.Logging
 
 class ImportPane(
     db: Database[RootNode],
     pluginManager: PluginManager,
-    parent: Frame) extends SplitPane(Orientation.Vertical) { self =>
+    parent: Frame) extends SplitPane(Orientation.Vertical) with Logging { self =>
 
   private class Task(val importer: Importer, val data: Map[String, String], val name: String) {
     override def toString =
@@ -113,6 +114,7 @@ class ImportPane(
 
     new Thread("importer-thread") {
       override def run = {
+        val start = System.currentTimeMillis
         try {
           val importer = new AsyncDatabaseImportHandler(
             db,
@@ -121,6 +123,7 @@ class ImportPane(
           }
           importer.run()
 
+          warn("Import process took "+(System.currentTimeMillis - start)+" ms")
           db.inTransaction { transaction: DBWithTransaction[RootNode] =>
             if (transaction.rootNode.state() < 1) {
               transaction.rootNode.state(1)
