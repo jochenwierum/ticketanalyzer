@@ -43,7 +43,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     commit.date(commitData(date))
     commit.message(commitData(message))
 
-    commit.add(getPerson(commitData(author)))(Owns)
+    commit.add(getPerson(commitData(author)), Owns)
 
     debug("Adding files...")
     addFiles(commitData, repository, commit)
@@ -55,7 +55,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     commitData(files).foreach {
       case (filename, value) =>
         val file = getFile(repository, filename)
-        val relation = commit.add(file)(ChangedFile)
+        val relation = commit.add(file, ChangedFile)
         relation.editType(value)
     }
   }
@@ -68,14 +68,14 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
         val file = repository.files.createFile()
         file.name(name)
         file.uid(repository.name()+"-"+name)
-        repository.files.add(file)(Contains)
+        repository.files.add(file, Contains)
         file
     }
 
   private def connectParents(commitData: CommitData, node: Commit, repository: CommitRepository) =
     commitData(parents).foreach { parentId =>
       repository.findCommit(parentId) match {
-        case Some(commit) => node.add(commit)(ChildOf)
+        case Some(commit) => node.add(commit, ChildOf)
         case None => addMissingLink(repository, parentId, node.id)
       }
     }
@@ -104,7 +104,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
           case Some(list) =>
             list.foreach { id =>
               trace("Adding reference from already visited node "+id)
-              transaction.getNode(id)(Commit).add(recentCommit)(ChildOf)
+              transaction.getNode(id, Commit).add(recentCommit, ChildOf)
             }
             map.remove(recentCommit.commitId())
         }

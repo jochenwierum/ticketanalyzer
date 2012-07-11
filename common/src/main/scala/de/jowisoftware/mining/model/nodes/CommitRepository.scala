@@ -2,9 +2,9 @@ package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.Direction
 
-import de.jowisoftware.mining.model.relationships.{ContainsFiles, Contains}
+import de.jowisoftware.mining.model.relationships.{ ContainsFiles, Contains }
 import de.jowisoftware.neo4j.content.NodeCompanion
-import helper.{MiningNode, HasName, EmptyNode}
+import helper.{ MiningNode, HasName, EmptyNode }
 
 object CommitRepository extends NodeCompanion[CommitRepository] {
   def apply = new CommitRepository
@@ -19,11 +19,11 @@ class CommitRepository extends MiningNode with HasName with EmptyNode {
         val commit = db.createNode(Commit)
         commit.commitId(id)
         commit.uid(uid)
-        this.add(commit)(Contains)
+        this.add(commit, Contains)
         commit
     }
   }
 
   def findCommit(id: String) = Commit.find(db, name()+"-"+id)
-  lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles)(FileRepository)
+  lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles, FileRepository)
 }

@@ -15,13 +15,13 @@ class RootNode extends MiningNode {
   def updateFrom(version: Int) = {}
 
   private def getCollection[T <: MiningNode](implicit nodeType: NodeCompanion[T]): T = {
-    val node = getFirstNeighbor(Direction.OUTGOING, Contains.relationType)(nodeType)
+    val node = getFirstNeighbor(Direction.OUTGOING, Contains.relationType, nodeType)
 
     node match {
       case Some(node) => node
       case _ =>
         val node = db.createNode(nodeType)
-        this.add(node)(Contains)
+        this.add(node, Contains)
         node
     }
   }

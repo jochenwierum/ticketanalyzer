@@ -16,11 +16,11 @@ private[neo4j] class DefaultTransaction[T <: Node](
   def failure = tx.failure()
 
   protected def getRootNode: T =
-    Node.wrapNeoNode(db.service.getReferenceNode(), this)(rootCompanion)
+    Node.wrapNeoNode(db.service.getReferenceNode(), this, rootCompanion)
 
-  def createNode[S <: Node](implicit companion: NodeCompanion[S]): S =
-    Node.wrapNeoNode(db.service.createNode(), this)
+  def createNode[S <: Node](companion: NodeCompanion[S]): S =
+    Node.wrapNeoNode(db.service.createNode(), this, companion)
 
-  def getNode[S <: Node](id: Long)(implicit companion: NodeCompanion[S]): S =
-    Node.wrapNeoNode(db.service.getNodeById(id), this)
+  def getNode[S <: Node](id: Long, companion: NodeCompanion[S]): S =
+    Node.wrapNeoNode(db.service.getNodeById(id), this, companion)
 }

@@ -19,16 +19,16 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
         val ticket = db.createNode(Ticket)
         ticket.ticketId(id)
         ticket.uid(uid)
-        this.add(ticket)(Contains)
+        this.add(ticket, Contains)
         ticket
     }
   }
 
   def findRecentVersionOf(tId: Int): Option[Ticket] =
-    Ticket.findAll(db, name()+"-"+tId+"-*").reduceOption{
+    Ticket.findAll(db, name()+"-"+tId+"-*").reduceOption {
       (t1, t2) =>
-      val v1 = t1.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
-      val v2 = t2.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
-      if (v1 > v2) t1 else t2
+        val v1 = t1.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
+        val v2 = t2.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
+        if (v1 > v2) t1 else t2
     }
 }

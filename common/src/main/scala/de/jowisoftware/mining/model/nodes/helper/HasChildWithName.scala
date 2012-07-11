@@ -21,7 +21,7 @@ protected trait HasChildWithName[A <: HasName] extends MiningNode {
       case None =>
         val node = db.createNode(creator)
         node.name(name)
-        add(node)(relationShip)
+        add(node, relationShip)
         node
     }
   }

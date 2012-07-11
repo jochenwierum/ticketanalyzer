@@ -15,8 +15,7 @@ import de.jowisoftware.neo4j.content.index.NodeIndexCreator
 object Node {
   def wrapNeoNode[T <: Node](
     neoNode: NeoNode,
-    db: DBWithTransaction[_ <: Node])(
-      implicit companion: NodeCompanion[T]): T = {
+    db: DBWithTransaction[_ <: Node], companion: NodeCompanion[T]): T = {
     val node = companion()
     node initWith (neoNode, db)
     node
@@ -49,7 +48,7 @@ trait Node extends Versionable with Properties[NeoNode] {
     sanityCheck(node)
   }
 
-  def add[T <: Relationship](other: Node)(implicit relType: RelationshipCompanion[T]): T = {
+  def add[T <: Relationship](other: Node, relType: RelationshipCompanion[T]): T = {
     def createRelationship(neoRelationship: Option[NeoRelationship]) = {
       val result = relType()
       val initRelationship = neoRelationship match {
@@ -83,24 +82,28 @@ trait Node extends Versionable with Properties[NeoNode] {
     ) yield node
   }
 
-  def getFirstNeighbor[T <: Node](direction: Direction = Direction.BOTH, relType: RelationshipType)(implicit nodeType: NodeCompanion[T]): Option[T] = {
+  def getFirstNeighbor[A <: Node](direction: Direction = Direction.BOTH,
+    relType: RelationshipType, nodeType: NodeCompanion[A]): Option[A] = {
+
     val targetClass = nodeType.apply().getClass().getName()
     innerNode.getRelationships(relType, direction).find { rel =>
       val otherNode = rel.getOtherNode(innerNode)
       otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
     } match {
-      case Some(node) => Some(Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB))
+      case Some(node) => Some(Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB, nodeType))
       case _ => None
     }
   }
 
-  def getOrCreate[A <: Node, B <: Relationship](direction: Direction = Direction.BOTH, relType: RelationshipCompanion[B])(implicit nodeType: NodeCompanion[A]): A = {
-    getFirstNeighbor(direction, relType.relationType) getOrElse {
-      val node = db.createNode
+  def getOrCreate[A <: Node, B <: Relationship](direction: Direction = Direction.BOTH, relType: RelationshipCompanion[B],
+    nodeType: NodeCompanion[A]): A = {
+
+    getFirstNeighbor(direction, relType.relationType, nodeType) getOrElse {
+      val node = db.createNode(nodeType)
       if (direction == Direction.INCOMING) {
-        node.add(this)(relType)
+        node.add(this, relType)
       } else {
-        this.add(node)(relType)
+        this.add(node, relType)
       }
       node
     }

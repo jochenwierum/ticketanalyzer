@@ -59,7 +59,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     node.created(comment(TicketCommentDataFields.created))
     node.modified(comment(TicketCommentDataFields.modified))
 
-    node.add(getPerson(comment(TicketCommentDataFields.author)))(Created)
+    node.add(getPerson(comment(TicketCommentDataFields.author)), Created)
 
     node
   }
@@ -80,26 +80,26 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticket.progress(ticketData(progress))
     ticket.spentTime(ticketData(spentTime))
 
-    getPerson(ticketData(reporter)).add(ticket)(Reported)
-    ticket.add(getMilestone(ticketData(milestone)))(InMilestone)
-    ticket.add(getVersion(ticketData(version)))(InVersion)
-    ticket.add(getVersion(ticketData(fixedInVersion)))(FixedInVersion)
-    ticket.add(getVersion(ticketData(targetVersion)))(Targets)
-    ticket.add(getType(ticketData(ticketType)))(HasType)
-    ticket.add(getComponent(ticketData(component)))(InComponent)
-    ticket.add(getStatus(ticketData(status)))(HasStatus)
-    getPerson(ticketData(owner)).add(ticket)(Owns)
-    ticket.add(getResolution(ticketData(resolution)))(HasResolution)
-    ticket.add(getPriority(ticketData(priority)))(HasPriority)
-    ticket.add(getSeverity(ticketData(severity)))(HasSeverity)
-    ticket.add(getReproducability(ticketData(reproducability)))(HasReproducability)
+    getPerson(ticketData(reporter)).add(ticket, Reported)
+    ticket.add(getMilestone(ticketData(milestone)), InMilestone)
+    ticket.add(getVersion(ticketData(version)), InVersion)
+    ticket.add(getVersion(ticketData(fixedInVersion)), FixedInVersion)
+    ticket.add(getVersion(ticketData(targetVersion)), Targets)
+    ticket.add(getType(ticketData(ticketType)), HasType)
+    ticket.add(getComponent(ticketData(component)), InComponent)
+    ticket.add(getStatus(ticketData(status)), HasStatus)
+    getPerson(ticketData(owner)).add(ticket, Owns)
+    ticket.add(getResolution(ticketData(resolution)), HasResolution)
+    ticket.add(getPriority(ticketData(priority)), HasPriority)
+    ticket.add(getSeverity(ticketData(severity)), HasSeverity)
+    ticket.add(getReproducability(ticketData(reproducability)), HasReproducability)
 
-    ticketData(tags).foreach(tag => ticket.add(getTag(tag))(HasTag))
-    ticketData(sponsors).foreach(sponsor => getPerson(sponsor).add(ticket)(Sponsors))
+    ticketData(tags).foreach(tag => ticket.add(getTag(tag), HasTag))
+    ticketData(sponsors).foreach(sponsor => getPerson(sponsor).add(ticket, Sponsors))
 
     ticketData(editor) match {
       case Some(user) =>
-        val relationship = getPerson(user).add(ticket)(ChangedTicket)
+        val relationship = getPerson(user).add(ticket, ChangedTicket)
         relationship.changes(ticketData.updatedFields.filter(_ != "editor").toArray)
       case None =>
     }
@@ -109,7 +109,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
         case -1 =>
         case position =>
           val commentNode = obtainComment(ticket, commentList(position))
-          ticket.add(commentNode)(HasComment)
+          ticket.add(commentNode, HasComment)
       }
     }
 
@@ -126,7 +126,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
             list.foreach {
               case (id, referenceType) =>
                 trace("Adding reference from already visited node "+id)
-                val ref = transaction.getNode(id)(Ticket).add(recentTicket)(References)
+                val ref = transaction.getNode(id, Ticket).add(recentTicket, References)
                 ref.referenceType(referenceType)
             }
             map.remove(recentTicket.ticketId())
@@ -138,7 +138,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     def connect(next: Seq[Ticket]): Unit = next match {
       case recent :: head :: tail =>
         trace("Connecting node "+recent.id+" with Node "+head.id)
-        head.add(recent)(Updates)
+        head.add(recent, Updates)
         connect(head :: tail)
       case recent :: Nil =>
     }
@@ -156,7 +156,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
           targetNode match {
             case Some(ticket) =>
               trace("Adding connection from ticket "+targetId+" to this one")
-              val ref = headTicket.add(ticket)(References)
+              val ref = headTicket.add(ticket, References)
               ref.referenceType(rel.ticketRelationship.toString)
             case None =>
               trace("Ticket "+targetId+" is not known yet - queuing operation up")
