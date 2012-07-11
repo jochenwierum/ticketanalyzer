@@ -2,13 +2,30 @@ package de.jowisoftware.mining.linker.trac
 
 import org.scalatest.FunSpec
 import de.jowisoftware.mining.linker.ScmLink
+import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.mining.model.nodes.RootNode
+import de.jowisoftware.mining.test.MockHelper
+import de.jowisoftware.mining.test.DBMockBuilder
+import org.jmock.api.ExpectationError
+import org.scalatest.TestFailedException
+import org.scalatest.StackDepthExceptionHelper
 
-class SvnScmScannerTest extends FunSpec {
-  private def check(text: String, expected: Set[ScmLink]) {
-    val scanner = new SvnScmScanner()
-    val result = scanner.scan(text)
+class ScmScannerTest extends FunSpec with MockHelper {
+  private def check(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode]) {
+    val scanner = new ScmScanner()
+    val repository = database.rootNode.commitRepositoryCollection.findOrCreateChild("git")
+    val result = scanner.scan(text, repository)
 
     assert(result === expected)
+  }
+
+  private def check(text: String, expected: Set[ScmLink]) {
+    prepareMock { implicit context =>
+      val builder = new DBMockBuilder
+      builder.createMock
+    } andCheck { database =>
+      check(text, expected, database)
+    }
   }
 
   private def link(id: String) = ScmLink(id, path = None)

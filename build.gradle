@@ -20,16 +20,15 @@ subprojects {
   dependencies {
     scalaTools 'org.scala-lang:scala-compiler:2.9.2'
     scalaTools 'org.scala-lang:scala-library:2.9.2'
-    
-    compile 'org.scala-lang:scala-library:2.9.2'
-    
-    //testCompile group: "org.scalamock", name: "scalamock-support_2.9.1", version: "latest.integration"
-    testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
 
-    compile 'ch.qos.logback:logback-classic:1.0.5'
-    compile 'ch.qos.logback:logback-access:1.0.5'
+    compile group: "org.scala-lang", name: "scala-library", version: "2.9.2"
     compile group: "org.scala-lang", name: "scala-swing", version: "2.9.2"
     compile group: "org.clapper", name: "grizzled-slf4j_2.9.2", version: "0.6.9"
+    compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.5"
+    compile group: "ch.qos.logback", name: "logback-access", version: "1.0.5"
+    
+    testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
+    testCompile group: "org.jmock", name: "jmock", version: "2.5.1"
     
 
     if (project.name != 'common') {

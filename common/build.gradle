@@ -1,9 +1,20 @@
 description = "The shared API for all plugins"
 
+configurations {
+  provided {
+    extendsFrom compile
+  }
+}
+
 dependencies {
   if (project.hasProperty("compact") && project.property("compact") == "true") {
     compile group: "org.neo4j", name: "neo4j", version: "1.8.M03"
   } else {
     compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03"
   }
+
+  provided group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
+  provided group: "org.jmock", name: "jmock", version: "2.5.1"
 }
+
+sourceSets.main.compileClasspath = configurations.provided
