@@ -1,14 +1,11 @@
 package de.jowisoftware.mining.linker.trac
 
 import org.scalatest.FunSpec
+
 import de.jowisoftware.mining.linker.ScmLink
-import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.test.MockHelper
-import de.jowisoftware.mining.test.DBMockBuilder
-import org.jmock.api.ExpectationError
-import org.scalatest.TestFailedException
-import org.scalatest.StackDepthExceptionHelper
+import de.jowisoftware.mining.test.{MockHelper, DBMockBuilder}
+import de.jowisoftware.neo4j.DBWithTransaction
 
 class ScmScannerTest extends FunSpec with MockHelper {
   private def check(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode]) {
@@ -60,6 +57,16 @@ class ScmScannerTest extends FunSpec with MockHelper {
       check("A test with log:/trunk@11:12 and [1:3/tags/v7]", Set(
         link("11", "/trunk"), link("12", "/trunk"),
         link("1", "/tags/v7"), link("2", "/tags/v7"), link("3", "/tags/v7")))
+    }
+
+    it("sould work with alpha numerical commit ids") {
+      prepareMock { implicit context =>
+        val builder = new DBMockBuilder
+        builder.createMock
+      } andCheck { database =>
+        check("Commit:123abc, commit:abc123 and commit:abc1234 are broken",
+          Set(link("123abc"), link("abc1234")), database)
+      }
     }
   }
 }

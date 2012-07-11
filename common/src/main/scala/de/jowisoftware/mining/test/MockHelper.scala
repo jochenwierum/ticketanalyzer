@@ -1,48 +1,68 @@
 package de.jowisoftware.mining.test
 
-import org.jmock.Mockery
 import org.scalatest.mock.JMockExpectations
-import org.jmock.api.ExpectationError
-import org.jmock.api.ExpectationErrorTranslator
 import org.scalatest.TestFailedException
 
-object MockHelper {
-  def mock[A <: AnyRef](name: String = "")(implicit context: Mockery, manifest: Manifest[A]): A =
-    if (name == "")
-      context.mock(manifest.erasure.asInstanceOf[Class[A]], manifest.erasure.getSimpleName)
-    else
-      context.mock(manifest.erasure.asInstanceOf[Class[A]], name)
-
-  def expecting(fun: JMockExpectations => Unit)(implicit context: Mockery) {
-    val e = new JMockExpectations
-    fun(e)
-    context.checking(e)
-  }
-}
+import org.easymock.EasyMock
+import org.easymock.EasyMock._
 
 trait MockHelper {
-  private object scalaTestErrorTranslator extends ExpectationErrorTranslator {
-    def translate(e: ExpectationError): Error = {
-      throw new TestFailedException(x => Option(e.toString()), Option(e), {
-        ex =>
-          ex.getStackTrace.indexWhere(el =>
-            el.getFileName == "JavaReflectionImposteriser.java" &&
-              el.getLineNumber == 33) + 2
-      })
+  class MockContext private[MockHelper] {
+    private var newMocks: Set[Object] = Set()
+    private var runningMocks: Set[Object] = Set()
+    EasyMock.createControl
+
+    def mock[A <: AnyRef](name: String = "")(implicit manifest: Manifest[A]): A = {
+      val obj = if (name == "")
+        createMock(manifest.erasure.getSimpleName, manifest.erasure.asInstanceOf[Class[A]])
+      else
+        createMock(name, manifest.erasure.asInstanceOf[Class[A]])
+
+      newMocks += obj
+      obj
     }
+
+    def replay(mock: Object) = {
+      EasyMock.replay(mock)
+      newMocks -= mock
+      runningMocks -= mock
+    }
+
+    private[MockHelper] def replay() = newMocks.foreach(EasyMock.replay(_))
+    private[MockHelper] def verify() = runningMocks.foreach(EasyMock.verify(_))
   }
 
-  class CheckWord[A](context: Mockery) {
-    def andCheck(block: A => Unit) {
+  private def rewriteExceptions[A](block: => A): A =
+    try {
       block
-      context.assertIsSatisfied
+    } catch {
+      case e: AssertionError =>
+        val skip = e.getStackTrace.indexWhere { frame =>
+          frame.getMethodName == "invoke" &&
+            frame.getClassName == "org.easymock.internal.ObjectMethodsFilter"
+        } + 2
+
+        val result = new TestFailedException(Option(e.getMessage),
+          Option(e.getCause), skip)
+        result.setStackTrace(e.getStackTrace)
+        throw result.severedAtStackDepth
+    }
+
+  class CheckWord[A](context: MockContext, parameters: A) {
+    def andCheck(block: A => Unit) = {
+      rewriteExceptions {
+        context.replay()
+        block(parameters)
+        context.verify()
+      }
     }
   }
 
-  def prepareMock[A](setup: Mockery => A): CheckWord[A] = {
-    val context = new Mockery
-    context.setExpectationErrorTranslator(scalaTestErrorTranslator)
-    val result = setup(context)
-    new CheckWord[A](context)
+  def prepareMock[A](setup: MockContext => A): CheckWord[A] = {
+    rewriteExceptions {
+      val context = new MockContext
+      val result = setup(context)
+      new CheckWord[A](context, result)
+    }
   }
 }

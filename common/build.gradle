@@ -14,7 +14,7 @@ dependencies {
   }
 
   provided group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
-  provided group: "org.jmock", name: "jmock", version: "2.5.1"
+  provided group: "org.easymock", name: "easymock", version: "3.1"
 }
 
 sourceSets.main.compileClasspath = configurations.provided

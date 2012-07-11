@@ -28,7 +28,7 @@ subprojects {
     compile group: "ch.qos.logback", name: "logback-access", version: "1.0.5"
     
     testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
-    testCompile group: "org.jmock", name: "jmock", version: "2.5.1"
+    testCompile group: "org.easymock", name: "easymock", version: "3.1"
     
 
     if (project.name != 'common') {
@@ -41,7 +41,8 @@ subprojects {
       logging.setLevel(LogLevel.INFO) 
       ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: classpath.asPath)
       ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
-          reporter(type: 'stdout')
+          reporter(type: 'stdout', config: "D")
+          //reporter(type: 'stdout', config: "DF")
       }
 
       if (oldLevel == null)
