@@ -36,6 +36,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   layout += selectionPanel -> Position.North
+  layout += pluginDetails -> Position.Center
   layout += linkButton -> Position.South
 
   listenTo(parent)
@@ -45,7 +46,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   reactions += {
     case DatabaseUpdated => updateComboBoxes
     case SelectionChanged(`pluginList`) => updateSelection()
-    case ButtonClicked(`linkButton`) => doLink
+    case ButtonClicked(`linkButton`) => doLink()
   }
 
   updateSelection
