@@ -11,17 +11,19 @@ class TicketScannerTest extends FunSpec {
     assert(result === expected)
   }
 
-  private def link(id: String) = TicketLink(id)
+  private def links(ids: String*) = ids.toSet.map { id: String => TicketLink(id) }
 
   describe("A TicketScanner") {
     it("should find #1 and #4") {
-      check("Implemented #1 and #4", Set(link("1"), link("4")))
+      check("Implemented #1 and #4", links("1", "4"))
     }
-  }
 
-  describe("A TicketScanner") {
     it("should find ticket:12 and ticket:26") {
-      check("Implemented ticket:26 and parts of ticket:12!", Set(link("12"), link("26")))
+      check("Implemented ticket:26 and parts of ticket:12!", links("12", "26"))
+    }
+
+    it("should support Mantis:12 and mantis: 14 (case insensitive with optional space)") {
+      check("Implemented Mantis:1, mantis:2, MantiS: 3 and Mantis: 4!", links("1", "2", "3", "4"))
     }
   }
 }
