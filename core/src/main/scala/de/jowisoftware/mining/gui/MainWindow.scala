@@ -35,6 +35,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   title = "Ticketanalyzer"
   contents = tabs
   size = new Dimension(640, 480)
+  minimumSize = new Dimension(640, 480)
   importPane.content.asInstanceOf[SplitPane].dividerLocation = .75
 
   updateView()

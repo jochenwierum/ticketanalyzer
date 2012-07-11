@@ -1,18 +1,73 @@
 package de.jowisoftware.mining
 
-import scala.swing.event.ValueChanged
-import scala.swing.{ CheckBox, TextField, PasswordField, Panel, Label, Alignment }
-import scala.swing.event.ButtonClicked
+import java.awt.Insets
+import scala.swing._
+import scala.swing.event.{ ValueChanged, ButtonClicked }
 
 trait UserOptions {
+  protected class CustomizedGridBagPanel(htmlDescrition: String) extends GridBagPanel {
+    var line = 1
+
+    def add(text: String, component: Component) = {
+      val constraints = new Constraints
+      constraints.gridx = 0
+      constraints.weighty = 0
+      constraints.fill = GridBagPanel.Fill.Horizontal
+
+      constraints.gridy = line
+      constraints.weightx = 0.3
+      constraints.insets = new Insets(0, 0, 4, 0)
+      layout(label(text)) = constraints
+
+      constraints.gridx = 1
+      constraints.weightx = 0.7
+      constraints.insets = new Insets(0, 4, 4, 0)
+      layout(component) = constraints
+
+      line = line + 1
+    }
+
+    private[UserOptions] def fillToBottom() {
+      val c = new Constraints
+      c.fill = GridBagPanel.Fill.Vertical
+      c.gridy = line
+      c.gridx = 0
+      c.weighty = 1
+      layout(new Label("")) = c
+    }
+
+    private[UserOptions] def addTitle() {
+      val constraints = new Constraints
+      constraints.gridx = 0
+      constraints.gridy = 0
+      constraints.weighty = 0
+      constraints.gridwidth = 2
+      constraints.insets = new Insets(8, 8, 8, 8)
+      constraints.fill = GridBagPanel.Fill.Horizontal
+
+      val label = new Label("<html>"+htmlDescrition+"</html>")
+      label.maximumSize = new Dimension(30, 800);
+      layout(label) = constraints
+    }
+  }
+
   protected var result: Map[String, String]
 
   def getUserInput: Map[String, String] = result
-  def getPanel(): Panel
+  def getPanel(): Panel = {
+    val panel = new CustomizedGridBagPanel(getHtmlDescription)
+    panel.addTitle
+    fillPanel(panel)
+    panel.fillToBottom
+    panel
+  }
+
+  def getHtmlDescription: String
+  def fillPanel(panel: CustomizedGridBagPanel)
 
   protected def label(text: String) = {
     val label = new Label(text+":")
-    label.xAlignment = Alignment.Left
+    label.horizontalAlignment = Alignment.Right
     label
   }
 

@@ -29,39 +29,33 @@ object MantisImporter {
   }
 }
 
-class MantisImporter extends Importer with Logging {
+class MantisImporter(config: Map[String, String], events: ImportEvents) extends Logging {
   import MantisImporter._
 
-  def userOptions(): UserOptions = new MantisOptions()
+  require(config contains "url")
+  require(config contains "username")
+  require(config contains "password")
+  require(config contains "project")
+  require(config contains "repositoryname")
 
-  def importAll(config: Map[String, String], events: ImportEvents) {
-    require(config contains "url")
-    require(config contains "username")
-    require(config contains "password")
-    require(config contains "project")
-    require(config contains "repositoryname")
+  val client = new SoapClient(config("url"))
 
-    val client = new SoapClient(config("url"))
-
-    processAllTickets(config, client, events)
-  }
-
-  private def processAllTickets(config: Map[String, String], client: SoapClient, events: ImportEvents) {
+  def run() {
     info("Counting tickets...")
-    events.countedTickets(countTickets(config, client))
+    events.countedTickets(countTickets)
 
     info("Importing tickets...")
     val scraper = new HTMLScraper(config("url"))
     scraper.login(config("username"), config("password"))
 
-    val items = receiveTickets(config, client)
-    items foreach { t => processTicket(t, events, config("repositoryname"), scraper) }
+    val items = receiveTickets
+    items foreach { t => processTicket(t, scraper) }
 
     scraper.logout
     info("Importing finished.")
   }
 
-  private def processTicket(item: Elem, events: ImportEvents, repository: String, scraper: HTMLScraper) {
+  private def processTicket(item: Elem, scraper: HTMLScraper) {
     val allComments = getComments(item \ "notes")
     val ticket = createTicket(item, allComments)
 
@@ -76,7 +70,7 @@ class MantisImporter extends Importer with Logging {
     val baseTicket = createBaseTicket(ticket, changesByDate)
     val allTickets = createTicketUpdates(baseTicket, changesByDate)
 
-    events.loadedTicket(repository, allTickets, allComments)
+    events.loadedTicket(config("repositoryname"), allTickets, allComments)
   }
 
   private def createTicket(item: Elem, allComments: Seq[TicketCommentData]) = {
@@ -168,12 +162,12 @@ class MantisImporter extends Importer with Logging {
     case _ => None
   }
 
-  private def countTickets(config: Map[String, String], client: SoapClient) = {
+  private def countTickets() = {
     def tickets(headers: NodeSeq) = headers \ "mc_project_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
     val perPage = 25
 
     @tailrec def count(lastId: Int, lastCount: Int, page: Int): Int = {
-      val items = tickets(getTicketHeaders(config, page, perPage, client))
+      val items = tickets(getTicketHeaders(page, perPage))
       val id = (items \ "id").last.text.toInt
 
       if (id == lastId) lastCount
@@ -182,12 +176,12 @@ class MantisImporter extends Importer with Logging {
     count(Integer.MIN_VALUE, 0, 1)
   }
 
-  private def receiveTickets(config: Map[String, String], client: SoapClient): Stream[Elem] = {
+  private def receiveTickets(): Stream[Elem] = {
     val perPage = 20
 
     def nextPage(pageNr: Int, lastId: Int): Stream[Elem] = {
       debug("Lazily fetching next "+perPage+" items")
-      val page = getPage(config, pageNr, perPage, client)
+      val page = getPage(pageNr, perPage)
       val items = page \ "mc_project_get_issuesResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
       val id = (items \ "id").last.text.toInt
 
@@ -205,25 +199,25 @@ class MantisImporter extends Importer with Logging {
     if (s.isEmpty) next
     else s.head.asInstanceOf[Elem] #:: toStream(s.tail, next)
 
-  private def getPage(config: Map[String, String], page: Int, perPage: Int, client: SoapClient) =
+  private def getPage(page: Int, perPage: Int) =
     client.sendMessage(
       <mc:mc_project_get_issues xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-        { getRequestContent(config, page, perPage, client) }
+        { getRequestContent(page, perPage) }
       </mc:mc_project_get_issues>) match {
         case SoapResult(r) => r
         case SoapError(t, m) => throw new RuntimeException("Error ("+t+") while listing tickets:"+m)
       }
 
-  private def getTicketHeaders(config: Map[String, String], page: Int, perPage: Int, client: SoapClient) =
+  private def getTicketHeaders(page: Int, perPage: Int) =
     client.sendMessage(
       <mc:mc_project_get_issue_headers xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-        { getRequestContent(config, page, perPage, client) }
+        { getRequestContent(page, perPage) }
       </mc:mc_project_get_issue_headers>) match {
         case SoapResult(r) => r
         case SoapError(t, m) => throw new RuntimeException("Error ("+t+") while listing ticket header:"+m)
       }
 
-  private def getRequestContent(config: Map[String, String], page: Int, perPage: Int, client: SoapClient) = Seq(
+  private def getRequestContent(page: Int, perPage: Int) = Seq(
     <username xsi:type="xsd:string">{ config("username") }</username>,
     <password xsi:type="xsd:string">{ config("password") }</password>,
     <project_id xsi:type="xsd:integer">{ config("project").toInt }</project_id>,

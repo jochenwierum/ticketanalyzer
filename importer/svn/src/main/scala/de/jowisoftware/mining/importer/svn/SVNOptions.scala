@@ -8,17 +8,12 @@ class SVNOptions extends UserOptions {
   protected var result = Map(("url" -> "https://jowisoftware.de:4443/svn/ssh"),
     ("username" -> ""), ("password" -> ""), ("repositoryname" -> "default"))
 
-  def getPanel(): Panel = new GridPanel(4, 2) {
-    contents += label("Url")
-    contents += text("url")
+  val getHtmlDescription = """<p><b>SVN Importer</b></p>"""
 
-    contents += label("User")
-    contents += text("username")
-
-    contents += label("Password")
-    contents += password("password")
-
-    contents += label("Repository name")
-    contents += text("repositoryname")
+  def fillPanel(panel: CustomizedGridBagPanel) {
+    panel.add("Url", text("url"))
+    panel.add("User", text("username"))
+    panel.add("Password", password("password"))
+    panel.add("Repository name", text("repositoryname"))
   }
 }

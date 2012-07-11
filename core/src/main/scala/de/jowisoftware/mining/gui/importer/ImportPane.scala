@@ -39,8 +39,6 @@ class ImportPane(
   private var importerOptions: UserOptions = _
   private var tasks: List[Task] = Nil
 
-  pluginDetails.horizontalScrollBarPolicy = BarPolicy.Never
-
   private val buttons = new GridPanel(2, 1) {
     contents += deleteButton
     contents += importButton

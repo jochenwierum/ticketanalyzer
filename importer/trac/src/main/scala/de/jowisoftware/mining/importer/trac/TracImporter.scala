@@ -10,53 +10,52 @@ import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer._
 import de.jowisoftware.util.XMLUtils
 
-class TracImporter extends Importer {
+object TracImporter {
+  private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
+}
+
+class TracImporter(config: Map[String, String], events: ImportEvents) {
   sealed abstract class UpdateInfo { val time: Date; val user: String }
   case class Comment(time: Date, user: String, text: String) extends UpdateInfo
 
-  private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
+  require(config.contains("url"))
+  require(config.contains("username"))
+  require(config.contains("password"))
+  require(config.contains("repositoryname"))
 
-  def userOptions = new TracOptions()
-
-  def importAll(config: Map[String, String], events: ImportEvents) {
-    require(config.contains("url"))
-    require(config.contains("username"))
-    require(config.contains("password"))
-    require(config.contains("repositoryname"))
-
+  def run() {
     try {
-      doImport(events, config)
+      setupAuth()
+      doImport()
     } finally {
       events.finish()
     }
   }
 
-  private def doImport(events: ImportEvents, config: Map[String, String]) {
-    setupAuth(config)
-
-    val ticketlist = receiveTicketNumbers(config)
+  private def doImport() {
+    val ticketlist = receiveTicketNumbers()
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map { node => (node \ "int").text.toInt }
     events.countedTickets(ticketIds.size)
     ticketIds.foreach { tId =>
-      val (tickets, comments) = getTicket(tId, config)
+      val (tickets, comments) = getTicket(tId)
       events.loadedTicket(config("repositoryname"), tickets, comments)
     }
   }
 
-  private def setupAuth(config: Map[String, String]) {
+  private def setupAuth() {
     Authenticator.setDefault(new Authenticator() {
       override def getPasswordAuthentication = new PasswordAuthentication(
         config("username"), config("password").toCharArray())
     })
   }
 
-  private def receiveTicketNumbers(config: Map[String, String]) =
-    retrieveXML(methodCall("ticket.query", <string>max=0</string>), config)
+  private def receiveTicketNumbers() =
+    retrieveXML(methodCall("ticket.query", <string>max=0</string>))
 
-  private def getTicket(id: Int, config: Map[String, String]): (List[TicketData], Seq[TicketCommentData]) = {
-    val ticket = createTicket(id, config)
-    val (comments, rawHistory) = parseHistory(receiveHistory(id, config), ticket)
+  private def getTicket(id: Int): (List[TicketData], Seq[TicketCommentData]) = {
+    val ticket = createTicket(id)
+    val (comments, rawHistory) = parseHistory(receiveHistory(id), ticket)
     val history = groupHistory(rawHistory)
     val baseTicket = createBaseTicket(ticket, history)
     val tickets = createTicketUpdates(baseTicket, history)
@@ -64,8 +63,8 @@ class TracImporter extends Importer {
     (tickets, comments)
   }
 
-  private def createTicket(id: Int, config: Map[String, String]): TicketData = {
-    val xml = receiveTicket(id, config)
+  private def createTicket(id: Int): TicketData = {
+    val xml = receiveTicket(id)
     val values = xml \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val subValues = values \ "struct" \ "member"
 
@@ -158,7 +157,7 @@ class TracImporter extends Importer {
   private def getNodeAsDate(parent: NodeSeq, default: Date = null) = {
     val value = getTypedContent(parent, "dateTime.iso8601", null)
     if (value != null)
-      dateFormat.parseDateTime(value).toDate()
+      TracImporter.dateFormat.parseDateTime(value).toDate()
     else
       default
   }
@@ -179,11 +178,11 @@ class TracImporter extends Importer {
     }
   }
 
-  private def receiveTicket(id: Int, config: Map[String, String]) =
-    retrieveXML(methodCall("ticket.get", <int>{ id }</int>), config)
+  private def receiveTicket(id: Int) =
+    retrieveXML(methodCall("ticket.get", <int>{ id }</int>))
 
-  private def receiveHistory(id: Int, config: Map[String, String]) =
-    retrieveXML(methodCall("ticket.changeLog", <int>{ id }</int>, <int>0</int>), config)
+  private def receiveHistory(id: Int) =
+    retrieveXML(methodCall("ticket.changeLog", <int>{ id }</int>, <int>0</int>))
 
   private def methodCall(name: String, params: Elem*) =
     <methodCall>
@@ -195,7 +194,7 @@ class TracImporter extends Importer {
       </params>
     </methodCall>
 
-  def retrieveXML(request: Elem, config: Map[String, String]) = {
+  def retrieveXML(request: Elem) = {
     val rpcurl = new URL(config("url"))
     val data = request.toString()
     val connection = rpcurl.openConnection()

@@ -8,11 +8,11 @@ class GitOptions extends UserOptions {
   protected var result = Map(("gitdir" -> "c:/temp/testrepos/.git"),
     ("repositoryname" -> "default"))
 
-  def getPanel(): Panel = new GridPanel(2, 2) {
-    contents += label("Git dir")
-    contents += text("gitdir")
+  val getHtmlDescription = """<p><b>Git Importer</b><br>
+    Import a local git repository</p>"""
 
-    contents += label("Repository name")
-    contents += text("repositoryname")
+  def fillPanel(panel: CustomizedGridBagPanel) {
+    panel.add("Git dir", text("gitdir"))
+    panel.add("Repository name", text("repositoryname"))
   }
 }

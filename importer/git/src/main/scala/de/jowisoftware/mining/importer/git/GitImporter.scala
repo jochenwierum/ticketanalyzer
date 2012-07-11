@@ -13,6 +13,8 @@ import org.eclipse.jgit.lib.RepositoryBuilder
 import org.eclipse.jgit.treewalk.filter.TreeFilter
 import de.jowisoftware.mining.importer.git.walker.DiffWalker
 import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.revwalk.RevCommit
 
 class GitImporter extends Importer {
   def userOptions = new GitOptions
@@ -41,7 +43,7 @@ class GitImporter extends Importer {
     logs.call
   }
 
-  private def importCommit(config: Map[String, String], events: de.jowisoftware.mining.importer.ImportEvents, repository: org.eclipse.jgit.lib.Repository, commit: org.eclipse.jgit.revwalk.RevCommit): Unit = {
+  private def importCommit(config: Map[String, String], events: ImportEvents, repository: Repository, commit: RevCommit): Unit = {
     val commitData = CommitData(commit.getName)
     val commitAuthor = commit.getAuthorIdent.getName
 

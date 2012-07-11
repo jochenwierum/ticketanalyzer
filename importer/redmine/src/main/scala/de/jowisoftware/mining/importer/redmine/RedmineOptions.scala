@@ -11,17 +11,12 @@ class RedmineOptions extends UserOptions {
     "project" -> "1",
     "repositoryname" -> "default")
 
-  def getPanel(): Panel = new GridPanel(4, 2) {
-    contents += label("Url")
-    contents += text("url")
+  val getHtmlDescription = "<b>Redmine Importer</b>"
 
-    contents += label("API-Key")
-    contents += text("key")
-
-    contents += label("Project id")
-    contents += text("project")
-
-    contents += label("Repository name")
-    contents += text("repositoryname")
+  def fillPanel(panel: CustomizedGridBagPanel) {
+    panel.add("Url", text("url"))
+    panel.add("API-Key", text("key"))
+    panel.add("Project id", text("project"))
+    panel.add("Repository name", text("repositoryname"))
   }
 }
