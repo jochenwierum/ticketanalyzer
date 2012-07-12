@@ -67,11 +67,15 @@ class ScmScannerTest extends FunSpec with MockHelper {
     it("sould work with alpha numerical commit ids") {
       prepareMock { implicit context =>
         val builder = new DBMockBuilder
-        builder.addCommitRepository("git", true)
+        val repository = builder.addCommitRepository("git", true)
+        val index = builder.addNodeIndex("Commit")
+        index.add("uid:git-123abc*", repository.addCommit("123abc123"))
+        index.add("uid:git-abc1234*", repository.addCommit("abc1234f"))
+        index.add("uid:git-abc123*", null)
         builder.finishMock
       } andCheck { database =>
-        check("Commit:123abc, commit:abc123 and commit:abc1234 are broken",
-          Set(link("123abc"), link("abc1234")), database)
+        check("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
+          Set(link("123abc123"), link("abc1234f")), database)
       }
     }
   }

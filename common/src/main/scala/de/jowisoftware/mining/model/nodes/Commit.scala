@@ -22,4 +22,8 @@ class Commit extends MiningNode {
   lazy val uid = stringProperty("uid", "", true)
   lazy val message = stringProperty("message")
   lazy val date = dateProperty("date")
+
+  def findPathTo(commit: Commit): Seq[Commit] = {
+    null
+  }
 }
