@@ -4,7 +4,7 @@ import org.scalatest.FunSpec
 
 import de.jowisoftware.mining.linker.ScmLink
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.test.{MockHelper, DBMockBuilder}
+import de.jowisoftware.mining.test.{ MockHelper, DBMockBuilder }
 import de.jowisoftware.neo4j.DBWithTransaction
 
 class ScmScannerTest extends FunSpec with MockHelper {
@@ -19,7 +19,12 @@ class ScmScannerTest extends FunSpec with MockHelper {
   private def check(text: String, expected: Set[ScmLink]) {
     prepareMock { implicit context =>
       val builder = new DBMockBuilder
-      builder.createMock
+      val repository = builder.addCommitRepository("git", false)
+      val index = builder.addNodeIndex("Commit")
+      expected.foreach { link =>
+        index.add("uid", "git-"+link.ref, repository.addCommit(link.ref))
+      }
+      builder.finishMock
     } andCheck { database =>
       check(text, expected, database)
     }
@@ -62,7 +67,8 @@ class ScmScannerTest extends FunSpec with MockHelper {
     it("sould work with alpha numerical commit ids") {
       prepareMock { implicit context =>
         val builder = new DBMockBuilder
-        builder.createMock
+        builder.addCommitRepository("git", true)
+        builder.finishMock
       } andCheck { database =>
         check("Commit:123abc, commit:abc123 and commit:abc1234 are broken",
           Set(link("123abc"), link("abc1234")), database)

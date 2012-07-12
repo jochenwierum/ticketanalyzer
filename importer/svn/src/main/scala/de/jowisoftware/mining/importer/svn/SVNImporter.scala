@@ -19,6 +19,8 @@ class SVNImporter extends Importer {
     require(config.contains("username"))
     require(config.contains("password"))
 
+    events.setupCommits(false)
+
     val authManager = new BasicAuthenticationManager(config("username"), config("password"))
     val svnOptions = SVNWCUtil.createDefaultOptions(true)
 
@@ -52,9 +54,8 @@ class SVNImporter extends Importer {
     data(CommitDataFields.author) = author
     data(date) = entry.getDate
 
-
     val changes = entry.getChangedPaths().asInstanceOf[java.util.Map[String, SVNLogEntryPath]].toMap
-    val splitChanges = changes.map {case (file, state) => splitPath(file) -> state}
+    val splitChanges = changes.map { case (file, state) => splitPath(file) -> state }
 
     data(files) = createFileList(splitChanges)
 
@@ -67,7 +68,7 @@ class SVNImporter extends Importer {
   }
 
   private def findParents(files: Set[(String, String, String)]) =
-    Set[String]() ++ files.map { file => file._1 + "-" + file._2 }
+    Set[String]() ++ files.map { file => file._1+"-"+file._2 }
 
   private def createFileList(pathMap: Map[(String, String, String), SVNLogEntryPath]) =
     pathMap.map {

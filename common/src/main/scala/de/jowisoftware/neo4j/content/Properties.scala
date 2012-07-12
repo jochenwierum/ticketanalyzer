@@ -34,6 +34,9 @@ trait Properties[A <: PropertyContainer] {
   protected def stringArrayProperty(name: String) =
     new NodeProperty[Array[String], A](this, name, Array[String](), NullIndex) with CastingObjectPersister[Array[String]]
 
+  protected def booleanProperty(name: String, default: Boolean = false) =
+    new NodeProperty[Boolean, A](this, name, default, NullIndex) with CastingObjectPersister[Boolean]
+
   private def index(realIndex: Boolean, name: String) =
     if (!realIndex) NullIndex
     else indexCreator.create(innerDB, content, getClass().getSimpleName, name)

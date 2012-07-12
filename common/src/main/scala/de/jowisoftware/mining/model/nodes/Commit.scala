@@ -9,6 +9,9 @@ object Commit extends NodeCompanion[Commit] {
 
   private[model] def find(db: DBWithTransaction[RootNode], uid: String) =
     findInIndex(db, "uid", uid)
+
+  private[model] def findAbbrev(db: DBWithTransaction[RootNode], uid: String) =
+    findInIndex(db, "uid:"+uid+"*")
 }
 
 class Commit extends MiningNode {

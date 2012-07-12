@@ -24,6 +24,13 @@ class CommitRepository extends MiningNode with HasName with EmptyNode {
     }
   }
 
-  def findCommit(id: String) = Commit.find(db, name()+"-"+id)
+  def findCommit(id: String) =
+    if (supportsAbbrev())
+      Commit.findAbbrev(db, name()+"-"+id)
+    else
+      Commit.find(db, name()+"-"+id)
+
   lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles, FileRepository)
+
+  lazy val supportsAbbrev = booleanProperty("supportsAbbrev", false)
 }

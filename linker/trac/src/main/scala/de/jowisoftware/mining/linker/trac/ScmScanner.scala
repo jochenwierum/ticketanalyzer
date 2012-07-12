@@ -3,6 +3,8 @@ package de.jowisoftware.mining.linker.trac
 import de.jowisoftware.mining.linker.ScmLink
 import scala.util.matching.Regex
 import de.jowisoftware.mining.model.nodes.CommitRepository
+import scala.util.matching.Regex.Match
+import de.jowisoftware.mining.model.nodes.Commit
 
 private[trac] object ScmScanner {
   private val singleRegexes = List("""r(\d+|[0-9a-fA-F]{1,32})""".r,
@@ -12,19 +14,14 @@ private[trac] object ScmScanner {
   private val rangeRegexes = List(new Regex("""r(\d+:\d+)""", "revs"),
     new Regex("""\[((?:\d+|[0-9a-fA-F]{1,32}):(?:\d+|[0-9a-fA-F]{1,32}))(/[^\]]+)?\]""", "revs", "path"),
     new Regex("""log:([^\s]+)?@((?:\d+|[0-9a-fA-F]{1,32}):(?:\d+|[0-9a-fA-F]{1,32}))""", "path", "revs"))
-
-  private def isNumeric(s: String) = s.matches("""^\d+$""")
 }
 
 private[trac] class ScmScanner {
   import ScmScanner._
 
   def scan(text: String, commitRepository: CommitRepository): Set[ScmLink] = {
-    val singleMatches = singleRegexes.flatMap(_.findAllIn(text).matchData.map { theMatch =>
-      if (theMatch.groupCount > 1 && theMatch.group(2) != null)
-        ScmLink(theMatch.group(1), path = Some(theMatch.group(2)))
-      else
-        ScmLink(theMatch.group(1))
+    val singleMatches = singleRegexes.flatMap(_.findAllIn(text).matchData.flatMap { theMatch =>
+      processSingleMatch(theMatch, commitRepository)
     }).toSet
 
     val rangeMatches = rangeRegexes.flatMap(_.findAllIn(text).matchData.flatMap { theMatch =>
@@ -37,6 +34,14 @@ private[trac] class ScmScanner {
 
     singleMatches ++ rangeMatches
   }
+
+  private def processSingleMatch(theMatch: Match, repository: CommitRepository): Option[ScmLink] =
+    repository.findCommit(theMatch.group(1)).map { commit =>
+      if (theMatch.groupCount == 2)
+        ScmLink(commit.commitId(), path = Option(theMatch.group(2)))
+      else
+        ScmLink(commit.commitId(), path = None)
+    }
 
   private def makeRange(rangeSpec: String, path: Option[String]): Seq[ScmLink] = {
     val rangeParts = rangeSpec.split(":")

@@ -13,15 +13,18 @@ trait NodeCompanion[T <: Node] {
     db.service.index.forNodes(manifest.erasure.getSimpleName)
 
   protected def findInIndex[A <: Node](db: DBWithTransaction[A], indexName: String, value: String)(implicit manifest: Manifest[T]): Option[T] = {
-
     val result = getIndex(db)(manifest).query(indexName, value).getSingle
+    Option(result).map(Node.wrapNeoNode(_, db, this))
+  }
 
-    if (result == null)
-      None
-    else
-      Some(Node.wrapNeoNode(result, db, this))
+  protected def findInIndex[A <: Node](db: DBWithTransaction[A], query: String)(implicit manifest: Manifest[T]): Option[T] = {
+    val result = getIndex(db)(manifest).query(query).getSingle
+    Option(result).map(Node.wrapNeoNode(_, db, this))
   }
 
   protected def findMultipleInIndex[A <: Node](db: DBWithTransaction[A], indexName: String, value: String)(implicit manifest: Manifest[T]) =
     getIndex(db)(manifest).query(indexName, value).iterator.map { result => Node.wrapNeoNode(result, db, this) }
+
+  protected def findMultipleInIndex[A <: Node](db: DBWithTransaction[A], query: String)(implicit manifest: Manifest[T]) =
+    getIndex(db)(manifest).query(query).iterator.map { result => Node.wrapNeoNode(result, db, this) }
 }

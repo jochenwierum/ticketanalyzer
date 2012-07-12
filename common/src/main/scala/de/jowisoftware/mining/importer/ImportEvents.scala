@@ -4,6 +4,8 @@ trait ImportEvents {
   def countedTickets(count: Long)
   def countedCommits(count: Long)
 
+  def setupCommits(supportsAbbrev: Boolean)
+
   /**
     * Loads a ticket with all its versions
     * @param tickets list of versions, ordered by date from old to new

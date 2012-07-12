@@ -10,8 +10,11 @@ import grizzled.slf4j.Logging
 private[importer] trait CommitImportHandler extends ImportEvents with Logging { this: GeneralImportHelper =>
   /** Missing commit links in the format: repository -> (parentCommit -> childNodeIDs*) */
   private var missingCommitLinks: Map[String, mutable.Map[String, List[Long]]] = Map()
+  private var supportsAbbrev = false
 
   def countedCommits(count: Long) {}
+
+  def setupCommits(supportsAbbrev: Boolean) = this.supportsAbbrev = supportsAbbrev
 
   abstract override def finish() {
     if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
@@ -23,6 +26,8 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
   def loadedCommit(repositoryName: String, commitData: CommitData) = {
     val repository = getCommitRepository(repositoryName)
+    if (!repository.supportsAbbrev() == supportsAbbrev)
+      repository.supportsAbbrev(supportsAbbrev)
 
     info("Inserting commit "+commitData(id)+" with "+commitData(files).size+" files")
     val node = createCommit(commitData, repository)
