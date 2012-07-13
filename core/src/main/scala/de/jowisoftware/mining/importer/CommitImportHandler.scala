@@ -1,19 +1,24 @@
 package de.jowisoftware.mining.importer
 
-import de.jowisoftware.mining.model.nodes._
-import de.jowisoftware.mining.model.relationships._
-import CommitDataFields._
-import java.util.Date
+import scala.collection.immutable.Queue
 import scala.collection.mutable
+
+import CommitDataFields.{parents, message, id, files, date, author}
+import de.jowisoftware.mining.model.nodes.{File, CommitRepository, Commit}
+import de.jowisoftware.mining.model.relationships.{Owns, Contains, ChildOf, ChangedFile}
 import grizzled.slf4j.Logging
 
 private[importer] trait CommitImportHandler extends ImportEvents with Logging { this: GeneralImportHelper =>
   /** Missing commit links in the format: repository -> (parentCommit -> childNodeIDs*) */
   private var missingCommitLinks: Map[String, mutable.Map[String, List[Long]]] = Map()
 
+  private var roots: Set[Commit] = Set()
+
   def countedCommits(count: Long) {}
 
   abstract override def finish() {
+    roots.foreach(rankNodes)
+
     if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
       error("There are unresolved commit parents which could not be imported:\n"+missingCommitLinks.toString)
     }
@@ -34,6 +39,8 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     connectMissingCommits(node, repository)
 
     debug("Commit "+commitData(id)+" finished")
+
+    roots += node
 
     safePointReached
   }
@@ -108,6 +115,27 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
             }
             map.remove(recentCommit.commitId())
         }
+    }
+  }
+
+  private def rankNodes(root: Commit) {
+    var todo: Queue[Commit] = Queue(root)
+    var i = 0
+
+    while (!todo.isEmpty) {
+      val (commit, tail) = todo.dequeue
+      val parents = commit.parents.toList
+
+      if (parents.forall(_.rank() != 0)) {
+        i += 1
+        if (i % 100 == 0) {
+          println(i)
+        }
+        commit.rank((0 /: parents)(_ max _.rank()) + 1)
+        safePointReached
+
+        todo = tail ++ commit.children
+      }
     }
   }
 }
