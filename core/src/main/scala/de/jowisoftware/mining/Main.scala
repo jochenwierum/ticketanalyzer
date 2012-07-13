@@ -35,14 +35,9 @@ object Main {
     SLF4JBridgeHandler.install()
 
     Swing.onEDT {
-      val dbPath = new File(basePath, settings.getString("db")).getCanonicalFile
       val pluginManager = preparePluginManager
       checkPlugins(pluginManager)
-
-      val db = if (compactMode)
-        new EmbeddedDatabase(dbPath, RootNode)
-      else
-        new EmbeddedDatabaseWithConsole(dbPath, RootNode)
+      val db = openDatabase
 
       new MainWindow(db, pluginManager).visible = true
     }
@@ -61,5 +56,13 @@ object Main {
       Dialog.showMessage(null, "No plugins found", "Critical Error", Dialog.Message.Error, null)
       System.exit(1)
     }
+  }
+
+  private def openDatabase: EmbeddedDatabase[RootNode] = {
+    val dbPath = new File(basePath, settings.getString("db")).getCanonicalFile
+    if (compactMode)
+      new EmbeddedDatabase(dbPath, RootNode)
+    else
+      new EmbeddedDatabaseWithConsole(dbPath, RootNode)
   }
 }

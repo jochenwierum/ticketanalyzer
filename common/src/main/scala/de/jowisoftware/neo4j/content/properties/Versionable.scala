@@ -32,8 +32,16 @@ trait Versionable {
   }
 
   protected def toString(id: Long, content: PropertyContainer): String =
-    content.getPropertyKeys().map({ key => key+"="+content.getProperty(key) }).
-      mkString("["+getClass.getSimpleName+" "+id+": ", ", ", "]")
+    content.getPropertyKeys()
+      .filter(!_.startsWith("_"))
+      .map(key => key+"="+shorten(content.getProperty(key)))
+      .mkString("["+getClass.getSimpleName+" "+id+": ", ", ", "]")
+
+  private def shorten(o: Object) = o match {
+    case s: String if s.length > 32 => '"' + s.substring(0, 29)+"...\""
+    case s: String => '"' + s + '"'
+    case o => o.toString
+  }
 
   def version: Int
   protected def initProperties = {}

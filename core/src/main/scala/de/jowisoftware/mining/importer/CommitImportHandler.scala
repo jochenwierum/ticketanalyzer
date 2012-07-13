@@ -127,23 +127,18 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
   private def rankNodes(root: Commit) {
     var todo: Queue[Commit] = Queue(root)
-    var i = 0
 
     while (!todo.isEmpty) {
       val (commit, tail) = todo.dequeue
       val parents = commit.parents.toList
 
-      todo = if (parents.forall(_.rank() == 0)) {
-        tail
-      } else {
-        i += 1
-        if (i % 100 == 0) {
-          println(i)
-        }
+      todo = if (commit.rank() == 0 && parents.forall(_.rank() != 0)) {
         commit.rank((0 /: parents)(_ max _.rank()) + 1)
         safePointReached
 
         tail ++ commit.children
+      } else {
+        tail
       }
     }
   }

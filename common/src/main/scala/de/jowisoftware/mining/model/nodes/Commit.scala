@@ -32,8 +32,4 @@ class Commit extends MiningNode {
 
   def parents =
     neighbors(Direction.OUTGOING, Seq(ChildOf.relationType)) map (_.asInstanceOf[Commit])
-
-  def findPathTo(commit: Commit): Seq[Commit] = {
-    null
-  }
 }
