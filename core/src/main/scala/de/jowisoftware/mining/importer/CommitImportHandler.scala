@@ -11,12 +11,16 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
   /** Missing commit links in the format: repository -> (parentCommit -> childNodeIDs*) */
   private var missingCommitLinks: Map[String, mutable.Map[String, List[Long]]] = Map()
   private var supportsAbbrev = false
+  private var roots: Set[Commit] = Set()
 
   def countedCommits(count: Long) {}
 
   def setupCommits(supportsAbbrev: Boolean) = this.supportsAbbrev = supportsAbbrev
 
   abstract override def finish() {
+    info("Ranking nodes")
+    roots.foreach(root => new CommitNodeRanker(root).run)
+
     if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
       error("There are unresolved commit parents which could not be imported:\n"+missingCommitLinks.toString)
     }
@@ -39,6 +43,10 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     connectMissingCommits(node, repository)
 
     debug("Commit "+commitData(id)+" finished")
+
+    if (commitData(parents).length == 0) {
+      roots += node
+    }
 
     safePointReached
   }
