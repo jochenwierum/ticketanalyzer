@@ -3,20 +3,23 @@ package de.jowisoftware.mining.importer
 import scala.collection.immutable.Queue
 import scala.collection.mutable
 
-import CommitDataFields.{parents, message, id, files, date, author}
-import de.jowisoftware.mining.model.nodes.{File, CommitRepository, Commit}
-import de.jowisoftware.mining.model.relationships.{Owns, Contains, ChildOf, ChangedFile}
+import CommitDataFields.{ parents, message, id, files, date, author }
+import de.jowisoftware.mining.model.nodes.{ File, CommitRepository, Commit }
+import de.jowisoftware.mining.model.relationships.{ Owns, Contains, ChildOf, ChangedFile }
 import grizzled.slf4j.Logging
 
 private[importer] trait CommitImportHandler extends ImportEvents with Logging { this: GeneralImportHelper =>
   /** Missing commit links in the format: repository -> (parentCommit -> childNodeIDs*) */
   private var missingCommitLinks: Map[String, mutable.Map[String, List[Long]]] = Map()
-
+  private var supportsAbbrev = false
   private var roots: Set[Commit] = Set()
 
   def countedCommits(count: Long) {}
 
+  def setupCommits(supportsAbbrev: Boolean) = this.supportsAbbrev = supportsAbbrev
+
   abstract override def finish() {
+    info("Ranking nodes")
     roots.foreach(rankNodes)
 
     if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
@@ -28,6 +31,8 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
   def loadedCommit(repositoryName: String, commitData: CommitData) = {
     val repository = getCommitRepository(repositoryName)
+    if (!repository.supportsAbbrev() == supportsAbbrev)
+      repository.supportsAbbrev(supportsAbbrev)
 
     info("Inserting commit "+commitData(id)+" with "+commitData(files).size+" files")
     val node = createCommit(commitData, repository)
@@ -40,7 +45,9 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
     debug("Commit "+commitData(id)+" finished")
 
-    roots += node
+    if (commitData(parents).length == 0) {
+      roots += node
+    }
 
     safePointReached
   }
@@ -126,7 +133,9 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
       val (commit, tail) = todo.dequeue
       val parents = commit.parents.toList
 
-      if (parents.forall(_.rank() != 0)) {
+      todo = if (parents.forall(_.rank() == 0)) {
+        tail
+      } else {
         i += 1
         if (i % 100 == 0) {
           println(i)
@@ -134,7 +143,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
         commit.rank((0 /: parents)(_ max _.rank()) + 1)
         safePointReached
 
-        todo = tail ++ commit.children
+        tail ++ commit.children
       }
     }
   }

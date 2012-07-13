@@ -20,8 +20,8 @@ trait Versionable {
 
   private def checkProperties(content: PropertyContainer) {
     val className = content.getProperty("_class")
-    require(className == getClass.getName(), "Expected node '" + getClass.getName + "' had type '"+
-        className+"'")
+    require(className == getClass.getName(), "Expected node '"+getClass.getName+"' had type '"+
+      className+"'")
 
     val nodeVersion = content.getProperty("_version").asInstanceOf[Int]
 
@@ -35,7 +35,7 @@ trait Versionable {
     content.getPropertyKeys().map({ key => key+"="+content.getProperty(key) }).
       mkString("["+getClass.getSimpleName+" "+id+": ", ", ", "]")
 
-  protected def version: Int
+  def version: Int
   protected def initProperties = {}
   protected def updateFrom(oldVersion: Int)
 }

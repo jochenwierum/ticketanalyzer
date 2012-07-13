@@ -11,6 +11,9 @@ object Commit extends NodeCompanion[Commit] {
 
   private[model] def find(db: DBWithTransaction[RootNode], uid: String) =
     findInIndex(db, "uid", uid)
+
+  private[model] def findAbbrev(db: DBWithTransaction[RootNode], uid: String) =
+    findInIndex(db, "uid:"+uid+"*")
 }
 
 class Commit extends MiningNode {
@@ -29,4 +32,8 @@ class Commit extends MiningNode {
 
   def parents =
     neighbors(Direction.OUTGOING, Seq(ChildOf.relationType)) map (_.asInstanceOf[Commit])
+
+  def findPathTo(commit: Commit): Seq[Commit] = {
+    null
+  }
 }

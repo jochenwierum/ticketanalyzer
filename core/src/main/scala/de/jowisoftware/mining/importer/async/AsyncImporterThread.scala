@@ -13,6 +13,8 @@ class AsyncImporterThread(config: Map[String, String], importer: Importer) exten
     def countedTickets(count: Long) = inner.countedTickets(count)
     def countedCommits(count: Long) = inner.countedCommits(count)
 
+    def setupCommits(supportsAbbrev: Boolean) = inner.setupCommits(supportsAbbrev)
+
     def loadedTicket(repository: String, tickets: List[TicketData], comments: Seq[TicketCommentData]) =
       inner.loadedTicket(repository, tickets, comments)
 

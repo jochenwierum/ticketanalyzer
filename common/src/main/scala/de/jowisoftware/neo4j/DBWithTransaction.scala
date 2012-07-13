@@ -21,10 +21,12 @@ trait DBWithTransaction[T <: Node] {
     */
   def failure
 
-  val rootNode: T = getRootNode
-  protected def getRootNode: T
+  val rootNode: T
 
-  private[neo4j] def service: AbstractGraphDatabase
+  /**
+    * Public only for testing
+    */
+  def service: AbstractGraphDatabase
 
   def createNode[T <: Node](companion: NodeCompanion[T]): T
   def getNode[T <: Node](id: Long, companion: NodeCompanion[T]): T

@@ -24,6 +24,7 @@ class GitImporter extends Importer {
     val git = new Git(repository)
 
     val countLogs = collectLogs(git)
+    events.setupCommits(true)
     events.countedCommits(countLogs.size)
 
     val commits = collectLogs(git)

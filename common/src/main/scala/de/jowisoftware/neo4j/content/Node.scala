@@ -42,12 +42,24 @@ trait Node extends Versionable with Properties[NeoNode] {
 
   protected final def getIndex = db.service.index.forNodes(getClass().getName)
 
-  private[neo4j] final def initWith(node: NeoNode, db: DBWithTransaction[_ <: Node]) {
+  /**
+    * Initialize a Node with a backing Neo4j Node object.
+    * This method is called on initialisation. There is normally no need to
+    * call this method manually. It is only public to inject mocks.
+    */
+  final def initWith(node: NeoNode, db: DBWithTransaction[_ <: Node]) {
     this.innerNode = node
     this.innerDB = db
     sanityCheck(node)
   }
 
+  /**
+    * Adds a relationship to another node.
+    * If such a relationship already exists and the
+    * {@link de.jowisoftware.neo4j.content.RelationshipCompanion} does not allow
+    * duplicates, the existing relationship is reused and returned. Otherwise
+    * a new relationship will be created and returned.
+    */
   def add[T <: Relationship](other: Node, relType: RelationshipCompanion[T]): T = {
     def createRelationship(neoRelationship: Option[NeoRelationship]) = {
       val result = relType()

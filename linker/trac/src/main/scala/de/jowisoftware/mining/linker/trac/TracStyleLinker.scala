@@ -22,8 +22,8 @@ class TracStyleLinker extends Linker {
       if (node.isInstanceOf[Ticket])
       ticket = node.asInstanceOf[Ticket]
     } {
-      scanner.scan(ticket.text(), events, ticket)
-      scanner.scan(ticket.title(), events, ticket)
+      scanner.scan(ticket.text(), events, ticket, commits)
+      scanner.scan(ticket.title(), events, ticket, commits)
       progress += 1
       events.reportProgress(progress, total, "Processing tickets")
     }
@@ -33,7 +33,7 @@ class TracStyleLinker extends Linker {
       if (node.isInstanceOf[Commit])
       commit = node.asInstanceOf[Commit]
     } {
-      scanner.scan(commit.message(), events, commit)
+      scanner.scan(commit.message(), events, commit, commits)
       progress += 1
       events.reportProgress(progress, total, "Processing commits")
     }

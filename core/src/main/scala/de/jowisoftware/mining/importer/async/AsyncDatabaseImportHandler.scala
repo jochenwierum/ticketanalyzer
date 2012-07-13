@@ -17,6 +17,7 @@ class AsyncDatabaseImportHandler(
   case class CountedCommits(count: Long) extends ImportEvent
   case class LoadedTicket(repository: String, tickets: List[TicketData], comments: Seq[TicketCommentData]) extends ImportEvent
   case class LoadedCommit(repository: String, commit: CommitData) extends ImportEvent
+  case class SetupCommits(supportsAbbrev: Boolean) extends ImportEvent
   case object Finish extends ImportEvent
 
   private val target = self
@@ -58,6 +59,8 @@ class AsyncDatabaseImportHandler(
             commitsDone += 1
             dbImporter.loadedCommit(repository, data)
             reportProgress
+          case SetupCommits(supportsAbbrev) =>
+            dbImporter.setupCommits(supportsAbbrev)
           case Finish =>
             toFinish = toFinish - 1
             if (toFinish == 0) {
@@ -80,4 +83,7 @@ class AsyncDatabaseImportHandler(
 
   def loadedCommit(repository: String, commit: CommitData) =
     target ! LoadedCommit(repository, commit)
+
+  def setupCommits(supportsAbbrev: Boolean) =
+    target ! SetupCommits(supportsAbbrev)
 }
