@@ -4,8 +4,8 @@ import de.jowisoftware.mining.linker.TicketLink
 import scala.util.matching.Regex
 
 private[trac] object TicketScanner {
-  private def ticketRegexes = List("""#(\d+)""".r, """ticket:(\d+)""".r,
-    new Regex("""(?i)mantis:\s?(\d+)"""))
+  private def ticketRegexes = List("""#(\d+)(?=\W|$)""".r, """ticket:(\d+)(?=\W|$)""".r,
+    new Regex("""(?i)mantis:\s?(\d+)(?=\W|$)"""))
 }
 
 private[trac] class TicketScanner {

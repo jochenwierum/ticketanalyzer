@@ -25,5 +25,9 @@ class TicketScannerTest extends FunSpec {
     it("should support Mantis:12 and mantis: 14 (case insensitive with optional space)") {
       check("Implemented Mantis:1, mantis:2, MantiS: 3 and Mantis: 4!", links(1, 2, 3, 4))
     }
+
+    it("should not find a link in #1test") {
+      check("A text with #1test in it", Set())
+    }
   }
 }

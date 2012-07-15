@@ -123,5 +123,9 @@ class ScmScannerTest extends FunSpec with MockHelper {
       checkWithStarLookups("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
         Set(link("123abc123"), link("abc1234f")), lookups, Nil)
     }
+
+    it("should not identify r2text nor log2:4test as a link") {
+      check("a text with t2text log2:4test in it", Set(), Nil)
+    }
   }
 }
