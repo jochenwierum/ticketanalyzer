@@ -1,39 +1,54 @@
 package de.jowisoftware.mining.test
 
-import org.easymock.EasyMock._
+import org.mockito.Mockito._
 import org.neo4j.graphdb.Node
-
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.model.nodes.helper.MiningNode
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.content.NodeCompanion
+import scala.collection.JavaConversions._
+import org.mockito.stubbing.OngoingStubbing
+import org.mockito.invocation.InvocationOnMock
+
+object NodeMockBuilder {
+  private var nextId = 1
+}
 
 class NodeMockBuilder[A <: MiningNode] private[test] (companion: NodeCompanion[A], name: String = "")(implicit context: MockContext) {
+  import NodeMockBuilder._
+  import context._
+
   private val wrapper = companion()
+  private var properties: List[String] = Nil
+  private var wrapperIsPrepared = false
+
   val mockedNode: Node = if (name != "")
     context.mock[Node](name)
   else
     context.mock[Node](wrapper.getClass.getSimpleName)
 
+  when(mockedNode.hasProperty("_version")).thenReturn(true)
+  when(mockedNode.getProperty("_version")).thenReturnSingle(Integer.valueOf(wrapper.version))
+
+  when(mockedNode.hasProperty("_class")).thenReturn(true)
+  when(mockedNode.getProperty("_class")).thenReturnSingle(wrapper.getClass.getName)
+
+  when(mockedNode.getId).thenReturn(nextId)
+  nextId += 1
+
+  when(mockedNode.getPropertyKeys).thenAnswer { _: InvocationOnMock => properties }
+
   final private[test] def finishMock(db: DBWithTransaction[RootNode]): A = {
-    val node = finishMockNode()
-    wrapper.initWith(node, db)
+    if (!wrapperIsPrepared) {
+      wrapperIsPrepared = true
+      wrapper.initWith(mockedNode, db)
+    }
     wrapper
   }
 
-  protected[test] def finishMockNode(): Node = {
-    expect(mockedNode.hasProperty("_version")).andReturn(true).anyTimes
-    expect(mockedNode.getProperty("_version")).andReturn(Integer.valueOf(wrapper.version)).anyTimes
-
-    expect(mockedNode.hasProperty("_class")).andReturn(true).anyTimes
-    expect(mockedNode.getProperty("_class")).andReturn(wrapper.getClass.getName).anyTimes
-
-    context.replay(mockedNode)
-    mockedNode
-  }
-
   def addReadOnlyAttribute(name: String, value: Object) {
-    expect(mockedNode.hasProperty(name)).andReturn(true).anyTimes
-    expect(mockedNode.getProperty(name)).andReturn(value).anyTimes
+    when(mockedNode.hasProperty(name)).thenReturn(true)
+    when(mockedNode.getProperty(name)).thenReturnSingle(value)
+    properties = name :: properties
   }
 }

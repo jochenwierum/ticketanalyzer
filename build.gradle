@@ -28,7 +28,7 @@ subprojects {
     compile group: "ch.qos.logback", name: "logback-access", version: "1.0.5"
     
     testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
-    testCompile group: "org.easymock", name: "easymock", version: "3.1"
+    testCompile group: "org.mockito", name: "mockito-all", version: "1.9.0"
     
 
     if (project.name != 'common') {

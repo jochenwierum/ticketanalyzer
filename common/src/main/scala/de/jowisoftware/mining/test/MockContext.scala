@@ -1,30 +1,31 @@
 package de.jowisoftware.mining.test
 
-import org.easymock.EasyMock
-import org.easymock.EasyMock._
+import org.mockito.Mockito
+import org.mockito.stubbing.OngoingStubbing
+import org.mockito.stubbing.Answer
+import org.mockito.invocation.InvocationOnMock
 
 class MockContext private[test] {
-  private var newMocks: Set[Object] = Set()
-  private var runningMocks: Set[Object] = Set()
+  class ThenReturnSingle[T](inner: OngoingStubbing[T]) {
+    def thenReturnSingle(o: T): OngoingStubbing[T] = {
+      inner.thenReturn(o, Seq[T](): _*)
+    }
+  }
+
+  implicit def returnFix[T](stub: OngoingStubbing[T]) = new ThenReturnSingle[T](stub)
+
+  implicit def blockToAnswer[T](block: InvocationOnMock => T) = new Answer[T] {
+    def answer(invocation: InvocationOnMock): T = block(invocation)
+  }
 
   def mock[A <: AnyRef](name: String = "")(implicit manifest: Manifest[A]): A = {
     val obj = if (name == "")
-      createMock(manifest.erasure.getSimpleName, manifest.erasure.asInstanceOf[Class[A]])
+      Mockito.mock(manifest.erasure.asInstanceOf[Class[A]], manifest.erasure.getSimpleName)
     else {
       val cleanName = name.replaceAll("""[^A-Za-z0-9_$]""", """\$""")
-      createMock(cleanName, manifest.erasure.asInstanceOf[Class[A]])
+      Mockito.mock(manifest.erasure.asInstanceOf[Class[A]], cleanName)
     }
 
-    newMocks += obj
     obj
   }
-
-  def replay(mock: Object) = {
-    EasyMock.replay(mock)
-    newMocks -= mock
-    runningMocks -= mock
-  }
-
-  private[test] def replay() = newMocks.foreach(EasyMock.replay(_))
-  private[test] def verify() = runningMocks.foreach(EasyMock.verify(_))
 }

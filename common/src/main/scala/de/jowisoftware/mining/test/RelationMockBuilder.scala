@@ -5,16 +5,16 @@ import org.neo4j.graphdb.Relationship
 
 import scala.collection.JavaConversions._
 
-import org.easymock.EasyMock._
+import org.mockito.Mockito._
 
 class RelationMockBuilder private[test] (sourceNode: Node, sinkNode: Node, name: String)(implicit context: MockContext) {
   val relationship = context.mock[Relationship](name)
 
   private[test] def finishMock(): Relationship = {
-    expect(relationship.getStartNode).andReturn(sourceNode).anyTimes
-    expect(relationship.getEndNode).andReturn(sinkNode).anyTimes
-    expect(relationship.getOtherNode(sinkNode)).andReturn(sourceNode).anyTimes
-    expect(relationship.getOtherNode(sourceNode)).andReturn(sinkNode).anyTimes
+    when(relationship.getStartNode).thenReturn(sourceNode)
+    when(relationship.getEndNode).thenReturn(sinkNode)
+    when(relationship.getOtherNode(sinkNode)).thenReturn(sourceNode)
+    when(relationship.getOtherNode(sourceNode)).thenReturn(sinkNode)
 
     relationship
   }

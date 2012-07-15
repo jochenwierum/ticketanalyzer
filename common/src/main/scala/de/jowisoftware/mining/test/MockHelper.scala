@@ -19,21 +19,10 @@ trait MockHelper {
         throw result.severedAtStackDepth
     }
 
-  class CheckWord[A](context: MockContext, parameters: A) {
-    def andCheck(block: A => Unit) = {
-      rewriteExceptions {
-        context.replay()
-        block(parameters)
-        context.verify()
-      }
-    }
-  }
-
-  def prepareMock[A](setup: MockContext => A): CheckWord[A] = {
+  def withMocks[A](block: MockContext => A): Unit = {
     rewriteExceptions {
       val context = new MockContext
-      val result = setup(context)
-      new CheckWord[A](context, result)
+      block(context)
     }
   }
 }

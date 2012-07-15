@@ -1,37 +1,86 @@
 package de.jowisoftware.mining.linker.trac
 
 import org.scalatest.FunSpec
-
 import de.jowisoftware.mining.linker.ScmLink
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.test.{ MockHelper, DBMockBuilder }
 import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.mining.model.nodes.Commit
+import org.mockito.Mockito._
+import org.neo4j.graphdb.Node
+import de.jowisoftware.mining.test.MockContext
+
+object ScmScannerTest {
+  val repositoryName = "git"
+}
 
 class ScmScannerTest extends FunSpec with MockHelper {
-  private def check(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode]) {
-    val scanner = new ScmScanner()
-    val repository = database.rootNode.commitRepositoryCollection.findOrCreateChild("git")
+  import ScmScannerTest._
+
+  private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode], generator: RangeGenerator) {
+    val scanner = new ScmScanner(generator)
+    val repository = database.rootNode.commitRepositoryCollection.findOrCreateChild(repositoryName)
     val result = scanner.scan(text, repository)
 
     assert(result === expected)
   }
 
-  private def check(text: String, expected: Set[ScmLink]) {
-    prepareMock { implicit context =>
+  private def check(text: String, expected: Set[ScmLink], ranges: List[(String, String)] = Nil) {
+    withMocks { implicit context =>
       val builder = new DBMockBuilder
-      val repository = builder.addCommitRepository("git", false)
+      val repository = builder.addCommitRepository(repositoryName, false)
       val index = builder.addNodeIndex("Commit")
+
       expected.foreach { link =>
-        index.add("uid", "git-"+link.ref, repository.addCommit(link.ref))
+        index.add("uid", repositoryName+"-"+link.ref, repository.addCommit(link.ref))
       }
-      builder.finishMock
-    } andCheck { database =>
-      check(text, expected, database)
+
+      val database = builder.finishMock
+      val generator = setupRangeMock(ranges, context, database)
+
+      realCheck(text, expected, database, generator)
     }
   }
 
-  private def link(id: String) = ScmLink(id, path = None)
-  private def link(id: String, path: String) = ScmLink(id, path = Some(path))
+  private def checkWithStarLookups(text: String, expected: Set[ScmLink],
+    lookups: Map[String, String],
+    ranges: List[(String, String)] = Nil) {
+    withMocks { implicit context =>
+      val builder = new DBMockBuilder
+      val repository = builder.addCommitRepository(repositoryName, true)
+      val index = builder.addNodeIndex("Commit")
+      lookups.foreach {
+        case (lookup, result) =>
+          if (result != null)
+            index.add(lookup, repository.addCommit(result))
+          else
+            index.add(lookup, null.asInstanceOf[Node])
+      }
+
+      val database = builder.finishMock
+      val generator = setupRangeMock(ranges, context, database)
+
+      realCheck(text, expected, database, generator)
+    }
+  }
+
+  private def setupRangeMock(ranges: List[(String, String)], context: MockContext, dbMock: DBWithTransaction[RootNode]): RangeGenerator = {
+    val generator = context.mock[RangeGenerator]()
+    for {
+      (commitId1, commitId2) <- ranges
+    } {
+      val rootNode = dbMock.rootNode
+      val collectionCollection = rootNode.commitRepositoryCollection
+      val commitCollection = collectionCollection.findOrCreateChild(repositoryName)
+      val commit1 = commitCollection.findCommit(commitId1).get
+      val commit2 = commitCollection.findCommit(commitId2).get
+      when(generator.findRange(commit1, commit2))
+        .thenReturn(Set(commit1, commit2))
+    }
+    generator
+  }
+
+  private def link(id: String, path: String = null) = ScmLink(id, path = Option(path))
 
   describe("A SvnScmScanner") {
     it("should find r1 and r4") {
@@ -50,33 +99,29 @@ class ScmScannerTest extends FunSpec with MockHelper {
 
     it("should find the ranges r23:24 and r10:12") {
       check("A test with r10:12 and r23:24", Set(
-        link("10"), link("11"), link("12"), link("23"), link("24")))
+        link("10"), link("12"), link("23"), link("24")),
+        ("23", "24") :: ("10", "12") :: Nil)
     }
 
     it("should find the ranges log:@11:12 and [1:3]") {
       check("A test with log:@11:12 and [1:3]", Set(
-        link("11"), link("12"), link("1"), link("2"), link("3")))
+        link("11"), link("12"), link("1"), link("3")),
+        ("1", "3") :: ("11", "12") :: Nil)
     }
 
     it("should find restricted ranges log:/trunk@11:12 and [1:3/tags/v7]") {
       check("A test with log:/trunk@11:12 and [1:3/tags/v7]", Set(
         link("11", "/trunk"), link("12", "/trunk"),
-        link("1", "/tags/v7"), link("2", "/tags/v7"), link("3", "/tags/v7")))
+        link("1", "/tags/v7"), link("3", "/tags/v7")),
+        ("1", "3") :: ("11", "12") :: Nil)
     }
 
     it("sould work with alpha numerical commit ids") {
-      prepareMock { implicit context =>
-        val builder = new DBMockBuilder
-        val repository = builder.addCommitRepository("git", true)
-        val index = builder.addNodeIndex("Commit")
-        index.add("uid:git-123abc*", repository.addCommit("123abc123"))
-        index.add("uid:git-abc1234*", repository.addCommit("abc1234f"))
-        index.add("uid:git-abc123*", null)
-        builder.finishMock
-      } andCheck { database =>
-        check("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
-          Set(link("123abc123"), link("abc1234f")), database)
-      }
+      val lookups: Map[String, String] = Map("uid:git-123abc*" -> "123abc123",
+        "uid:git-abc1234*" -> "abc1234f", "uid:git-abc123*" -> null)
+
+      checkWithStarLookups("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
+        Set(link("123abc123"), link("abc1234f")), lookups, Nil)
     }
   }
 }

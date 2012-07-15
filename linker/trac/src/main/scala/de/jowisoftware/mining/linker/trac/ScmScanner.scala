@@ -16,7 +16,7 @@ private[trac] object ScmScanner {
     new Regex("""(?i)log:([^\s]+)?@((?:[0-9a-fA-F]{1,32}|\d+):(?:\d+|[0-9a-fA-F]{1,32}))""", "path", "revs"))
 }
 
-private[trac] class ScmScanner {
+private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
   import ScmScanner._
 
   def scan(text: String, commitRepository: CommitRepository): Set[ScmLink] = {
@@ -33,7 +33,7 @@ private[trac] class ScmScanner {
 
   private def processRangeMatch(theMatch: Match, repository: CommitRepository): Seq[ScmLink] = {
     val path = if (theMatch.groupCount == 2)
-      Some(theMatch.group("path"))
+      Option(theMatch.group("path"))
     else
       None
 
@@ -55,7 +55,7 @@ private[trac] class ScmScanner {
       start <- repository.findCommit(rangeParts(0))
       end <- repository.findCommit(rangeParts(1))
     } yield {
-      new RangeGenerator(repository.db).findRange(start, end) map { commit => ScmLink(commit.commitId(), path = path) } toSeq
+      rangeGenerator.findRange(start, end) map { commit => ScmLink(commit.commitId(), path = path) } toSeq
     }
     commitRange getOrElse Seq()
   }

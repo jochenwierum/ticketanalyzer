@@ -5,7 +5,6 @@ import de.jowisoftware.mining.model.nodes.{ RootNode, CommitRepository }
 import de.jowisoftware.mining.model.nodes.helper.MiningNode
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.content.NodeCompanion
-import org.easymock.EasyMock._
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.model.nodes.CommitRepositoryRepository
@@ -15,9 +14,11 @@ import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.index.IndexManager
 import org.neo4j.graphdb.index.IndexHits
 
+import org.mockito.Mockito._
+
 class DBMockBuilder(implicit context: MockContext) {
   private var repositories: List[NodeMockBuilder[_]] = new NodeMockBuilder(CommitRepository) :: Nil
-  private var nodeIndex: Map[String, NodeIndexMock] = Map()
+  private var nodeIndex: Map[String, NodeIndexMockBuilder] = Map()
 
   private val service = context.mock[AbstractGraphDatabase]("service")
   private val indexManager = context.mock[IndexManager]()
@@ -32,20 +33,22 @@ class DBMockBuilder(implicit context: MockContext) {
   def finishMock = {
     val dbMock = context.mock[DBWithTransaction[RootNode]]("dbWithTransaction")
 
-    expect(dbMock.rootNode).andReturn(createRootNode(dbMock)).anyTimes
-    expect(dbMock.service).andReturn(createService).anyTimes
+    val service = createService
+    val rootNode = createRootNode(dbMock)
+    when(dbMock.rootNode).thenReturn(rootNode)
+    when(dbMock.service).thenReturn(service)
 
     dbMock
   }
 
   private def createService() = {
-    expect(service.index).andReturn(indexManager).anyTimes
+    when(service.index).thenReturn(indexManager)
     service
   }
 
   def addNodeIndex(name: String) = {
-    val index = new NodeIndexMock(name)
-    expect(indexManager.forNodes(name)).andReturn(index.index).anyTimes
+    val index = new NodeIndexMockBuilder(name)
+    when(indexManager.forNodes(name)).thenReturn(index.index)
     index
   }
 
@@ -59,18 +62,18 @@ class DBMockBuilder(implicit context: MockContext) {
   private def addRepositoryNodes(rootNodeMock: Node, db: DBWithTransaction[RootNode]) = {
     val repositoryCollection = new NodeMockBuilder(CommitRepositoryRepository)
 
-    val relations = repositories.map(repository =>
-      new RelationMockBuilder(repositoryCollection.mockedNode, repository.finishMockNode, "repositoryRelation").finishMock)
+    val relationshipsToRepositories = repositories.map(repository =>
+      new RelationMockBuilder(repositoryCollection.mockedNode, repository.mockedNode, "repositoryRelation").finishMock)
 
-    expect(repositoryCollection.mockedNode.getRelationships(Direction.OUTGOING, Contains.relationType))
-      .andReturn(relations)
-      .anyTimes()
+    when(repositoryCollection.mockedNode.getRelationships(Direction.OUTGOING, Contains.relationType))
+      .thenReturn(relationshipsToRepositories)
 
     val repositoryCollectionRelation = new RelationMockBuilder(rootNodeMock,
       repositoryCollection.mockedNode, "repositoryCollectionRelation")
 
-    expect(rootNodeMock.getRelationships(Contains.relationType, Direction.OUTGOING))
-      .andReturn(repositoryCollectionRelation.finishMockIterable).anyTimes
+    val relationshipsToCommits = repositoryCollectionRelation.finishMockIterable
+    when(rootNodeMock.getRelationships(Contains.relationType, Direction.OUTGOING))
+      .thenReturn(relationshipsToCommits)
 
     repositoryCollection.finishMock(db)
   }
