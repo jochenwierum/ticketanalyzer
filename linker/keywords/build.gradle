@@ -1,0 +1,12 @@
+description "keyword linker plugin"
+
+eclipse {
+  project {
+    name = 'linker-keywords'
+  }
+}
+
+dependencies {
+	compile group: 'org.apache.lucene', name: 'lucene-core', version: '3.6.0'
+	compile group: 'org.apache.lucene', name: 'lucene-analyzers', version: '3.6.0'
+}
