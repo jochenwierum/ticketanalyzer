@@ -15,8 +15,7 @@ object TracImporter {
 }
 
 class TracImporter(config: Map[String, String], events: ImportEvents) {
-  sealed abstract class UpdateInfo { val time: Date; val user: String }
-  case class Comment(time: Date, user: String, text: String) extends UpdateInfo
+  case class Comment(time: Date, user: String, text: String)
 
   require(config.contains("url"))
   require(config.contains("username"))
@@ -88,6 +87,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     ticket(owner) = getNodeAsString(findNode("owner"))
     ticket(milestone) = getNodeAsString(findNode("milestone"))
     ticket(version) = getNodeAsString(findNode("version"))
+    ticket(reporter) = ticketReporter
     ticket
   }
 
@@ -136,7 +136,9 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     }
 
     ticket(updateDate) = ticket(creationDate)
-    ticket(editor) = Some(reversedChanges.valuesIterator.next()(0).editor)
+    if (!reversedChanges.isEmpty) {
+      ticket(editor) = Some(reversedChanges.valuesIterator.next()(0).editor)
+    }
     ticket
   }
 
