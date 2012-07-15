@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.linker.trac
 
-import scala.collection.JavaConversions.iterableAsScalaIterable
+import scala.collection.JavaConversions._
 import org.neo4j.graphdb.Path
 import org.neo4j.graphdb.traversal.Evaluation
 import org.neo4j.graphdb.{ Node => NeoNode }
@@ -20,25 +20,26 @@ class Neo4jRangeGenerator(db: DBWithTransaction[RootNode]) extends RangeGenerato
       (c2, c1)
     }
 
-    val traverser = Traverser()
-    traverser.breadthFirst
-    traverser.relationships(ChildOf.relationType, Direction.OUTGOING)
-
     var nodes: Set[NeoNode] = Set()
-    traverser.evaluator {
-      path: Path =>
-        val currentCommit = Node.wrapNeoNode(path.endNode, db, Commit)
 
-        (currentCommit.rank() < c1.rank(), currentCommit.equals(end)) match {
-          case (false, true) =>
-            nodes ++= path.nodes
-            Evaluation.EXCLUDE_AND_PRUNE
-          case (false, false) => Evaluation.EXCLUDE_AND_PRUNE
-          case (true, _) => Evaluation.EXCLUDE_AND_CONTINUE
-        }
-    }
+    Traverser()
+      .depthFirst
+      .relationships(ChildOf.relationType, Direction.OUTGOING)
+      .evaluator {
+        path: Path =>
+          val currentCommit = Node.wrapNeoNode(path.endNode, db, Commit)
 
-    traverser.traverse(start.content)
+          val tmp = (currentCommit.rank() > end.rank(), currentCommit.equals(end)) match {
+            case (true, _) => Evaluation.EXCLUDE_AND_CONTINUE
+            case (false, true) =>
+              nodes ++= path.nodes
+              Evaluation.EXCLUDE_AND_PRUNE
+            case (false, false) => Evaluation.EXCLUDE_AND_PRUNE
+          }
+          tmp
+      }
+      .traverse(start.content).foreach { _ => }
+
     nodes map { node => Node.wrapNeoNode(node, db, Commit) }
   }
 }
