@@ -13,6 +13,6 @@ private[trac] class TicketScanner {
 
   def scan(text: String) =
     ticketRegexes.flatMap(_.findAllIn(text).matchData.map { theMatch =>
-      TicketLink(theMatch.group(1))
+      TicketLink(theMatch.group(1).toInt)
     }).toSet
 }

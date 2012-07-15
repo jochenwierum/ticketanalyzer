@@ -24,6 +24,7 @@ class TracStyleLinker extends Linker {
     } {
       scanner.scan(ticket.text(), events, ticket, commits)
       scanner.scan(ticket.title(), events, ticket, commits)
+      ticket.comments.foreach { c => scanner.scan(c.text(), events, ticket, commits) }
       progress += 1
       events.reportProgress(progress, total, "Processing tickets")
     }

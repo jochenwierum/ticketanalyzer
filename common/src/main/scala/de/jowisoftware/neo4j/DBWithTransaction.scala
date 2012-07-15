@@ -30,4 +30,5 @@ trait DBWithTransaction[T <: Node] {
 
   def createNode[T <: Node](companion: NodeCompanion[T]): T
   def getNode[T <: Node](id: Long, companion: NodeCompanion[T]): T
+  def getUnknownNode(id: Long): Node
 }

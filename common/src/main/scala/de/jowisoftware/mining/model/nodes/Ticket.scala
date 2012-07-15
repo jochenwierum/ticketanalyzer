@@ -5,6 +5,7 @@ import org.neo4j.graphdb.Direction
 import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.mining.model.relationships.HasComment
 
 object Ticket extends NodeCompanion[Ticket] {
   def apply = new Ticket
@@ -42,9 +43,14 @@ class Ticket extends MiningNode {
 
   def createComment(id: Int) = {
     val node = db.createNode(TicketComment)
+    add(node, HasComment)
     node.uid(createCommentUid(id))
     node
   }
 
   private def createCommentUid(id: Int) = uid().substring(0, uid().lastIndexOf('-') + 1) + id
+
+  def comments = neighbors(Direction.OUTGOING, Seq(HasComment.relationType)) map {
+    _.asInstanceOf[TicketComment]
+  }
 }

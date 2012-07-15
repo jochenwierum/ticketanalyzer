@@ -100,7 +100,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
           try {
             selectedPlugin.link(getSelectedTicketRepository(transaction),
               getSelectedCommitRepository(transaction), options,
-              new DatabaseLinkerHandler() with ConsoleProgressReporter with LinkerEventGui {
+              new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
                 val progressDialog = dialog
               })
 

@@ -4,9 +4,9 @@ sealed abstract class Link
 
 case class ScmLink(
   ref: String,
-  linkType: LinkType.LinkType = LinkType.Mentions,
+  linkType: LinkType.Value = LinkType.Mentions,
   path: Option[String] = None) extends Link
 
 case class TicketLink(
-  id: String,
-  linkType: LinkType.LinkType = LinkType.Mentions) extends Link
+  id: Int,
+  linkType: LinkType.Value = LinkType.Mentions) extends Link
