@@ -20,7 +20,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   private val pluginList = new ComboBox[Plugin](makePluginList)
   private var scmList = makeSCMList
   private var ticketList = makeTicketList
-  private val linkButton = new Button("link")
+  private val linkButton = new Button("Link")
   private val pluginDetails = new ScrollPane
 
   private var selectedPlugin: Linker = _
