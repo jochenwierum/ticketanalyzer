@@ -4,11 +4,11 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object File extends NodeCompanion[File] {
+object File extends NodeCompanion[File] with IndexAccess[File] {
   def apply = new File
 
   private[model] def find(db: DBWithTransaction[RootNode], repository: String, name: String) =
-    findInIndex(db, "uid", repository+"-"+name)
+    findInIndex(db, "uid", repository+"-"+name, this)
 }
 
 class File extends MiningNode with HasName {

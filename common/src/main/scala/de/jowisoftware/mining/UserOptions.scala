@@ -3,6 +3,7 @@ package de.jowisoftware.mining
 import java.awt.Insets
 import scala.swing._
 import scala.swing.event.{ ValueChanged, ButtonClicked }
+import scala.swing.event.SelectionChanged
 
 trait UserOptions {
   protected class CustomizedGridBagPanel(htmlDescrition: String) extends GridBagPanel {
@@ -92,10 +93,19 @@ trait UserOptions {
   protected def checkbox(name: String, text: String) = {
     val field = new CheckBox(text)
     field.text = text
-    field.selected = text.toLowerCase == "true"
+    field.selected = result(name).toLowerCase == "true"
     field.reactions += {
       case ButtonClicked(`field`) => result += (name -> field.selected.toString.toLowerCase)
     }
     field
+  }
+
+  protected def combobox(name: String, texts: Seq[String]) = {
+    val box = new ComboBox(texts)
+    box.selection.item = result(name)
+    box.selection.reactions += {
+      case SelectionChanged(`box`) => result += (name -> box.selection.item)
+    }
+    box
   }
 }

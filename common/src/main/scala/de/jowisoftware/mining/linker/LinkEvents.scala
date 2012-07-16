@@ -7,4 +7,5 @@ trait LinkEvents {
   def finish()
 
   def foundLink(source: MiningNode, link: Link)
+  def foundKeywords(source: MiningNode, keywords: Set[String])
 }

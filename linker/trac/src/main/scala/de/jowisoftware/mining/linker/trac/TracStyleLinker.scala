@@ -18,9 +18,7 @@ class TracStyleLinker extends Linker {
 
     var progress = 0
     for {
-      node <- tickets.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
-      if (node.isInstanceOf[Ticket])
-      ticket = node.asInstanceOf[Ticket]
+      ticket <- tickets.tickets
     } {
       scanner.scan(ticket.text(), events, ticket, commits)
       scanner.scan(ticket.title(), events, ticket, commits)
@@ -30,9 +28,7 @@ class TracStyleLinker extends Linker {
     }
 
     for {
-      node <- commits.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
-      if (node.isInstanceOf[Commit])
-      commit = node.asInstanceOf[Commit]
+      commit <- commits.commits
     } {
       scanner.scan(commit.message(), events, commit, commits)
       progress += 1

@@ -6,11 +6,11 @@ import org.neo4j.graphdb.RelationshipType
 import de.jowisoftware.neo4j.traversing.Traverser
 import helper._
 
-object TicketComment extends NodeCompanion[TicketComment] {
+object TicketComment extends NodeCompanion[TicketComment] with IndexAccess[TicketComment] {
   def apply = new TicketComment
 
   private[nodes] def find(db: DBWithTransaction[RootNode], uid: String) =
-    findInIndex(db, "uid", uid)
+    findInIndex(db, "uid", uid, this)
 }
 
 class TicketComment extends MiningNode {

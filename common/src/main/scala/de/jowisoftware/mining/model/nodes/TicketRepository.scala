@@ -31,4 +31,11 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
         val v2 = t2.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
         if (v1 > v2) t1 else t2
     }
+
+  def tickets =
+    for {
+      potentialTicket <- neighbors(Direction.OUTGOING, Seq(Contains.relationType))
+      if (potentialTicket.isInstanceOf[Ticket])
+      ticket = potentialTicket.asInstanceOf[Ticket]
+    } yield ticket
 }

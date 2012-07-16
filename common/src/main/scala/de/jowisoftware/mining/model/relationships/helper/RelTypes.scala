@@ -36,5 +36,6 @@ object RelTypes {
   val references = ScalaRelationshipType("references")
 
   val childOf = ScalaRelationshipType("child_of")
+
   val links = ScalaRelationshipType("links")
 }

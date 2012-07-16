@@ -7,6 +7,6 @@ eclipse {
 }
 
 dependencies {
-	compile group: 'org.apache.lucene', name: 'lucene-core', version: '3.6.0'
-	compile group: 'org.apache.lucene', name: 'lucene-analyzers', version: '3.6.0'
+	compile group: 'org.apache.lucene', name: 'lucene-core', version: '3.5.0'
+	compile group: 'org.apache.lucene', name: 'lucene-analyzers', version: '3.5.0'
 }

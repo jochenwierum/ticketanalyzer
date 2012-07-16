@@ -13,8 +13,14 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
     extends LinkEvents with AutoTransactions with Logging {
   val transactionThreshould = 50
 
-  def reportProgress(progress: Long, max: Long, message: String): Unit = {}
-  def finish(): Unit = {}
+  def reportProgress(progress: Long, max: Long, message: String) {}
+  def finish() {}
+
+  def foundKeywords(source: MiningNode, keywords: Set[String]) {
+    for (keyword <- keywords) {
+      root.keywordCollection.findOrCreateChild(keyword).add(source, Links).linkType("keyword")
+    }
+  }
 
   def foundLink(source: MiningNode, link: Link) {
     // we use a separate transaction here, so we have to re-lookup the node

@@ -30,6 +30,13 @@ class CommitRepository extends MiningNode with HasName with EmptyNode {
     else
       Commit.find(db, name()+"-"+id)
 
+  def commits =
+    for {
+      potentialCommit <- neighbors(Direction.OUTGOING, Seq(Contains.relationType))
+      if (potentialCommit.isInstanceOf[Commit])
+      commit = potentialCommit.asInstanceOf[Commit]
+    } yield commit
+
   lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles, FileRepository)
 
   lazy val supportsAbbrev = booleanProperty("supportsAbbrev", false)

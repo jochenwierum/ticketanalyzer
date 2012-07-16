@@ -6,14 +6,14 @@ import helper._
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.ChildOf
 
-object Commit extends NodeCompanion[Commit] {
+object Commit extends NodeCompanion[Commit] with IndexAccess[Commit] {
   def apply = new Commit
 
   private[model] def find(db: DBWithTransaction[RootNode], uid: String) =
-    findInIndex(db, "uid", uid)
+    findInIndex(db, "uid", uid, this)
 
   private[model] def findAbbrev(db: DBWithTransaction[RootNode], uid: String) =
-    findInIndex(db, "uid:"+uid+"*")
+    findInIndex(db, "uid:"+uid+"*", this)
 }
 
 class Commit extends MiningNode {

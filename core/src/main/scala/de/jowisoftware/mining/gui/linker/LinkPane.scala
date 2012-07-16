@@ -41,7 +41,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
 
   listenTo(parent)
   listenTo(linkButton)
-  listenTo(pluginList)
+  listenTo(pluginList.selection)
 
   reactions += {
     case DatabaseUpdated => updateComboBoxes

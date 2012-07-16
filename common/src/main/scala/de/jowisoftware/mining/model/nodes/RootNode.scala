@@ -43,4 +43,5 @@ class RootNode extends MiningNode {
   lazy val priorityCollection = getCollection(PriorityRepository)
   lazy val severityCollection = getCollection(SeverityRepository)
   lazy val reproducabilityCollection = getCollection(ReproducabilityRepository)
+  lazy val keywordCollection = getCollection(KeywordRepository)
 }

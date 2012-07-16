@@ -8,9 +8,9 @@ import de.jowisoftware.mining.model._
 
 protected trait HasChildWithName[A <: HasName] extends MiningNode {
   protected def findOrCreateChild(name: String,
-    relationShip: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[A]): A = {
+    relationship: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[A]): A = {
 
-    val neighbor = neighbors(Direction.OUTGOING, List(relationShip.relationType)).find {
+    val neighbor = neighbors(Direction.OUTGOING, List(relationship.relationType)).find {
       _ match {
         case node: HasName => node.name() == name
       }
@@ -21,7 +21,7 @@ protected trait HasChildWithName[A <: HasName] extends MiningNode {
       case None =>
         val node = db.createNode(creator)
         node.name(name)
-        add(node, relationShip)
+        add(node, relationship)
         node
     }
   }

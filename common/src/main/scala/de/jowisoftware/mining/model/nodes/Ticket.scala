@@ -6,15 +6,17 @@ import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.mining.model.relationships.HasComment
+import de.jowisoftware.neo4j.content.IndexAccess
+import de.jowisoftware.mining.model.relationships.HasTag
 
-object Ticket extends NodeCompanion[Ticket] {
+object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
 
   def find(db: DBWithTransaction[RootNode], uid: String) =
-    findInIndex(db, "uid", uid)
+    findInIndex(db, "uid", uid, this)
 
   def findAll(db: DBWithTransaction[RootNode], uidQuery: String) =
-    findMultipleInIndex(db, "uid", uidQuery)
+    findMultipleInIndex(db, "uid", uidQuery, this)
 }
 
 class Ticket extends MiningNode {
@@ -52,5 +54,9 @@ class Ticket extends MiningNode {
 
   def comments = neighbors(Direction.OUTGOING, Seq(HasComment.relationType)) map {
     _.asInstanceOf[TicketComment]
+  }
+
+  def tags = neighbors(Direction.OUTGOING, Seq(HasTag.relationType)) map {
+    _.asInstanceOf[Tag]
   }
 }
