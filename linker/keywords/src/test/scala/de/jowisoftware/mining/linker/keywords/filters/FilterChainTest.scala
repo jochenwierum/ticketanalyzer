@@ -10,22 +10,22 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
   "A filter Chain" should "accept by default" in {
     val chain = new FilterChain()
 
-    (chain.accepts(Set("1", "2", "3"))) should equal (Set("1", "2", "3"))
-    (chain.accepts(Set("a", "b"))) should equal (Set("a", "b"))
+    (chain.accepts(Set("1", "2", "3"))) should equal(Set("1", "2", "3"))
+    (chain.accepts(Set("a", "b"))) should equal(Set("a", "b"))
   }
 
   it should "accept when no filter matches" in {
     withMocks { context =>
       val filter: Filter = context.mock[Filter]("filter")
       val chain = new FilterChain()
-      when(filter.apply("x")).thenReturn(FilterResult.Next)
+      when(filter.apply("x")).thenReturn(FilterResult.Undecide)
       chain.addFilter(filter)
 
-      (chain.accepts(Set("x"))) should equal (Set("x"))
+      (chain.accepts(Set("x"))) should equal(Set("x"))
     }
   }
 
-  it should "accept word if a filter returns 'Keep'" in {
+  it should "accept word if a filter returns 'Accept'" in {
     withMocks { context =>
       val filter1: Filter = context.mock[Filter]("filter1")
       val filter2: Filter = context.mock[Filter]("filter2")
@@ -37,11 +37,11 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       chain.addFilter(filter2)
       chain.addFilter(filter3)
 
-      when(filter1.apply("word1")).thenReturn(FilterResult.Next)
-      when(filter2.apply("word1")).thenReturn(FilterResult.Keep)
-      when(filter1.apply("word2")).thenReturn(FilterResult.Keep)
+      when(filter1.apply("word1")).thenReturn(FilterResult.Undecide)
+      when(filter2.apply("word1")).thenReturn(FilterResult.Accept)
+      when(filter1.apply("word2")).thenReturn(FilterResult.Accept)
 
-      chain.accepts(list) should equal (list)
+      chain.accepts(list) should equal(list)
 
       verify(filter1).apply("word1")
       verify(filter2).apply("word1")
@@ -50,7 +50,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
     }
   }
 
-  it should "reject a word if a filter returns 'Remove'" in {
+  it should "reject a word if a filter returns 'Reject'" in {
     withMocks { context =>
       val filter1: Filter = context.mock[Filter]("filter1")
       val filter2: Filter = context.mock[Filter]("filter2")
@@ -60,10 +60,10 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       chain.addFilter(filter1)
       chain.addFilter(filter2)
 
-      when(filter1.apply("word1")).thenReturn(FilterResult.Remove)
-      when(filter1.apply("word2")).thenReturn(FilterResult.Remove)
+      when(filter1.apply("word1")).thenReturn(FilterResult.Reject)
+      when(filter1.apply("word2")).thenReturn(FilterResult.Reject)
 
-      chain.accepts(list) should equal (Set())
+      chain.accepts(list) should equal(Set())
 
       verify(filter1).apply("word1")
       verify(filter1).apply("word2")

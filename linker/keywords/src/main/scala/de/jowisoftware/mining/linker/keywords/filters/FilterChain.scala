@@ -7,14 +7,14 @@ class FilterChain {
   val filters = new ArrayBuffer[Filter]
 
   @tailrec private def checkWord(word: String, filterList: Iterator[Filter]): Boolean =
-    if(filterList.isEmpty) {
+    if (filterList.isEmpty) {
       true
     } else {
       val currentFilter = filterList.next
       currentFilter.apply(word) match {
-        case FilterResult.Keep => true
-        case FilterResult.Remove => false
-        case FilterResult.Next => checkWord(word, filterList)
+        case FilterResult.Accept => true
+        case FilterResult.Reject => false
+        case FilterResult.Undecide => checkWord(word, filterList)
       }
     }
 
