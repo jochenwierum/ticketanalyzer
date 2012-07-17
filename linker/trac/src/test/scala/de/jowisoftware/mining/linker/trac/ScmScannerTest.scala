@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.linker.trac
 
-import org.scalatest.FunSpec
+import org.scalatest.FlatSpec
 import de.jowisoftware.mining.linker.ScmLink
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.test.{ MockHelper, DBMockBuilder }
@@ -9,20 +9,23 @@ import de.jowisoftware.mining.model.nodes.Commit
 import org.mockito.Mockito._
 import org.neo4j.graphdb.Node
 import de.jowisoftware.mining.test.MockContext
+import org.scalatest.matchers.ShouldMatchers
 
 object ScmScannerTest {
   val repositoryName = "git"
 }
 
-class ScmScannerTest extends FunSpec with MockHelper {
+class ScmScannerTest extends FlatSpec with ShouldMatchers with MockHelper {
   import ScmScannerTest._
 
   private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode], generator: RangeGenerator) {
+    info("testing: '"+text+"'")
+
     val scanner = new ScmScanner(generator)
     val repository = database.rootNode.commitRepositoryCollection.findOrCreateChild(repositoryName)
     val result = scanner.scan(text, repository)
 
-    assert(result === expected)
+    (result) should equal(expected)
   }
 
   private def check(text: String, expected: Set[ScmLink], ranges: List[(String, String)] = Nil) {
@@ -82,50 +85,48 @@ class ScmScannerTest extends FunSpec with MockHelper {
 
   private def link(id: String, path: String = null) = ScmLink(id, path = Option(path))
 
-  describe("A SvnScmScanner") {
-    it("should find r1 and r4") {
-      check("Fixed r1 and r4", Set(link("1"), link("4")))
-    }
+  "A SvnScmScanner" should "find changesets starting with 'r'" in {
+    check("Fixed r1 and r4", Set(link("1"), link("4")))
+  }
 
-    it("should find changeset:1 and [4]") {
-      check("Fixed changeset:1 and [4]", Set(link("1"), link("4")))
-    }
+  it should "find single changeset with 'changeset' and braces" in {
+    check("Fixed changeset:1 and [4]", Set(link("1"), link("4")))
+  }
 
-    it("should find restricted changeset:2/trunk and [27/tags/v1]") {
-      check("Fixed changeset:2/trunk and [27/tags/v1]",
-        Set(link("2", "/trunk"),
-          link("27", "/tags/v1")))
-    }
+  it should "find restricted single changesets (with pathes)" in {
+    check("Fixed changeset:2/trunk and [27/tags/v1]",
+      Set(link("2", "/trunk"),
+        link("27", "/tags/v1")))
+  }
 
-    it("should find the ranges r23:24 and r10:12") {
-      check("A test with r10:12 and r23:24", Set(
-        link("10"), link("12"), link("23"), link("24")),
-        ("23", "24") :: ("10", "12") :: Nil)
-    }
+  it should "find ranges starting with 'r'" in {
+    check("A test with r10:12 and r23:24", Set(
+      link("10"), link("12"), link("23"), link("24")),
+      ("23", "24") :: ("10", "12") :: Nil)
+  }
 
-    it("should find the ranges log:@11:12 and [1:3]") {
-      check("A test with log:@11:12 and [1:3]", Set(
-        link("11"), link("12"), link("1"), link("3")),
-        ("1", "3") :: ("11", "12") :: Nil)
-    }
+  it should "find ranges starting with 'log' and braces" in {
+    check("A test with log:@11:12 and [1:3]", Set(
+      link("11"), link("12"), link("1"), link("3")),
+      ("1", "3") :: ("11", "12") :: Nil)
+  }
 
-    it("should find restricted ranges log:/trunk@11:12 and [1:3/tags/v7]") {
-      check("A test with log:/trunk@11:12 and [1:3/tags/v7]", Set(
-        link("11", "/trunk"), link("12", "/trunk"),
-        link("1", "/tags/v7"), link("3", "/tags/v7")),
-        ("1", "3") :: ("11", "12") :: Nil)
-    }
+  it should "find restricted ranges (with path names)" in {
+    check("A test with log:/trunk@11:12 and [1:3/tags/v7]", Set(
+      link("11", "/trunk"), link("12", "/trunk"),
+      link("1", "/tags/v7"), link("3", "/tags/v7")),
+      ("1", "3") :: ("11", "12") :: Nil)
+  }
 
-    it("sould work with alpha numerical commit ids") {
-      val lookups: Map[String, String] = Map("uid:git-123abc*" -> "123abc123",
-        "uid:git-abc1234*" -> "abc1234f", "uid:git-abc123*" -> null)
+  it should "sould work with alpha numerical commit ids" in {
+    val lookups: Map[String, String] = Map("uid:git-123abc*" -> "123abc123",
+      "uid:git-abc1234*" -> "abc1234f", "uid:git-abc123*" -> null)
 
-      checkWithStarLookups("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
-        Set(link("123abc123"), link("abc1234f")), lookups, Nil)
-    }
+    checkWithStarLookups("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
+      Set(link("123abc123"), link("abc1234f")), lookups, Nil)
+  }
 
-    it("should not identify r2text nor log2:4test as a link") {
-      check("a text with t2text log2:4test in it", Set(), Nil)
-    }
+  it should "not identify ranges with text as a link" in {
+    check("a text with t2text log2:4test in it", Set(), Nil)
   }
 }
