@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 class NumericFilterTest extends AbstractFilterTest {
-  protected def newFilter = new NumericFilter
+  protected def newFilter = NumericFilter
 
   "A NumericFilter" should "not reject words without digits" in {
     check("hello", FilterResult.Undecide)

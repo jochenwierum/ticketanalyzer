@@ -2,15 +2,15 @@ package de.jowisoftware.mining.linker.keywords.filters
 
 import scala.io.Source
 
-class WordListFilterTest extends AbstractFilterTest {
+class WordListAcceptFilterTest extends AbstractFilterTest {
   protected def wordSorce = Source.fromString(
     """ok
       |allow
       |correct""".stripMargin)
 
-  protected def newFilter: Filter = new WordListFilter(wordSorce)
+  protected def newFilter = new WordListAcceptFilter(wordSorce)
 
-  "A WordListFilter" should "accept words from the word source" in {
+  "A WordListAcceptFilter" should "accept words from the word source" in {
     check("ok", FilterResult.Accept)
     check("coRRect", FilterResult.Accept)
   }
@@ -19,4 +19,6 @@ class WordListFilterTest extends AbstractFilterTest {
     check("error", FilterResult.Undecide)
     check("unknown", FilterResult.Undecide)
   }
+
+  it should behave like nonConsumeableFilter("ok", FilterResult.Accept)
 }

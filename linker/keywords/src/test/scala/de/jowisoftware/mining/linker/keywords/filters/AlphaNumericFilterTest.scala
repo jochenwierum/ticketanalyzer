@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 class AlphaNumericFilterTest extends AbstractFilterTest {
-  protected def newFilter = new AlphaNumericFilter
+  protected def newFilter = AlphaNumericFilter
 
   "A AlphaNumericFilter" should "not reject words without digits" in {
     check("hello", FilterResult.Undecide)

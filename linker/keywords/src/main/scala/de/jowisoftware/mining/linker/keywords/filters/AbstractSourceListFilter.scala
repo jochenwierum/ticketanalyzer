@@ -1,17 +1,20 @@
 package de.jowisoftware.mining.linker.keywords.filters
 
 import scala.io.Source
-import java.net.URI
 
-class WordListFilter(source: Source) extends Filter {
+abstract class AbstractSourceListFilter(private var source: Source) extends Filter {
+  protected val matchResult: FilterResult.Value
+  protected val noMatchResult: FilterResult.Value
+
   def isInFile(word: String): Boolean = {
     val lowerWord = word.toLowerCase
+    source = source.reset
     source.getLines.find(lowerWord == _.toLowerCase).isDefined
   }
 
   def apply(word: String): FilterResult.Value =
     isInFile(word) match {
-      case true => FilterResult.Accept
-      case false => FilterResult.Undecide
+      case true => matchResult
+      case false => noMatchResult
     }
 }
