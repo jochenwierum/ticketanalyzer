@@ -40,7 +40,7 @@ class KeywordLinkerOptions extends UserOptions {
     panel.add("Reject numbers", checkbox("filterNum", "Remove words like '2'"))
     panel.add("Reject alphanumerical words", checkbox("filterAlphaNum", "Remove words like 'r4'"))
     panel.add("Accept uppercase abbrevs", checkbox("filterAbbrevs", "Accepts words like 'REST'"))
-    panel.add("Accept uppercase abbrevs", checkbox("filterCamelCase", "Accepts words like 'HelloWorld'"))
+    panel.add("Accept CamelCase words", checkbox("filterCamelCase", "Accepts words like 'HelloWorld'"))
     panel.add("Accept by wordlist", checkbox("filterWhitelist", "Accept all words (regexes) in settings/keywordwhitelist.txt"))
     panel.add("Reject by wordlist", checkbox("filterBlacklist", "Reject words (regexes) in settings/keywordblacklist.txt"))
     panel.addSpace()

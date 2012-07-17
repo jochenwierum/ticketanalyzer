@@ -1,37 +1,72 @@
 package de.jowisoftware.mining.linker.keywords
 
 import scala.collection.immutable.Map
+import de.jowisoftware.mining.linker.LinkEvents
+import de.jowisoftware.mining.linker.keywords.filters.{ RejectFilter, NumericFilter, MinLengthFilter, FilterChain, CamelCaseFilter, AlphaNumericFilter, AbbrevFilter }
+import de.jowisoftware.mining.model.nodes.{ TicketRepository, Ticket, CommitRepository }
+import de.jowisoftware.mining.linker.keywords.filters.WordListAcceptFilter
+import de.jowisoftware.util.AppUtil
+import java.io.File
+import scala.swing.Dialog
+import grizzled.slf4j.Logging
+import scala.io.Source
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.core.util.StatusPrinter
+import org.slf4j.LoggerFactory
 
-import de.jowisoftware.mining.linker.{Linker, LinkEvents}
-import de.jowisoftware.mining.model.nodes.{TicketRepository, CommitRepository}
-import de.jowisoftware.mining.UserOptions
+class KeywordLinker(
+    tickets: TicketRepository, commits: CommitRepository,
+    options: Map[String, String], events: LinkEvents) extends Logging {
 
-class KeywordLinker extends Linker {
-  def userOptions(): UserOptions = new KeywordLinkerOptions
+  private def isSet(key: String) = options.getOrElse(key, "false").toLowerCase == "true"
 
-  def link(tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
-    def isSet(key: String) = options.getOrElse(key, "false").toLowerCase == "true"
+  private val lucene = new LuceneKeywordExtractor(options("language"))
+  private val filter = setupFilter(options)
 
-    val lucene = new LuceneKeywordExtractor(options("language"))
+  private def setupFilter(options: Map[String, String]) = {
+    val chain = new FilterChain
+    if (isSet("filterShort")) chain.addFilter(new MinLengthFilter(3))
+    if (isSet("filterNum")) chain.addFilter(NumericFilter)
+    if (isSet("filterAlphaNum")) chain.addFilter(AlphaNumericFilter)
+    if (isSet("filterAbbrevs")) chain.addFilter(AbbrevFilter)
+    if (isSet("filterCamelCase")) chain.addFilter(CamelCaseFilter)
+    if (isSet("filterWhitelist")) {
+      val file = new File(AppUtil.basePath, "settings/keywordwhitelist.txt")
+      if (file.isFile()) {
+        chain.addFilter(new WordListAcceptFilter(Source.fromFile(file)))
+      } else {
+        error("Ignoring whitelist filter: file does not exist")
+      }
+    }
+    if (isSet("filterBlacklist")) {
+      val file = new File(AppUtil.basePath, "settings/keywordblacklist.txt")
+      if (file.isFile()) {
+        chain.addFilter(new WordListAcceptFilter(Source.fromFile(file)))
+      } else {
+        error("Ignoring blacklist filter: file does not exist")
+      }
+    }
+    if (!isSet("filterAccept")) chain.addFilter(RejectFilter)
 
+    chain
+  }
+
+  def link() {
     events.reportProgress(0, 1, "Counting tickets...")
     val size = tickets.tickets.size
     var i = 0
 
-    for(ticket <- tickets.tickets) {
+    for (ticket <- tickets.tickets) {
       var keywords: Set[String] = Set()
 
-      if (isSet("parseTitle")) { keywords ++= lucene.getKeywords(ticket.title()) }
-      if (isSet("parseText"))  { keywords ++= lucene.getKeywords(ticket.text()) }
-      if (isSet("parseTags"))  { keywords ++= ticket.tags map {_.name()} }
-
-      if (isSet("parseComments")) {
-        for (comment <- ticket.comments) {
-          keywords ++= lucene.getKeywords(comment.text())
-        }
-      }
+      keywords ++= processTitle(ticket)
+      keywords ++= processText(ticket)
+      keywords ++= processTags(ticket)
+      keywords ++= processComments(ticket)
 
       keywords -= ""
+      trace("Keywords for "+ticket.uid()+": "+keywords)
+
       if (!keywords.isEmpty) {
         events.foundKeywords(ticket, keywords)
       }
@@ -40,4 +75,18 @@ class KeywordLinker extends Linker {
       events.reportProgress(i, size, "Extracting keywords")
     }
   }
+
+  private def processTitle(ticket: Ticket) =
+    if (isSet("parseTitle")) { filter(lucene.getKeywords(ticket.title())) } else Seq()
+
+  private def processText(ticket: Ticket) =
+    if (isSet("parseText")) { filter(lucene.getKeywords(ticket.text())) } else Seq()
+
+  private def processTags(ticket: Ticket) =
+    if (isSet("parseTags")) { ticket.tags map { _.name() } } else Seq()
+
+  private def processComments(ticket: Ticket) =
+    if (isSet("parseComments")) {
+      ticket.comments.flatMap(comment => filter(lucene.getKeywords(comment.text())))
+    } else Seq()
 }

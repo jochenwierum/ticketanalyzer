@@ -10,8 +10,8 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
   "A filter Chain" should "accept by default" in {
     val chain = new FilterChain()
 
-    (chain.accepts(Set("1", "2", "3"))) should equal(Set("1", "2", "3"))
-    (chain.accepts(Set("a", "b"))) should equal(Set("a", "b"))
+    (chain(Set("1", "2", "3"))) should equal(Set("1", "2", "3"))
+    (chain(Set("a", "b"))) should equal(Set("a", "b"))
   }
 
   it should "accept when no filter matches" in {
@@ -21,7 +21,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter.apply("x")).thenReturn(FilterResult.Undecide)
       chain.addFilter(filter)
 
-      (chain.accepts(Set("x"))) should equal(Set("x"))
+      (chain(Set("x"))) should equal(Set("x"))
     }
   }
 
@@ -41,7 +41,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter2.apply("word1")).thenReturn(FilterResult.Accept)
       when(filter1.apply("word2")).thenReturn(FilterResult.Accept)
 
-      chain.accepts(list) should equal(list)
+      chain(list) should equal(list)
 
       verify(filter1).apply("word1")
       verify(filter2).apply("word1")
@@ -63,7 +63,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter1.apply("word1")).thenReturn(FilterResult.Reject)
       when(filter1.apply("word2")).thenReturn(FilterResult.Reject)
 
-      chain.accepts(list) should equal(Set())
+      chain(list) should equal(Set())
 
       verify(filter1).apply("word1")
       verify(filter1).apply("word2")

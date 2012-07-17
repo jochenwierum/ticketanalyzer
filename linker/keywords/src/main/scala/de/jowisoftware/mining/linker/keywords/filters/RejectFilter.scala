@@ -1,5 +1,5 @@
 package de.jowisoftware.mining.linker.keywords.filters
 
-object RejectMatcher extends Filter {
+object RejectFilter extends Filter {
   def apply(word: String) = FilterResult.Reject
 }
