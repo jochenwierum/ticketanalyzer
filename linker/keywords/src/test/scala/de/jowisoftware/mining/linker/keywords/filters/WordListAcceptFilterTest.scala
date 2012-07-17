@@ -6,7 +6,8 @@ class WordListAcceptFilterTest extends AbstractFilterTest {
   protected def wordSorce = Source.fromString(
     """ok
       |allow
-      |correct""".stripMargin)
+      |correct
+      |.*X""".stripMargin)
 
   protected def newFilter = new WordListAcceptFilter(wordSorce)
 
@@ -18,6 +19,11 @@ class WordListAcceptFilterTest extends AbstractFilterTest {
   it should "ignore words which are not in the word source" in {
     check("error", FilterResult.Undecide)
     check("unknown", FilterResult.Undecide)
+  }
+
+  it should "support regexes" in {
+    check("testX", FilterResult.Accept)
+    check("Xa", FilterResult.Undecide)
   }
 
   it should behave like nonConsumeableFilter("ok", FilterResult.Accept)

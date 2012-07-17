@@ -9,7 +9,7 @@ abstract class AbstractSourceListFilter(private var source: Source) extends Filt
   def isInFile(word: String): Boolean = {
     val lowerWord = word.toLowerCase
     source = source.reset
-    source.getLines.find(lowerWord == _.toLowerCase).isDefined
+    source.getLines.find(w => lowerWord.matches(w.toLowerCase)).isDefined
   }
 
   def apply(word: String): FilterResult.Value =
