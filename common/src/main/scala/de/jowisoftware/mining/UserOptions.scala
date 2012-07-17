@@ -28,6 +28,16 @@ trait UserOptions {
       line = line + 1
     }
 
+    def addSpace() {
+      val constraints = new Constraints
+      constraints.gridx = 0
+      constraints.weighty = 0
+      constraints.gridwidth = 2
+      constraints.gridy = line
+      layout(new Label("<html><br /></html>")) = constraints
+      line = line + 1
+    }
+
     private[UserOptions] def fillToBottom() {
       val c = new Constraints
       c.fill = GridBagPanel.Fill.Vertical
