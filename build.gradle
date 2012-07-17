@@ -103,6 +103,16 @@ copyDistFiles << {
       from it.configurations.archives.allArtifacts.files
     }
   }
+
+  copy {
+    into mkdir(new File(dist, "settings"))
+    subprojects.each {
+      File settingsDir = it.file("settings")
+      if (settingsDir.isDirectory()) {
+        from settingsDir
+      }
+    }
+  }
 }
 
 task writeStartScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
