@@ -1,4 +1,4 @@
-<configuration debug="false">
+<configuration>
   <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
     <resetJUL>true</resetJUL>
   </contextListener>
@@ -18,21 +18,17 @@
     </encoder>
   </appender>
 
-  <logger name="de.jowisoftware" level="INFO"/>
-  
-  <logger name="org.mortbay.log" level="WARN"/>
-  <logger name="org.neo4j" level="WARN"/>
-  <logger name="com.sun.jersey" level="WARN"/>
+  <logger name="de.jowisoftware" level="INFO" additivity="false">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </logger>
 
   <!-- 
   	org.neo4j.server.logging.Logger logs either to a log file, or to stdout if the log level
   	is ignored by the logger. Better log all in the same format then mix logs and stdout,
   	so we use "DBEUG" here.
    -->
-  <logger name="org.neo4j.server" level="DEBUG"/>
+  <logger name="org.neo4j.server" level="DEBUG" />
 
-  <root level="WARN">
-    <appender-ref ref="STDOUT" />
-    <appender-ref ref="FILE" />
-  </root>
+  <root level="WARN" />
 </configuration>

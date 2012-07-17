@@ -24,8 +24,8 @@ subprojects {
     compile group: "org.scala-lang", name: "scala-library", version: "2.9.2"
     compile group: "org.scala-lang", name: "scala-swing", version: "2.9.2"
     compile group: "org.clapper", name: "grizzled-slf4j_2.9.2", version: "0.6.9"
-    compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.5"
-    compile group: "ch.qos.logback", name: "logback-access", version: "1.0.5"
+    compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.6"
+    compile group: "ch.qos.logback", name: "logback-access", version: "1.0.6"
     
     testCompile group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
     testCompile group: "org.mockito", name: "mockito-all", version: "1.9.0"
@@ -58,14 +58,14 @@ subprojects {
         whenMerged { cp ->
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/resources") }*.output = "build/resources/main"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.contains('scala-library-2.9.2.jar') ||
             entry.path.contains('scala-swing-2.9.2.jar') ||
-            entry.path.endsWith('.pom')
+            entry.path.endsWith('.pom') ||
+			(entry instanceof SourceFolder && entry.path.startsWith("src/main/resources"))
           })
         }
       }

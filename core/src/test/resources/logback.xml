@@ -1,31 +1,35 @@
-<configuration debug="false">
-  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
-    <resetJUL>true</resetJUL>
-  </contextListener>
+<configuration>
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender>
+    <if condition='isDefined("ECLIPSE")'>
+        <then>
+            <consolePlugin />
+        </then>
+    </if>
 
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <append>false</append>
-    <file>lastrun.log</file>
-    <encoder>
-      <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg %n</pattern>
-    </encoder>
-  </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
-  <logger name="de.jowisoftware" level="DEBUG"/>
-  <logger name="org.mortbay.log" level="WARN"/>
-  <logger name="org.neo4j" level="WARN"/>
-  <logger name="com.sun.jersey" level="WARN"/>
-  <!-- see src/main/resources/logback.xml -->
-  <logger name="org.neo4j.server" level="DEBUG"/>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <append>false</append>
+        <file>lastrun.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg %n</pattern>
+        </encoder>
+    </appender>
 
-  <root level="WARN">
-    <appender-ref ref="STDOUT" />
-    <appender-ref ref="FILE" />
-  </root>
+    <logger name="de.jowisoftware" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- see src/main/resources/logback.xml -->
+    <logger name="org.neo4j.server" level="DEBUG" />
+
+    <root level="WARN" />
 </configuration>
