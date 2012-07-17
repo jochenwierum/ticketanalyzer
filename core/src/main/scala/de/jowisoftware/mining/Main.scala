@@ -12,9 +12,9 @@ import scala.swing.Swing
 import org.slf4j.bridge.SLF4JBridgeHandler
 import scala.swing.Dialog
 import de.jowisoftware.neo4j.database.EmbeddedDatabaseWithConsole
+import de.jowisoftware.util.AppUtil
 
 object Main {
-  val basePath = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
   val settings = new Settings("config.properties")
 
   lazy val compactMode = try {
@@ -46,7 +46,7 @@ object Main {
   private def preparePluginManager = {
     val pluginDirs = settings.getArray("plugindirs")
     val pluginManager = new PluginManager()
-    val scanner = new PluginScanner(basePath, pluginDirs: _*)
+    val scanner = new PluginScanner(AppUtil.basePath, pluginDirs: _*)
     scanner.scan(pluginManager)
     pluginManager
   }
@@ -59,7 +59,7 @@ object Main {
   }
 
   private def openDatabase: EmbeddedDatabase[RootNode] = {
-    val dbPath = new File(basePath, settings.getString("db")).getCanonicalFile
+    val dbPath = new File(AppUtil.basePath, settings.getString("db")).getCanonicalFile
     if (compactMode)
       new EmbeddedDatabase(dbPath, RootNode)
     else

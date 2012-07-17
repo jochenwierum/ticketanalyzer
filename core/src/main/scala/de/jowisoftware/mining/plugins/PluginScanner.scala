@@ -55,31 +55,36 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
 
     def appendMatchingPathes(base: File, segments: List[String]): List[File] =
       segments match {
-      case Nil => base :: Nil
-      case head :: tail =>
-        if (!head.contains('*')) {
-          val file = new File(base, head).getCanonicalFile
-          if (file.exists)
-            appendMatchingPathes(file, tail)
-          else
-            Nil
-        } else {
-          val pattern = Pattern.quote(head).replaceAll("\\?", "\\\\E.\\\\Q").replaceAll("\\*", "\\\\E.*\\\\Q").replaceAll("\\\\Q\\\\E", "")
-          val regex = Pattern.compile("^"+pattern+"$", Pattern.CASE_INSENSITIVE)
-          val files = base.listFiles(new FilenameFilter() {
-            def accept(dir: File, name: String) = {
-              regex.matcher(name).find
-            }
-          })
-          if (files != null) {
-            files.flatMap { f =>
-              appendMatchingPathes(f, tail)
-            }.toList
+        case Nil => base :: Nil
+        case head :: tail =>
+          if (head.equals("..")) {
+            appendMatchingPathes(base.getParentFile(), tail)
+          } else if (!head.contains('*')) {
+            val file = new File(base, head).getCanonicalFile
+            if (file.exists)
+              appendMatchingPathes(file, tail)
+            else
+              Nil
           } else {
-            Nil
+            val pattern = Pattern.quote(head)
+              .replaceAll("\\?", "\\\\E.\\\\Q")
+              .replaceAll("\\*", "\\\\E.*\\\\Q")
+              .replaceAll("\\\\Q\\\\E", "")
+            val regex = Pattern.compile("^"+pattern+"$", Pattern.CASE_INSENSITIVE)
+            val files = base.listFiles(new FilenameFilter() {
+              def accept(dir: File, name: String) = {
+                regex.matcher(name).find
+              }
+            })
+            if (files != null) {
+              files.flatMap { f =>
+                appendMatchingPathes(f, tail)
+              }.toList
+            } else {
+              Nil
+            }
           }
-        }
-    }
+      }
 
     appendMatchingPathes(base, segments)
   }
