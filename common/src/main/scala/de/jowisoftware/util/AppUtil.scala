@@ -14,5 +14,4 @@ object AppUtil {
     else
       file.getParentFile
   }.getParentFile.getCanonicalFile
-  println(basePath.getCanonicalFile)
 }
