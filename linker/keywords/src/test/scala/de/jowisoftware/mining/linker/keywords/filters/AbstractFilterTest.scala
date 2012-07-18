@@ -10,12 +10,4 @@ abstract class AbstractFilterTest extends FlatSpec with ShouldMatchers {
     info("testing: '"+input+"'")
     newFilter.apply(input) should equal(expected)
   }
-
-  protected def nonConsumeableFilter(word: String, result: FilterResult.Value) {
-    it should "not consume its source" in {
-      val filter = newFilter
-      filter.apply(word) should equal(result)
-      filter.apply(word) should equal(result)
-    }
-  }
 }

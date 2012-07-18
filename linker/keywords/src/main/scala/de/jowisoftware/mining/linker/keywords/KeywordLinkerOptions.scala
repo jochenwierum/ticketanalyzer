@@ -11,10 +11,11 @@ class KeywordLinkerOptions extends UserOptions {
     "parseTitle" -> "true",
     "parseText" -> "true",
     "parseComments" -> "true",
+    "filterUniversal" -> "true",
     "filterNum" -> "true",
     "filterAlphaNum" -> "true",
-    "filterWhitelist" -> "true",
-    "filterBlacklist" -> "true",
+    "filterWhitelist" -> "false",
+    "filterBlacklist" -> "false",
     "filterShort" -> "true",
     "filterAbbrevs" -> "true",
     "filterCamelCase" -> "true",
@@ -36,6 +37,7 @@ class KeywordLinkerOptions extends UserOptions {
       "The first match decides what happens with the keyword</html>")
     label.horizontalAlignment = Alignment.Left
     panel.add("Filters", label)
+    panel.add("Use universal filter", checkbox("filterUniversal", "Apply all regexes in settings/universallist.txt"))
     panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than 3 letters"))
     panel.add("Reject numbers", checkbox("filterNum", "Remove words like '2'"))
     panel.add("Reject alphanumerical words", checkbox("filterAlphaNum", "Remove words like 'r4'"))

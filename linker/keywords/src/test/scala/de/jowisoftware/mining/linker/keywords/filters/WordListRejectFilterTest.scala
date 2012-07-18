@@ -2,7 +2,7 @@ package de.jowisoftware.mining.linker.keywords.filters
 
 import scala.io.Source
 
-class WordListRejectFilterTest extends AbstractFilterTest {
+class WordListRejectFilterTest extends AbstractFilterTest with SourceBehaviour {
   protected def wordSorce = Source.fromString(
     """ok
       |allow
