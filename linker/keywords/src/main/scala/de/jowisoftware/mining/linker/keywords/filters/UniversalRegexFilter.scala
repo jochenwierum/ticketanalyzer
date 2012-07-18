@@ -1,30 +1,29 @@
 package de.jowisoftware.mining.linker.keywords.filters
 
 import scala.io.Source
-import scala.util.matching.Regex
-
 import grizzled.slf4j.Logging
+import java.util.regex.Pattern
 
 class UniversalRegexFilter(private var wordlist: Source) extends Filter with Logging {
-  case class RegexContainer(regex: Regex, value: FilterResult.Value)
+  case class RegexContainer(regex: Pattern, value: FilterResult.Value)
+
+  def toRegex(s: String) = Pattern.compile("^"+(s.substring(1).trim)+"$")
 
   val regexList = wordlist.getLines.flatMap(regex =>
-    if (regex.startsWith("#"))
+    if (regex.startsWith("#") || regex.trim.isEmpty)
       None
     else if (regex.startsWith("+"))
-      Some(RegexContainer(("^"+regex.toLowerCase.substring(1)+"$").r, FilterResult.Accept))
+      Some(RegexContainer(toRegex(regex), FilterResult.Accept))
     else if (regex.startsWith("-"))
-      Some(RegexContainer(("^"+regex.toLowerCase.substring(1).r+"$").r, FilterResult.Reject))
+      Some(RegexContainer(toRegex(regex), FilterResult.Reject))
     else {
       error("Invalid line in filter file: "+regex)
       None
     }).toList
 
   def apply(word: String): FilterResult.Value = {
-    val lowerCaseWord = word.toLowerCase
-
     regexList.find {
-      _.regex.findFirstIn(lowerCaseWord).isDefined
+      _.regex.matcher(word).find
     } match {
       case Some(result) => result.value
       case None => FilterResult.Undecide
