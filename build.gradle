@@ -83,6 +83,8 @@ copyDistFiles << {
   File dist = mkdir("$buildDir/dist")
   
   copy {
+	fileMode = 0644
+	dirMode = 0755
     into mkdir(new File(dist, "lib"))
     subprojects.each {
       from it.configurations.runtime.filter {!it.name.endsWith(".pom")}
@@ -92,6 +94,8 @@ copyDistFiles << {
   }
   
   copy {
+	fileMode = 0644
+	dirMode = 0755
     into mkdir(new File(dist, "plugins/importer"))
     project(':importer').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -99,6 +103,8 @@ copyDistFiles << {
   }
   
   copy {
+	fileMode = 0644
+	dirMode = 0755
     into mkdir(new File(dist, "plugins/linker"))
     project(':linker').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -106,9 +112,11 @@ copyDistFiles << {
   }
 
   copy {
+	fileMode = 0644
+	dirMode = 0755
     into mkdir(new File(dist, "settings"))
     subprojects.each {
-      File settingsDir = it.file("settings")
+      File settingsDir = it.file("src/main/settings")
       if (settingsDir.isDirectory()) {
         from settingsDir
       }
