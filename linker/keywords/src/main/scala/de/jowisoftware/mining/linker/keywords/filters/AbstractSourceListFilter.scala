@@ -7,9 +7,8 @@ abstract class AbstractSourceListFilter(private var source: Source) extends Filt
   protected val noMatchResult: FilterResult.Value
 
   def isInFile(word: String): Boolean = {
-    val lowerWord = word.toLowerCase
     source = source.reset
-    source.getLines.find(w => lowerWord.matches(w.toLowerCase)).isDefined
+    source.getLines.find(w => word.matches(w)).isDefined
   }
 
   def apply(word: String): FilterResult.Value =

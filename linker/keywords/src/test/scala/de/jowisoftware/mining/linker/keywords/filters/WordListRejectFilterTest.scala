@@ -13,7 +13,7 @@ class WordListRejectFilterTest extends AbstractFilterTest with SourceBehaviour {
 
   "A WordListRejectFilter" should "reject words from the word source" in {
     check("ok", FilterResult.Reject)
-    check("coRRect", FilterResult.Reject)
+    check("correct", FilterResult.Reject)
   }
 
   it should "ignore words which are not in the word source" in {
@@ -24,6 +24,7 @@ class WordListRejectFilterTest extends AbstractFilterTest with SourceBehaviour {
   it should "support regexes" in {
     check("testX", FilterResult.Reject)
     check("Xa", FilterResult.Undecide)
+    check("OK", FilterResult.Undecide)
   }
 
   it should behave like nonConsumeableFilter("ok", FilterResult.Reject)
