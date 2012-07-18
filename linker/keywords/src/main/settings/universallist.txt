@@ -1,0 +1,130 @@
+# <- This is a comment
+# This file is scanned from top to bottom
+# Each line contains a regex and an indicator whether a match should accept
+# or reject the keyword. If the regex does not match, the next line is scanned.
+# note that the full keyword has to match (use .* where needed)
+#
+# A possitive (accept) regex can be specified by prepending a '+', a negative
+# one by preprending a '-'.
+#
+# This regex discards all keywords that contain a number
+# -.*\d.*
+# This regex accepts all keywords that ends with "exception"
+# +.*exception
+
+-[Ee]\.[Gg]
+-[Ii]\.[Ee]
+
++.*[a-z][A-Z].*
+
++.*[_.;].*
++.*null.*
++.+[eE]xcep.*
++.+[eE]rr.*
++.*\.(class|java)
++javax?\..*
++key.*
++kei
++password
++ui
++(?i:oom)
++(?i:npe)
+
+# these words don't add value
+-\d+
+-\w{1,2}
+-r\d+
+-find
+-test
+-what
+-dont
+-reproduc.*
+-last
+-out
+-now
+-shown?
+-new
+-have
+-would
+-creat
+-ready
+-program
+-your
+-all
+-suggest.*
+-idea
+-nevertheless
+-realli
+-can
+-need
+-also
+-whatev.*
+-habe
+-thing
+-which
+-more
+-other
+-non
+-without
+-cant
+-eg
+-even
+-may
+-set
+-via
+-should
+-alredi
+-one
+-two
+-them
+-each
+-doe
+-perhap
+-problem
+-fix
+-can't
+-how
+-same
+-from
+-again
+-thank
+-you
+-ani
+-veri
+-case
+-whether
+-whish
+-could
+-caus
+-ist
+-occur
+-text
+-atm
+-nearli
+-sinc
+-like
+-chanc
+-goe
+-here
+-help
+-kind
+-must
+-don't
+-work
+-three
+-four
+-five
+-six
+-seven
+-eight
+-nine
+-ten
+-much
+-whole
+-alwai
+-becaus
+-etc
+-well
+-anymor
+-huge
+-did
