@@ -39,7 +39,8 @@ subprojects {
   test << {
       def oldLevel = logging.getLevel()
       logging.setLevel(LogLevel.INFO) 
-      ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: classpath.asPath)
+	  def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
+      ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: cp)
       ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
           reporter(type: 'stdout', config: "D")
           //reporter(type: 'stdout', config: "DF")
@@ -84,7 +85,7 @@ copyDistFiles << {
   copy {
     into mkdir(new File(dist, "lib"))
     subprojects.each {
-      from it.configurations.runtime
+      from it.configurations.runtime.filter {!it.name.endsWith(".pom")}
     }
     from project(':common').configurations.archives.allArtifacts.files
     from project(':core').configurations.archives.allArtifacts.files
