@@ -45,13 +45,13 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
 
   private def doSearch() {
     val text = textInput.text
-    val result = try {
-      engine.execute(text)
+    try {
+      val result = engine.execute(text)
+      resultTable.processResult(result)
     } catch {
       case e: Exception =>
         Dialog.showMessage(resultTable, "Could not execute query: "+e.getMessage, "Error", Message.Error)
         return
     }
-    resultTable.processResult(result)
   }
 }
