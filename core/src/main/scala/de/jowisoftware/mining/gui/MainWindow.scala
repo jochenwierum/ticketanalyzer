@@ -40,6 +40,9 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
 
   updateView()
   centerOnScreen()
+  for (tab <- tabs.pages.map(_.content.asInstanceOf[GuiTab])) {
+    tab.align
+  }
 
   reactions += {
     case WindowClosing(_) => dispose()

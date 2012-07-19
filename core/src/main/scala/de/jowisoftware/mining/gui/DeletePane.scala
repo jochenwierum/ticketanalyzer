@@ -10,7 +10,9 @@ import scala.swing.Frame
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 
-class DeletePane(val db: Database[RootNode], parent: Frame) extends BoxPanel(Orientation.Vertical) {
+class DeletePane(val db: Database[RootNode], parent: Frame)
+    extends BoxPanel(Orientation.Vertical) with GuiTab {
+
   val button = new Button("Drop database")
   contents += button
 
@@ -24,4 +26,6 @@ class DeletePane(val db: Database[RootNode], parent: Frame) extends BoxPanel(Ori
     db.deleteContent
     parent.publish(DatabaseUpdated)
   }
+
+  def align = {}
 }

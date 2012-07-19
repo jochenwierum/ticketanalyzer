@@ -17,11 +17,12 @@ import javax.swing.BoxLayout
 import javax.swing.Box
 import scala.swing.Swing
 import grizzled.slf4j.Logging
+import de.jowisoftware.mining.gui.GuiTab
 
 class ImportPane(
     db: Database[RootNode],
     pluginManager: PluginManager,
-    parent: Frame) extends SplitPane(Orientation.Vertical) with Logging { self =>
+    parent: Frame) extends SplitPane(Orientation.Vertical) with GuiTab with Logging { self =>
 
   private class Task(val importer: Importer, val data: Map[String, String], val name: String) {
     override def toString =
@@ -56,7 +57,6 @@ class ImportPane(
   }
 
   addButton.enabled = false
-  dividerLocation = .75
 
   listenTo(deleteButton)
   listenTo(importButton)
@@ -141,4 +141,6 @@ class ImportPane(
     }.start()
     progress.show()
   }
+
+  def align = dividerLocation = .75
 }

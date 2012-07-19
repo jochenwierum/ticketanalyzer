@@ -15,8 +15,9 @@ import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 import de.jowisoftware.mining.linker.ConsoleProgressReporter
 import de.jowisoftware.mining.linker.DatabaseLinkerHandler
+import de.jowisoftware.mining.gui.GuiTab
 
-class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel {
+class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel with GuiTab {
   private val pluginList = new ComboBox[Plugin](makePluginList)
   private var scmList = makeSCMList
   private var ticketList = makeTicketList
@@ -126,4 +127,6 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
 
   def getSelectedCommitRepository(transaction: DBWithTransaction[RootNode]) =
     transaction.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
+
+  def align = {}
 }

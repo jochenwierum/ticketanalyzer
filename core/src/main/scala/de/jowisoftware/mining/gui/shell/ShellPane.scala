@@ -1,16 +1,20 @@
 package de.jowisoftware.mining.gui.shell
 
+import java.net.URI
+
+import scala.swing.{ BorderPanel, Dialog, Button, TextArea, SplitPane, ScrollPane }
 import scala.swing.BorderPanel.Position
 import scala.swing.Dialog.Message
 import scala.swing.event.ButtonClicked
-import scala.swing.{ TextArea, SplitPane, Orientation, Dialog, Button, BorderPanel }
+
 import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.kernel.AbstractGraphDatabase
-import de.jowisoftware.mining.gui.components.Link
-import java.net.URI
-import de.jowisoftware.mining.{ Main => MainApp }
 
-class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
+import de.jowisoftware.mining.{ Main => MainApp }
+import de.jowisoftware.mining.gui.GuiTab
+import de.jowisoftware.mining.gui.components.Link
+
+class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
   private val engine = new ExecutionEngine(db)
 
   private val textInput = new TextArea
@@ -19,7 +23,7 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
   private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in Browser")
 
   private val textPanel = new BorderPanel() {
-    layout(textInput) = Position.Center
+    layout(new ScrollPane(textInput)) = Position.Center
     layout(startButton) = Position.East
 
     if (!MainApp.compactMode) {
@@ -36,6 +40,8 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane {
     case ButtonClicked(`startButton`) =>
       doSearch()
   }
+
+  def align = dividerLocation = 0.2
 
   private def doSearch() {
     val text = textInput.text
