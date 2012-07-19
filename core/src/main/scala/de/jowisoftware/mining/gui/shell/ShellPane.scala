@@ -49,7 +49,14 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
     } catch {
       case e: Exception =>
         Dialog.showMessage(resultTable, "<html>Could not execute query: <br /><pre>"+
-          e.getMessage+"</pre></html>", "Error", Message.Error)
+          maskHTML(e.getMessage)+"</pre></html>", "Error", Message.Error)
     }
   }
+
+  private def maskHTML(s: String) =
+    s.replace("&", "&amp;")
+      .replace("<", "&lt;")
+      .replace(">", "&gt;")
+      .replace("\"", "&quot;")
+      .replace("\n", "<br />")
 }
