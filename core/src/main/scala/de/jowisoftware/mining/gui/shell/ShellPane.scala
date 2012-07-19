@@ -20,7 +20,7 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
   private val textInput = new TextArea
   textInput.text = "START f=node(20)\nMATCH f-[x]->to\nRETURN f, to, x, type(x)"
   private val startButton = new Button(">>")
-  private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in Browser")
+  private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in browser")
 
   private val textPanel = new BorderPanel() {
     layout(new ScrollPane(textInput)) = Position.Center

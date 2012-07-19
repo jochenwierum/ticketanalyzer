@@ -11,6 +11,7 @@ import de.jowisoftware.mining.plugins.PluginManager
 import de.jowisoftware.neo4j.Database
 import scala.swing.SplitPane
 import de.jowisoftware.mining.gui.linker.LinkPane
+import de.jowisoftware.mining.gui.linker.AnalyzerPane
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -21,7 +22,8 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   private val deletePane = new TabbedPane.Page("0) Delete", new DeletePane(db, this))
   private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, this))
   private val linkPane = new TabbedPane.Page("2) Link data", new LinkPane(db, pluginManager, this))
-  private val shellPane = new TabbedPane.Page("3) Shell", new ShellPane(db.service))
+  private val analyzePane = new TabbedPane.Page("3) Analyze", new AnalyzerPane(db, pluginManager, this))
+  private val shellPane = new TabbedPane.Page("4) Shell", new ShellPane(db.service))
 
   private val tabs = new TabbedPane {
     tabPlacement(Alignment.Left)
@@ -29,6 +31,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     pages += deletePane
     pages += importPane
     pages += linkPane
+    pages += analyzePane
     pages += shellPane
   }
 
@@ -36,7 +39,6 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   contents = tabs
   size = new Dimension(640, 480)
   minimumSize = new Dimension(640, 480)
-  importPane.content.asInstanceOf[SplitPane].dividerLocation = .75
 
   updateView()
   centerOnScreen()
@@ -58,10 +60,11 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   }
 
   def updateView() {
-    val state = db.inTransaction(t => t.rootNode.state())
+    val state = db.inTransaction(_.rootNode.state())
 
     linkPane.enabled = state > 0
     shellPane.enabled = state > 0
+    analyzePane.enabled = state > 1
     tabs.selection.index = state + 1
   }
 }

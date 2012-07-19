@@ -2,8 +2,9 @@ package de.jowisoftware.mining.plugins
 
 object PluginType extends Enumeration {
   val SCM = Value("SCM")
-  val Tickets = Value("Tickets")
+  val ITS = Value("ITS")
   val Linker = Value("Linker")
+  val Analyzer = Value("Analyzer")
 
   def find(name: String) =
     try {
@@ -14,5 +15,5 @@ object PluginType extends Enumeration {
           "Not a valid plugin type: "+name, e)
     }
 
-  def types = SCM :: Tickets :: Linker :: Nil
+  def types = SCM :: ITS :: Linker :: Analyzer :: Nil
 }

@@ -18,6 +18,9 @@ import javax.swing.Box
 import scala.swing.Swing
 import grizzled.slf4j.Logging
 import de.jowisoftware.mining.gui.GuiTab
+import org.neo4j.graphdb.Direction
+import de.jowisoftware.mining.model.relationships.Contains
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
 
 class ImportPane(
     db: Database[RootNode],
@@ -73,7 +76,7 @@ class ImportPane(
   updateSelection()
 
   def makePluginList =
-    pluginManager.getFor(PluginType.SCM) ++ pluginManager.getFor(PluginType.Tickets)
+    pluginManager.getFor(PluginType.SCM) ++ pluginManager.getFor(PluginType.ITS)
 
   def queueTask() {
     tasks = new Task(selectedPlugin, importerOptions.getUserInput,
@@ -122,13 +125,7 @@ class ImportPane(
           importer.run()
 
           warn("Import process took "+(System.currentTimeMillis - start)+" ms")
-          db.inTransaction { transaction: DBWithTransaction[RootNode] =>
-            if (transaction.rootNode.state() < 1) {
-              transaction.rootNode.state(1)
-            }
-
-            transaction.success
-          }
+          updateDBState
           tasks = Nil
         } finally {
           Swing.onEDT {
@@ -140,6 +137,22 @@ class ImportPane(
       }
     }.start()
     progress.show()
+  }
+
+  private def updateDBState() = {
+    db.inTransaction { transaction: DBWithTransaction[RootNode] =>
+      def hasContent(repository: MiningNode) =
+        repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType)).size > 0
+
+      val root = transaction.rootNode
+      val hasCommits = hasContent(root.commitRepositoryCollection)
+      val hasTickets = hasContent(root.ticketRepositoryCollection)
+      if (hasCommits && hasTickets && root.state() < 1) {
+        root.state(1)
+      }
+
+      transaction.success
+    }
   }
 
   def align = dividerLocation = .75

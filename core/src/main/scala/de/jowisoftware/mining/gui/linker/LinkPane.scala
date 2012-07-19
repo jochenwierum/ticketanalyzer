@@ -52,34 +52,34 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
 
   updateSelection
 
-  def makePluginList =
+  private def makePluginList =
     pluginManager.getFor(PluginType.Linker)
 
-  def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
+  private def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
     val result = namesOfChildren(transaction.rootNode.commitRepositoryCollection)
     transaction.success
     result
   }.toSeq)
 
-  def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
+  private def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
     val result = namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
     transaction.success
     result
   }.toSeq)
 
-  def namesOfChildren(repository: MiningNode) = {
+  private def namesOfChildren(repository: MiningNode) = {
     val nodes = repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
     nodes.map { node => node.asInstanceOf[HasName].name() }
   }
 
-  def updateComboBoxes() {
+  private def updateComboBoxes() {
     scmList = makeSCMList
     selectionPanel.contents(3) = scmList
     ticketList = makeTicketList
     selectionPanel.contents(5) = ticketList
   }
 
-  def updateSelection() {
+  private def updateSelection() {
     val plugin = pluginList.selection.item
     selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Linker]
     importerOptions = selectedPlugin.userOptions
@@ -91,7 +91,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     pluginDetails.revalidate()
   }
 
-  def doLink() {
+  private def doLink() {
     val dialog = new ProgressDialog(parent)
     new Thread("linker-thread") {
       override def run() {
@@ -122,10 +122,10 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     dialog.show()
   }
 
-  def getSelectedTicketRepository(transaction: DBWithTransaction[RootNode]) =
+  private def getSelectedTicketRepository(transaction: DBWithTransaction[RootNode]) =
     transaction.rootNode.ticketRepositoryCollection.findOrCreateChild(ticketList.selection.item)
 
-  def getSelectedCommitRepository(transaction: DBWithTransaction[RootNode]) =
+  private def getSelectedCommitRepository(transaction: DBWithTransaction[RootNode]) =
     transaction.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
 
   def align = {}

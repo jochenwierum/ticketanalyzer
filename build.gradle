@@ -114,6 +114,15 @@ copyDistFiles << {
   copy {
 	fileMode = 0644
 	dirMode = 0755
+    into mkdir(new File(dist, "plugins/analyzer"))
+    project(':analyzer').subprojects.each {
+      from it.configurations.archives.allArtifacts.files
+    }
+  }
+
+  copy {
+	fileMode = 0644
+	dirMode = 0755
     into mkdir(new File(dist, "settings"))
     subprojects.each {
       File settingsDir = it.file("src/main/settings")

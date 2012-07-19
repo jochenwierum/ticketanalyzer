@@ -5,7 +5,7 @@ import scala.swing._
 import scala.swing.event.{ ValueChanged, ButtonClicked }
 import scala.swing.event.SelectionChanged
 
-trait UserOptions {
+abstract class UserOptions {
   protected class CustomizedGridBagPanel(htmlDescrition: String) extends GridBagPanel {
     var line = 1
 
