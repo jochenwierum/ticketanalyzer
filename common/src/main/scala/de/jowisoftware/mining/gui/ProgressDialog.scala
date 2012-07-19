@@ -3,7 +3,7 @@ package de.jowisoftware.mining.gui
 import java.awt.Dimension
 
 import scala.swing.BorderPanel.Position
-import scala.swing.{Swing, ProgressBar, Label, Frame, Dialog, BorderPanel}
+import scala.swing.{ Swing, ProgressBar, Label, Frame, Dialog, BorderPanel }
 
 import javax.swing.WindowConstants
 
@@ -20,7 +20,6 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
 
   val bar = new ProgressBar()
   bar.indeterminate = true
-  bar.labelPainted = true
   bar.max = 10000
   bar.min = 0
   bar.value = 0
@@ -72,6 +71,7 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
     if (_max > 0) {
       Swing.onEDT {
         bar.indeterminate = false
+        bar.labelPainted = true
         bar.value = (10000.0 * (1.0 * _value / _max)).asInstanceOf[Int]
       }
     }

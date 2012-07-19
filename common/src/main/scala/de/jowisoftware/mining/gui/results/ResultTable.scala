@@ -1,13 +1,10 @@
-package de.jowisoftware.mining.gui.shell
-
-import java.awt.Color
+package de.jowisoftware.mining.gui.results
 import scala.swing.{ Table, Label, Component, Alignment }
-import javax.swing.BorderFactory
 import javax.swing.UIManager
-import sun.swing.DefaultLookup
 import javax.swing.table.TableModel
 import java.awt.Graphics2D
 import java.awt.FontMetrics
+import org.neo4j.cypher.ExecutionResult
 
 class ResultTable extends Table { that =>
   private var sizeSet = false
@@ -17,7 +14,7 @@ class ResultTable extends Table { that =>
     super.model = newModel
   }
 
-  override def paintComponent(g: Graphics2D) {
+  override protected def paintComponent(g: Graphics2D) {
     if (!sizeSet) {
       calcLineHeight(g.getFontMetrics(this.font))
       sizeSet = true
@@ -37,7 +34,7 @@ class ResultTable extends Table { that =>
     rowHeight = fm.getHeight * maxLines
   }
 
-  override def rendererComponent(isSelected: Boolean,
+  override protected def rendererComponent(isSelected: Boolean,
     hasFocus: Boolean, row: Int, column: Int): Component = {
     val value = model.getValueAt(row, column).asInstanceOf[CellData]
     new Label("<html>"+value.shortText+"</html>") {

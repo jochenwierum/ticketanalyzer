@@ -1,18 +1,16 @@
 package de.jowisoftware.mining.gui.shell
 
 import java.net.URI
-
 import scala.swing.{ BorderPanel, Dialog, Button, TextArea, SplitPane, ScrollPane }
 import scala.swing.BorderPanel.Position
 import scala.swing.Dialog.Message
 import scala.swing.event.ButtonClicked
-
 import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.kernel.AbstractGraphDatabase
-
 import de.jowisoftware.mining.{ Main => MainApp }
 import de.jowisoftware.mining.gui.GuiTab
 import de.jowisoftware.mining.gui.components.Link
+import de.jowisoftware.mining.gui.results.ResultTablePane
 
 class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
   private val engine = new ExecutionEngine(db)

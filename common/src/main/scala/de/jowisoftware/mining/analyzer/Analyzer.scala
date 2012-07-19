@@ -5,8 +5,10 @@ import de.jowisoftware.mining.model.nodes.RootNode
 import scala.swing.Frame
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.mining.UserOptions
+import de.jowisoftware.mining.gui.ProgressDialog
 
 trait Analyzer {
-  def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame)
+  def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame,
+    waitDialog: ProgressDialog)
   def userOptions: UserOptions
 }

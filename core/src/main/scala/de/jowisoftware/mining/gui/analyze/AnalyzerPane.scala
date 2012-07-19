@@ -58,12 +58,18 @@ class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent:
   }
 
   def analyze() {
+    val dialog = new ProgressDialog(parent)
     new Thread("analyzer-thread") {
       override def run() {
         val options = analyzerOptions.getUserInput
-        selectedPlugin.analyze(db, options, parent)
+        try {
+          selectedPlugin.analyze(db, options, parent, dialog)
+        } finally {
+          dialog.hide()
+        }
       }
     }.start()
+    dialog.show()
   }
 
   def align = {}
