@@ -50,8 +50,8 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
       resultTable.processResult(result)
     } catch {
       case e: Exception =>
-        Dialog.showMessage(resultTable, "Could not execute query: "+e.getMessage, "Error", Message.Error)
-        return
+        Dialog.showMessage(resultTable, "<html>Could not execute query: <br /><pre>"+
+          e.getMessage+"</pre></html>", "Error", Message.Error)
     }
   }
 }
