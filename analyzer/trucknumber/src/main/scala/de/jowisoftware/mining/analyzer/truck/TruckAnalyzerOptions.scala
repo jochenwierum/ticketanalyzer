@@ -9,5 +9,6 @@ class TruckAnalyzerOptions extends UserOptions {
   def getHtmlDescription() = "<b>Truck Number</b><br />How critical is knowledge?"
 
   def fillPanel(panel: CustomizedGridBagPanel) {
+    panel.add("Algorithm", combobox("algorithm", TruckAnalyzer.queryMap.keys.toSeq))
   }
 }
