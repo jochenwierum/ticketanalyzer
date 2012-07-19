@@ -17,6 +17,7 @@ import java.io.File
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
   var service: AbstractGraphDatabase = _
   init()
+  addShutdownHook()
 
   protected def init() {
     service = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
@@ -45,6 +46,18 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
   }
 
   def shutdown() {
-    service.shutdown()
+    try {
+      service.shutdown()
+    } catch {
+      case e: Exception =>
+      // we can't do anything here, so we ignore the exception
+    }
+  }
+
+  private def addShutdownHook() {
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      override def run() =
+        shutdown()
+    })
   }
 }
