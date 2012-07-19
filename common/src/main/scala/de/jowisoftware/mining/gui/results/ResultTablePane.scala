@@ -59,22 +59,26 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
     text.replace("de.jowisoftware.mining.model.", "")
 
   private def formatNode(node: Node, formatter: String => String) =
-    "<b>Node["+node.getId+"]: "+formatProperties(node, formatter)
+    "<b>Node["+node.getId+"]: "+getClassFromProperties(node)+"</b>"+formatProperties(node, formatter)
 
   private def formatRelationship(relationship: Relationship, formatter: String => String) =
-    "<b>Relationship["+relationship.getId+"]: "+formatProperties(relationship, formatter)
+    "<b>Relationship["+relationship.getId+"]: "+getClassFromProperties(relationship)+
+      "</b>"+formatProperties(relationship, formatter)
 
   private def formatProperties(properties: PropertyContainer, formatter: String => String) =
-    getClassFromProperties(properties) + formatPropertyLines(properties).map {
-      text => "<br>\n"+formatter(text)
-    }.mkString("")
+    formatPropertyLines(properties).map("<br>\n"+formatter(_)).mkString("")
 
   private def getClassFromProperties(properties: PropertyContainer) =
-    properties.getProperty(".class", "(?)").toString+"</b>"
+    properties.getProperty("_class", "(?)").toString
 
   private def formatPropertyLines(properties: PropertyContainer) =
-    properties.getPropertyKeys.filter(!_.startsWith(".")).map { property =>
-      property+": "+properties.getProperty(property).toString.replace("\\", "\\\\").replace("\n", "\\n")
+    properties.getPropertyKeys.filter(!_.startsWith("_")).map { property =>
+      property+": "+properties.getProperty(property).toString
+        .replace("\\", "\\\\").replace("\n", "\\n")
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
     }
 
   private def shortenString(length: Int)(text: String) =
