@@ -11,7 +11,6 @@ import scala.xml.{ NodeSeq, Elem }
 
 import org.joda.time.format.DateTimeFormat
 
-import MantisImporter.{ fromComplexDate, MantisConstants }
 import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer._
 import de.jowisoftware.mining.UserOptions
@@ -21,8 +20,10 @@ object MantisImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ")
   def fromComplexDate(value: String) = dateFormat.parseDateTime(value).toDate()
 
-  private val simpleDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm")
-  def fromSimpleDate(value: String) = simpleDateFormat.parseDateTime(value).toDate()
+  private val simpleDateFormat = Map(
+      "en" -> DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"),
+      "de" -> DateTimeFormat.forPattern("dd.MM.yyyy HH:mm"))
+  def fromSimpleDate(value: String, lang: String) = simpleDateFormat(lang).parseDateTime(value).toDate()
 
   object MantisConstants {
     val public = 10
@@ -37,6 +38,8 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
   require(config contains "password")
   require(config contains "project")
   require(config contains "repositoryname")
+  require(config contains "dateformat")
+  require((config contains "filter") && (config("filter").toInt >= 0))
 
   val client = new SoapClient(config("url"))
 
@@ -64,7 +67,7 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
     val historyRows = historyTable \\ "tr" drop 2
 
     val changeParser = new ChangeParser
-    val changes = historyRows.flatMap(row => changeParser.parse(row, ticket))
+    val changes = historyRows.flatMap(row => changeParser.parse(row, ticket, config("dateformat")))
     val changesByDate = SortedMap.empty[Date, Seq[Change]] ++ changes.groupBy(_.date)
 
     val baseTicket = createBaseTicket(ticket, changesByDate)
@@ -163,15 +166,20 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
   }
 
   private def countTickets() = {
-    def tickets(headers: NodeSeq) = headers \ "mc_project_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
+    def tickets(headers: NodeSeq) = headers \ "mc_filter_get_issue_headersResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
     val perPage = 25
 
     @tailrec def count(lastId: Int, lastCount: Int, page: Int): Int = {
       val items = tickets(getTicketHeaders(page, perPage))
-      val id = (items \ "id").last.text.toInt
 
-      if (id == lastId) lastCount
-      else count(id, lastCount + items.length, page + 1)
+      if ((items \ "id").size == 0) {
+        lastCount
+      } else {
+        val id = (items \ "id").last.text.toInt
+
+        if (id == lastId) lastCount
+        else count(id, lastCount + items.length, page + 1)
+      }
     }
     count(Integer.MIN_VALUE, 0, 1)
   }
@@ -182,13 +190,18 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
     def nextPage(pageNr: Int, lastId: Int): Stream[Elem] = {
       debug("Lazily fetching next "+perPage+" items")
       val page = getPage(pageNr, perPage)
-      val items = page \ "mc_project_get_issuesResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
-      val id = (items \ "id").last.text.toInt
+      val items = page \ "mc_filter_get_issuesResponse" \ "return" \ "item" filter (_.isInstanceOf[Elem])
 
-      if (id == lastId) {
+      if ((items \ "id").size == 0) {
         Stream.empty
       } else {
-        toStream(items, nextPage(pageNr + 1, id))
+        val id = (items \ "id").last.text.toInt
+
+        if (id == lastId) {
+          Stream.empty
+        } else {
+          toStream(items, nextPage(pageNr + 1, id))
+        }
       }
     }
 
@@ -201,18 +214,18 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
 
   private def getPage(page: Int, perPage: Int) =
     client.sendMessage(
-      <mc:mc_project_get_issues xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      <mc:mc_filter_get_issues xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
         { getRequestContent(page, perPage) }
-      </mc:mc_project_get_issues>) match {
+      </mc:mc_filter_get_issues>) match {
         case SoapResult(r) => r
         case SoapError(t, m) => throw new RuntimeException("Error ("+t+") while listing tickets:"+m)
       }
 
   private def getTicketHeaders(page: Int, perPage: Int) =
     client.sendMessage(
-      <mc:mc_project_get_issue_headers xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      <mc:mc_filter_get_issue_headers xmlns:mc="http://futureware.biz/mantisconnect" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
         { getRequestContent(page, perPage) }
-      </mc:mc_project_get_issue_headers>) match {
+      </mc:mc_filter_get_issue_headers>) match {
         case SoapResult(r) => r
         case SoapError(t, m) => throw new RuntimeException("Error ("+t+") while listing ticket header:"+m)
       }
@@ -221,6 +234,7 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
     <username xsi:type="xsd:string">{ config("username") }</username>,
     <password xsi:type="xsd:string">{ config("password") }</password>,
     <project_id xsi:type="xsd:integer">{ config("project").toInt }</project_id>,
+    <filter_id xsi:type="xsd:integer">{ config("filter").toInt }</filter_id>,
     <page_number xsi:type="xsd:integer">{ page }</page_number>,
     <per_page xsi:type="xsd:integer">{ perPage }</per_page>)
 }

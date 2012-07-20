@@ -23,10 +23,10 @@ object ChangeParser {
 class ChangeParser extends Logging {
   import ChangeParser._
 
-  def parse(tr: Node, newTicket: TicketData): Option[Change] = {
+  def parse(tr: Node, newTicket: TicketData, lang: String): Option[Change] = {
     val cols = tr \ "td"
 
-    val date = MantisImporter.fromSimpleDate(cols(0).text.trim)
+    val date = MantisImporter.fromSimpleDate(cols(0).text.trim, lang)
     val user = cols(1).text.trim
     identifyChange(date, user, cols(2).text.trim, cols(3).text.trim, newTicket)
   }

@@ -14,7 +14,8 @@ class MantisOptions extends UserOptions {
   protected var result: Map[String, String] = Map(
     ("url" -> "http://jowisoftware.de/mant/"),
     ("username" -> "administrator"), ("password" -> "test"), ("repositoryname" -> "default"),
-    ("project" -> "1"))
+    ("project" -> "1"), ("filter" -> "1"),
+    ("dateformat" -> "en"))
 
   val getHtmlDescription =
     """<p><b>Mantis importer</b><br><br>
@@ -32,6 +33,8 @@ class MantisOptions extends UserOptions {
     panel.add("Project Id", text("project"))
     panel.add("User", text("username"))
     panel.add("Password", password("password"))
+    panel.add("Filter", text("filter"))
+    panel.add("Date format", combobox("dateformat", Seq("en", "de")))
     panel.add("Repository name", text("repositoryname"))
   }
 }

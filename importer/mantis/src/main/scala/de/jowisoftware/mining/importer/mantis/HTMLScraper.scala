@@ -10,8 +10,9 @@ import java.net.HttpURLConnection
 import java.net.URLConnection
 import java.net.URL
 
-private[mantis] class HTMLScraper(url: String) {
+private[mantis] class HTMLScraper(dirtyUrl: String) {
   private var cookies: Map[String, String] = Map()
+  private val url = if (dirtyUrl.endsWith("/")) dirtyUrl else (dirtyUrl + "/")
 
   def login(user: String, password: String) =
     post("login.php", Map("username" -> user, "password" -> password))
@@ -52,14 +53,17 @@ private[mantis] class HTMLScraper(url: String) {
 
     val redirect = conn.getHeaderField("Location")
     if (redirect != null) {
-      get(redirect)
+      val cleanURL = if (redirect.startsWith(url)) {
+        redirect.substring(url.length)
+      } else redirect
+      get(cleanURL)
     } else {
       new HTML5Parser().loadXML(conn.getInputStream)
     }
   }
 
   private def getConnection(file: String): URLConnection = {
-    val callUrl = new java.net.URL(url + (if (url.endsWith("/")) "" else "/") + file)
+    val callUrl = new java.net.URL(url + file)
     val conn = callUrl.openConnection.asInstanceOf[HttpURLConnection]
     conn.setRequestProperty("Cookie", cookies.map { case (k, v) => k+"="+v }.mkString(";"))
     conn.setInstanceFollowRedirects(false)
