@@ -13,11 +13,11 @@ trait DBWithTransaction[T <: Node] extends ReadWriteDatabase[T] {
     * Mark this transaction as successful.
     * After calling this method, no other methods of this object must be called.
     */
-  def success
+  def success()
 
   /**
     * Mark this transaction as failed.
     * After calling this method, no other methods of this object must be called.
     */
-  def failure
+  def failure()
 }
