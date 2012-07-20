@@ -7,7 +7,14 @@ import de.jowisoftware.neo4j.DBWithTransaction
 
 import scala.collection.JavaConversions._
 
+object IndexAccess {
+  def mask(s: String) =
+   s.replaceAll("""([-+!(){}\[\]^"~*?:\\]|&&|\|\|)""", "\\\\$1")
+}
+
 trait IndexAccess[A <: Node] {
+  import IndexAccess._
+
   private def getIndex(db: DBWithTransaction[_])(implicit manifest: Manifest[A]): Index[NeoNode] =
     db.service.index.forNodes(manifest.erasure.getSimpleName)
 

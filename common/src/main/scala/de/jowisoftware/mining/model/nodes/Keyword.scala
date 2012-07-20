@@ -10,7 +10,7 @@ object Keyword extends NodeCompanion[Keyword] with IndexAccess[Keyword] {
   def apply = new Keyword
 
   private[model] def find(db: DBWithTransaction[RootNode], name: String) =
-    findInIndex(db, "name", name, this)
+    findInIndex(db, "name", IndexAccess.mask(name), this)
 }
 
 class Keyword extends MiningNode with HasIndexedName {
