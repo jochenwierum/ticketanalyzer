@@ -8,7 +8,7 @@ import de.jowisoftware.mining.model.nodes.CommitRepository
 
 private[trac] class TextScanner {
   def scan(text: String, events: LinkEvents, node: MiningNode, commitRepository: CommitRepository): Unit = {
-    new ScmScanner(new Neo4jRangeGenerator(commitRepository.db))
+    new ScmScanner(new Neo4jRangeGenerator(commitRepository.readableDb))
       .scan(text, commitRepository)
       .foreach(link => events.foundLink(node, link))
 

@@ -14,6 +14,6 @@ object FileRepository extends NodeCompanion[FileRepository] {
 class FileRepository extends MiningNode with EmptyNode {
   private lazy val parentName = getFirstNeighbor(Direction.INCOMING, ContainsFiles, CommitRepository).get.name()
 
-  def createFile(): File = db.createNode(File)
-  def findFile(name: String) = File.find(db, parentName, name)
+  def createFile(): File = writableDb.createNode(File)
+  def findFile(name: String) = File.find(readableDb, parentName, name)
 }

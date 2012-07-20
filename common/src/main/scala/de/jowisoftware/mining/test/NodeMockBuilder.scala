@@ -9,6 +9,7 @@ import de.jowisoftware.neo4j.content.NodeCompanion
 import scala.collection.JavaConversions._
 import org.mockito.stubbing.OngoingStubbing
 import org.mockito.invocation.InvocationOnMock
+import de.jowisoftware.neo4j.ReadWriteDatabase
 
 object NodeMockBuilder {
   private var nextId = 1
@@ -38,7 +39,7 @@ class NodeMockBuilder[A <: MiningNode] private[test] (companion: NodeCompanion[A
 
   when(mockedNode.getPropertyKeys).thenAnswer { _: InvocationOnMock => properties }
 
-  final private[test] def finishMock(db: DBWithTransaction[RootNode]): A = {
+  final private[test] def finishMock(db: ReadWriteDatabase[RootNode]): A = {
     if (!wrapperIsPrepared) {
       wrapperIsPrepared = true
       wrapper.initWith(mockedNode, db)

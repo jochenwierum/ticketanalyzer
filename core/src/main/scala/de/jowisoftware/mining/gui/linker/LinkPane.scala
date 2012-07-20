@@ -1,21 +1,22 @@
 package de.jowisoftware.mining.gui.linker
 
+import scala.swing.{Swing, ScrollPane, Orientation, GridPanel, Frame, ComboBox, Button, BoxPanel}
+import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.event.{ SelectionChanged, ButtonClicked }
-import scala.swing.{ Swing, ScrollPane, Orientation, GridPanel, Frame, Button, BoxPanel, BorderPanel, ComboBox }
+import scala.swing.event.{SelectionChanged, ButtonClicked}
+
 import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.{ ProgressDialog, LeftAlignedLabel }
-import de.jowisoftware.mining.linker.Linker
-import de.jowisoftware.mining.model.nodes.{ RootNode }
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasName }
-import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
+
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
-import de.jowisoftware.mining.linker.ConsoleProgressReporter
-import de.jowisoftware.mining.linker.DatabaseLinkerHandler
-import de.jowisoftware.mining.gui.GuiTab
+import de.jowisoftware.mining.gui.{LeftAlignedLabel, GuiTab}
+import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
+import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.linker.{Linker, DatabaseLinkerHandler, ConsoleProgressReporter}
+import de.jowisoftware.mining.model.nodes.RootNode
+import de.jowisoftware.mining.model.nodes.helper.{MiningNode, HasName}
+import de.jowisoftware.mining.model.relationships.Contains
+import de.jowisoftware.mining.plugins.{PluginType, PluginManager, Plugin}
+import de.jowisoftware.neo4j.{ReadOnlyDatabase, Database}
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel with GuiTab {
   private val pluginList = new ComboBox[Plugin](makePluginList)
@@ -122,10 +123,10 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     dialog.show()
   }
 
-  private def getSelectedTicketRepository(transaction: DBWithTransaction[RootNode]) =
+  private def getSelectedTicketRepository(transaction: ReadOnlyDatabase[RootNode]) =
     transaction.rootNode.ticketRepositoryCollection.findOrCreateChild(ticketList.selection.item)
 
-  private def getSelectedCommitRepository(transaction: DBWithTransaction[RootNode]) =
+  private def getSelectedCommitRepository(transaction: ReadOnlyDatabase[RootNode]) =
     transaction.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
 
   def align = {}

@@ -15,7 +15,7 @@ private[neo4j] class DefaultTransaction[T <: Node](
   def success = tx.success()
   def failure = tx.failure()
 
-  val rootNode: T =
+  lazy val rootNode: T =
     Node.wrapNeoNode(db.service.getReferenceNode(), this, rootCompanion)
 
   def createNode[S <: Node](companion: NodeCompanion[S]): S =

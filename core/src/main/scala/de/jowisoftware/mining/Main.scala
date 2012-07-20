@@ -13,6 +13,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler
 import scala.swing.Dialog
 import de.jowisoftware.neo4j.database.EmbeddedDatabaseWithConsole
 import de.jowisoftware.util.AppUtil
+import org.neo4j.graphdb.GraphDatabaseService
 
 object Main {
   val settings = new Settings("config.properties")

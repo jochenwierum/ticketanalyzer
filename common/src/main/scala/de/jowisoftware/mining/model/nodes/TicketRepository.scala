@@ -2,9 +2,9 @@ package de.jowisoftware.mining.model.nodes
 
 import de.jowisoftware.mining.model.relationships.Contains
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
+import com.sun.corba.se.spi.ior.Writeable
 
 object TicketRepository extends NodeCompanion[TicketRepository] {
   def apply = new TicketRepository
@@ -13,10 +13,10 @@ object TicketRepository extends NodeCompanion[TicketRepository] {
 class TicketRepository extends MiningNode with HasName with EmptyNode {
   def obtainTicket(id: Int, version: Int): Ticket = {
     val uid = name()+"-"+id+"-"+version
-    Ticket.find(db, uid) match {
+    Ticket.find(readableDb, uid) match {
       case Some(ticket) => ticket
       case None =>
-        val ticket = db.createNode(Ticket)
+        val ticket = writableDb.createNode(Ticket)
         ticket.ticketId(id)
         ticket.uid(uid)
         this.add(ticket, Contains)
@@ -25,7 +25,7 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
   }
 
   def findRecentVersionOf(tId: Int): Option[Ticket] =
-    Ticket.findAll(db, name()+"-"+tId+"-*").reduceOption {
+    Ticket.findAll(readableDb, name()+"-"+tId+"-*").reduceOption {
       (t1, t2) =>
         val v1 = t1.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
         val v2 = t2.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt

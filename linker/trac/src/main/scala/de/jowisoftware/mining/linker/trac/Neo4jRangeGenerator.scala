@@ -11,8 +11,9 @@ import de.jowisoftware.neo4j.content.Node
 import de.jowisoftware.neo4j.traversing.Traverser
 import de.jowisoftware.neo4j.traversing.Traverser.evaluator2NeoEvaluator
 import org.neo4j.graphdb.Direction
+import de.jowisoftware.neo4j.ReadOnlyDatabase
 
-class Neo4jRangeGenerator(db: DBWithTransaction[RootNode]) extends RangeGenerator {
+class Neo4jRangeGenerator(db: ReadOnlyDatabase[RootNode]) extends RangeGenerator {
   def findRange(c1: Commit, c2: Commit): Set[Commit] = {
     val (start, end) = if (c1.rank() >= c2.rank()) {
       (c1, c2)

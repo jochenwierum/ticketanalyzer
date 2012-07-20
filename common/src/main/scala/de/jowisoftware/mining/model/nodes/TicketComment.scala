@@ -9,7 +9,7 @@ import helper._
 object TicketComment extends NodeCompanion[TicketComment] with IndexAccess[TicketComment] {
   def apply = new TicketComment
 
-  private[nodes] def find(db: DBWithTransaction[RootNode], uid: String) =
+  private[nodes] def find(db: ReadOnlyDatabase[RootNode], uid: String) =
     findInIndex(db, "uid", uid, this)
 }
 

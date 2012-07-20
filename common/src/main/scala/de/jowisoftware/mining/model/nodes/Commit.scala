@@ -9,10 +9,10 @@ import de.jowisoftware.mining.model.relationships.ChildOf
 object Commit extends NodeCompanion[Commit] with IndexAccess[Commit] {
   def apply = new Commit
 
-  private[model] def find(db: DBWithTransaction[RootNode], uid: String) =
+  private[model] def find(db: ReadOnlyDatabase[RootNode], uid: String) =
     findInIndex(db, "uid", uid, this)
 
-  private[model] def findAbbrev(db: DBWithTransaction[RootNode], uid: String) =
+  private[model] def findAbbrev(db: ReadOnlyDatabase[RootNode], uid: String) =
     findInIndex(db, "uid:"+uid+"*", this)
 }
 

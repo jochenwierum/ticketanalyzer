@@ -2,16 +2,24 @@ package de.jowisoftware.neo4j.content
 
 import java.util.Date
 import org.neo4j.graphdb.PropertyContainer
-import properties.{ NodeProperty, DateWrapper, CastingObjectPersister, OptionalNodeProperty }
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.content.index.IndexCreator
-import de.jowisoftware.neo4j.content.index.NullIndex
+import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase }
+import de.jowisoftware.neo4j.content.index.{ NullIndex, IndexCreator }
+import de.jowisoftware.neo4j.content.properties.{ OptionalNodeProperty, NodeProperty, CastingObjectPersister }
+import properties.{ OptionalNodeProperty, NodeProperty, DateWrapper, CastingObjectPersister }
+import de.jowisoftware.neo4j.ReadOnlyDatabase
+import de.jowisoftware.neo4j.ReadWriteDatabase
 
 trait Properties[A <: PropertyContainer] {
   protected[neo4j] def content: PropertyContainer
   private[neo4j] val indexCreator: IndexCreator
 
-  private[neo4j] var innerDB: DBWithTransaction[_ <: Node] = _
+  private[neo4j] var innerDB: ReadOnlyDatabase[_ <: Node] = _
+
+  protected def readableDb: ReadOnlyDatabase[_ <: Node] = innerDB
+  protected def writableDb: ReadWriteDatabase[_ <: Node] = innerDB match {
+    case e: ReadWriteDatabase[_] => e
+    case _ => sys.error("A writeable database requires a transaction")
+  }
 
   protected def stringProperty(name: String, default: String = "", indexed: Boolean = false) =
     new NodeProperty[String, A](this, name, default, index(indexed, name)) with CastingObjectPersister[String]
@@ -39,5 +47,5 @@ trait Properties[A <: PropertyContainer] {
 
   private def index(realIndex: Boolean, name: String) =
     if (!realIndex) NullIndex
-    else indexCreator.create(innerDB, content, getClass().getSimpleName, name)
+    else indexCreator.create(innerDB.service, content, getClass().getSimpleName, name)
 }

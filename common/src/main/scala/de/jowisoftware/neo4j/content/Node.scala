@@ -11,17 +11,24 @@ import scala.collection.JavaConversions._
 import properties.Versionable
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.content.index.NodeIndexCreator
+import de.jowisoftware.neo4j.Database
+import de.jowisoftware.neo4j.ReadOnlyDatabase
+import de.jowisoftware.neo4j.ReadWriteDatabase
+import de.jowisoftware.neo4j.ReadOnlyDatabase
+import de.jowisoftware.neo4j.ReadWriteDatabase
+import de.jowisoftware.neo4j.ReadWriteDatabase
+import de.jowisoftware.neo4j.ReadWriteDatabase
 
 object Node {
   def wrapNeoNode[T <: Node](
     neoNode: NeoNode,
-    db: DBWithTransaction[_ <: Node], companion: NodeCompanion[T]): T = {
+    db: ReadOnlyDatabase[_ <: Node], companion: NodeCompanion[T]): T = {
     val node = companion()
     node initWith (neoNode, db)
     node
   }
 
-  def neoNode2Node(node: NeoNode, db: DBWithTransaction[_ <: Node]): Option[Node] = {
+  def neoNode2Node(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]): Option[Node] = {
     try {
       val clazz = node.getProperty("_class").asInstanceOf[String]
       val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
@@ -35,22 +42,22 @@ object Node {
 
 trait Node extends Versionable with Properties[NeoNode] {
   private[neo4j] var innerNode: NeoNode = _
+
   private[neo4j] val indexCreator = NodeIndexCreator
-
   def content: NeoNode = innerNode
-  protected def db = innerDB
 
-  protected final def getIndex = db.service.index.forNodes(getClass().getName)
+  protected final def getIndex = readableDb.service.index.forNodes(getClass().getName)
 
   /**
     * Initialize a Node with a backing Neo4j Node object.
     * This method is called on initialisation. There is normally no need to
     * call this method manually. It is only public to inject mocks.
     */
-  final def initWith(node: NeoNode, db: DBWithTransaction[_ <: Node]) {
+  final def initWith(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]) = {
     this.innerNode = node
     this.innerDB = db
     sanityCheck(node)
+    this
   }
 
   /**
@@ -68,7 +75,7 @@ trait Node extends Versionable with Properties[NeoNode] {
         case None =>
           innerNode.createRelationshipTo(other.innerNode, relType.relationType)
       }
-      result.initWith(initRelationship, db)
+      result.initWith(initRelationship, innerDB)
       result
     }
 
@@ -111,7 +118,7 @@ trait Node extends Versionable with Properties[NeoNode] {
     nodeType: NodeCompanion[A]): A = {
 
     getFirstNeighbor(direction, relType.relationType, nodeType) getOrElse {
-      val node = db.createNode(nodeType)
+      val node = writableDb.createNode(nodeType)
       if (direction == Direction.INCOMING) {
         node.add(this, relType)
       } else {

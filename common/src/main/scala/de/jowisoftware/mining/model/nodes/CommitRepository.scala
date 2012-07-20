@@ -13,10 +13,10 @@ object CommitRepository extends NodeCompanion[CommitRepository] {
 class CommitRepository extends MiningNode with HasName with EmptyNode {
   def obtainCommit(id: String): Commit = {
     val uid = name()+"-"+id
-    Commit.find(db, uid) match {
+    Commit.find(readableDb, uid) match {
       case Some(commit) => commit
       case None =>
-        val commit = db.createNode(Commit)
+        val commit = writableDb.createNode(Commit)
         commit.commitId(id)
         commit.uid(uid)
         this.add(commit, Contains)
@@ -26,9 +26,9 @@ class CommitRepository extends MiningNode with HasName with EmptyNode {
 
   def findCommit(id: String) =
     if (supportsAbbrev())
-      Commit.findAbbrev(db, name()+"-"+id)
+      Commit.findAbbrev(readableDb, name()+"-"+id)
     else
-      Commit.find(db, name()+"-"+id)
+      Commit.find(readableDb, name()+"-"+id)
 
   def commits =
     for {

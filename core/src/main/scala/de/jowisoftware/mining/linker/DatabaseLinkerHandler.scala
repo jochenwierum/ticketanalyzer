@@ -18,8 +18,10 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
 
   def foundKeywords(source: MiningNode, keywords: Set[String]) {
     for (keyword <- keywords) {
-      root.keywordCollection.findOrCreateChild(keyword).add(source, Links).linkType("keyword")
+      val keywordNode = root.keywordCollection.findOrCreateChild(keyword)
+      keywordNode.add(source, Links).linkType("keyword")
     }
+    safePointReached
   }
 
   def foundLink(source: MiningNode, link: Link) {

@@ -1,9 +1,10 @@
 package de.jowisoftware.neo4j.content
 
 import org.neo4j.graphdb.{ RelationshipType, Relationship => NeoRelationship }
-import de.jowisoftware.neo4j.DBWithTransaction
-import properties.Versionable
+
+import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase, Database, DBWithTransaction }
 import de.jowisoftware.neo4j.content.index.RelationshipIndexCreator
+import properties.Versionable
 
 trait Relationship extends Versionable with Properties[NeoRelationship] {
   private[neo4j]type companion <: RelationshipCompanion[Relationship]
@@ -19,9 +20,9 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
   def sink = sinkNode
   def getRelationship = innerRelationship
 
-  protected final def getIndex = innerDB.service.index.forRelationships(getClass().getName)
+  protected final def getIndex = readableDb.service.index.forRelationships(getClass().getName)
 
-  def initWith(relationship: NeoRelationship, db: DBWithTransaction[_ <: Node]) {
+  def initWith(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]) {
     sanityCheck(relationship)
     this.innerRelationship = relationship
     this.innerDB = db

@@ -1,21 +1,19 @@
 package de.jowisoftware.mining.model.nodes
 
-import de.jowisoftware.mining.model.relationships.{ Contains, Updates }
 import org.neo4j.graphdb.Direction
-import de.jowisoftware.neo4j.content.NodeCompanion
-import helper._
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.mining.model.relationships.HasComment
-import de.jowisoftware.neo4j.content.IndexAccess
-import de.jowisoftware.mining.model.relationships.HasTag
+
+import de.jowisoftware.mining.model.relationships.{Updates, HasTag, HasComment}
+import de.jowisoftware.neo4j.ReadOnlyDatabase
+import de.jowisoftware.neo4j.content.{NodeCompanion, IndexAccess}
+import helper.MiningNode
 
 object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
 
-  def find(db: DBWithTransaction[RootNode], uid: String) =
+  def find(db: ReadOnlyDatabase[RootNode], uid: String) =
     findInIndex(db, "uid", uid, this)
 
-  def findAll(db: DBWithTransaction[RootNode], uidQuery: String) =
+  def findAll(db: ReadOnlyDatabase[RootNode], uidQuery: String) =
     findMultipleInIndex(db, "uid", uidQuery, this)
 }
 
@@ -41,10 +39,10 @@ class Ticket extends MiningNode {
 
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
 
-  def findComment(id: Int) = TicketComment.find(db, createCommentUid(id))
+  def findComment(id: Int) = TicketComment.find(readableDb, createCommentUid(id))
 
   def createComment(id: Int) = {
-    val node = db.createNode(TicketComment)
+    val node = writableDb.createNode(TicketComment)
     add(node, HasComment)
     node.uid(createCommentUid(id))
     node

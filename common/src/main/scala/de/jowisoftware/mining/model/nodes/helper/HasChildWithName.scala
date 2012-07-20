@@ -19,7 +19,7 @@ protected trait HasChildWithName[A <: HasName] extends MiningNode {
     neighbor match {
       case Some(node) => node.asInstanceOf[A]
       case None =>
-        val node = db.createNode(creator)
+        val node = writableDb.createNode(creator)
         node.name(name)
         add(node, relationship)
         node

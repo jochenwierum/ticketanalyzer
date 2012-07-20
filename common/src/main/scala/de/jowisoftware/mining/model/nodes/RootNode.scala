@@ -20,7 +20,7 @@ class RootNode extends MiningNode {
     node match {
       case Some(node) => node
       case _ =>
-        val node = db.createNode(nodeType)
+        val node = writableDb.createNode(nodeType)
         this.add(node, Contains)
         node
     }

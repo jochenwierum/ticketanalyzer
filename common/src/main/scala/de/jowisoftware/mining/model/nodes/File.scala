@@ -7,7 +7,7 @@ import helper._
 object File extends NodeCompanion[File] with IndexAccess[File] {
   def apply = new File
 
-  private[model] def find(db: DBWithTransaction[RootNode], repository: String, name: String) =
+  private[model] def find(db: ReadOnlyDatabase[RootNode], repository: String, name: String) =
     findInIndex(db, "uid", repository+"-"+name, this)
 }
 

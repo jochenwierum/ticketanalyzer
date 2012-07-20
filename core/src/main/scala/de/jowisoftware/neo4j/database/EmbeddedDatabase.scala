@@ -28,7 +28,7 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     val wrapper = new DefaultTransaction(this, tx, rootCompanion)
 
     try {
-      return body(wrapper)
+      body(wrapper)
     } finally {
       tx.finish()
     }
@@ -60,4 +60,13 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
         shutdown()
     })
   }
+
+  lazy val rootNode: T =
+    Node.wrapNeoNode(service.getReferenceNode, this, rootCompanion)
+
+  def getUnknownNode(id: Long): Node =
+    Node.neoNode2Node(service.getNodeById(id), this).get
+
+  def getNode[S <: Node](id: Long, companion: NodeCompanion[S]): S =
+    Node.wrapNeoNode(service.getNodeById(id), this, companion)
 }
