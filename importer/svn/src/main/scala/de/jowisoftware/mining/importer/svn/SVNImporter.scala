@@ -1,14 +1,16 @@
 package de.jowisoftware.mining.importer.svn
 
-import scala.collection.JavaConversions.asScalaSet
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager
-import org.tmatesoft.svn.core.wc._
-import org.tmatesoft.svn.core._
-import de.jowisoftware.mining.importer.CommitDataFields._
-import de.jowisoftware.mining.importer._
-import scala.collection.mutable
-import scala.collection.JavaConversions._
+import scala.Option.option2Iterable
 import scala.annotation.tailrec
+import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.mutable
+
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager
+import org.tmatesoft.svn.core.wc.{SVNWCUtil, SVNRevision, SVNClientManager}
+import org.tmatesoft.svn.core.{SVNURL, SVNLogEntryPath, SVNLogEntry, ISVNLogEntryHandler}
+
+import de.jowisoftware.mining.importer.CommitDataFields.{parents, message, files, date}
+import de.jowisoftware.mining.importer.{Importer, ImportEvents, CommitDataFields, CommitData}
 
 class SVNImporter extends Importer {
   def userOptions = new SVNOptions
@@ -26,18 +28,18 @@ class SVNImporter extends Importer {
 
     val cm = SVNClientManager.newInstance(svnOptions, authManager)
     val lc = cm.getLogClient()
+
     val svnurl = SVNURL.parseURIDecoded(config("url"))
     val rev0 = SVNRevision.create(1)
-    val parents = mutable.Map[String, Long]()
 
     val info = cm.getWCClient().doInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD)
     val latestRevision = info.getCommittedRevision()
 
     events.countedCommits(latestRevision.getNumber())
 
-    var tmp: List[SVNLogEntry] = Nil
-    lc.doLog(svnurl, Array[String]("."), rev0, rev0, latestRevision,
-      false, true, Long.MaxValue, new ISVNLogEntryHandler() {
+    val parents = mutable.Map[String, Long]()
+    lc.doLog(svnurl, Array[String]("."), latestRevision, latestRevision,SVNRevision.create(1),
+      false, true, -1, new ISVNLogEntryHandler() {
         def handleLogEntry(entry: SVNLogEntry) {
           val commitData = handle(entry, parents)
           events.loadedCommit(config("repositoryname"), commitData)
