@@ -60,7 +60,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   }
 
   def updateView() {
-    val state = db.inTransaction(_.rootNode.state())
+    val state = db.rootNode.state()
 
     linkPane.enabled = state > 0
     shellPane.enabled = state > 0

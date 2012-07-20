@@ -1,22 +1,22 @@
 package de.jowisoftware.mining.gui.linker
 
-import scala.swing.{Swing, ScrollPane, Orientation, GridPanel, Frame, ComboBox, Button, BoxPanel}
+import scala.swing.{ Swing, ScrollPane, Orientation, GridPanel, Frame, ComboBox, Button, BoxPanel }
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.event.{SelectionChanged, ButtonClicked}
+import scala.swing.event.{ SelectionChanged, ButtonClicked }
 
 import org.neo4j.graphdb.Direction
 
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.mining.gui.{LeftAlignedLabel, GuiTab}
+import de.jowisoftware.mining.gui.{ LeftAlignedLabel, GuiTab }
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.linker.{Linker, DatabaseLinkerHandler, ConsoleProgressReporter}
+import de.jowisoftware.mining.linker.{ Linker, DatabaseLinkerHandler, ConsoleProgressReporter }
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.model.nodes.helper.{MiningNode, HasName}
+import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasName }
 import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.plugins.{PluginType, PluginManager, Plugin}
-import de.jowisoftware.neo4j.{ReadOnlyDatabase, Database}
+import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
+import de.jowisoftware.neo4j.{ ReadOnlyDatabase, Database }
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame) extends BorderPanel with GuiTab {
   private val pluginList = new ComboBox[Plugin](makePluginList)
@@ -98,24 +98,25 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
       override def run() {
         val options = importerOptions.getUserInput
 
-        db.inTransaction { transaction =>
-          try {
-            selectedPlugin.link(getSelectedTicketRepository(transaction),
-              getSelectedCommitRepository(transaction), options,
-              new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
-                val progressDialog = dialog
-              })
+        try {
+          selectedPlugin.link(getSelectedTicketRepository,
+            getSelectedCommitRepository, options,
+            new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
+              val progressDialog = dialog
+            })
 
-            if (transaction.rootNode.state() < 2) {
+          if (db.rootNode.state() < 2) {
+            db.inTransaction { transaction =>
               transaction.rootNode.state(2)
+              println(transaction.rootNode.state())
+              transaction.success()
             }
+          }
 
-            transaction.success
-          } finally {
-            Swing.onEDT {
-              dialog.hide()
-              parent.publish(DatabaseUpdated)
-            }
+        } finally {
+          Swing.onEDT {
+            dialog.hide()
+            parent.publish(DatabaseUpdated)
           }
         }
       }
@@ -123,11 +124,11 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     dialog.show()
   }
 
-  private def getSelectedTicketRepository(transaction: ReadOnlyDatabase[RootNode]) =
-    transaction.rootNode.ticketRepositoryCollection.findOrCreateChild(ticketList.selection.item)
+  private def getSelectedTicketRepository =
+    db.rootNode.ticketRepositoryCollection.findOrCreateChild(ticketList.selection.item)
 
-  private def getSelectedCommitRepository(transaction: ReadOnlyDatabase[RootNode]) =
-    transaction.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
+  private def getSelectedCommitRepository =
+    db.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
 
   def align = {}
 }
