@@ -14,7 +14,9 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
   val transactionThreshould = 50
 
   def reportProgress(progress: Long, max: Long, message: String) {}
-  def finish() {}
+  def finish() {
+    transaction.success
+  }
 
   def foundKeywords(source: MiningNode, keywords: Set[String]) {
     for (keyword <- keywords) {
