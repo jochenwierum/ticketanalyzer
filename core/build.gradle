@@ -10,10 +10,10 @@ dependencies {
   compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.6.5"
   compile group: "org.fusesource.jansi", name: "jansi", version: "1.8"
   
-  provided group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03"
+  provided group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M06"
   if (!(project.hasProperty("compact") && project.property("compact") == "true")) {
     compile group: "com.sun.jersey", name: "jersey-core", version: "1.9"
-    compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M03", classifier: "static-web"
+    compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8.M06", classifier: "static-web"
   }
 }
 
