@@ -17,7 +17,7 @@ class ImageDialog(image: BufferedImage) extends Dialog {
     }
   }
 
-  title = "Ticket status structure"
+  title = "Ticket state workflow structure"
 
   val imageComponent = new DotImage()
   contents = imageComponent

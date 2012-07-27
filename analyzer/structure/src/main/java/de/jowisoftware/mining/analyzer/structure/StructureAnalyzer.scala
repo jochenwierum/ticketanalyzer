@@ -16,30 +16,114 @@ import java.awt.datatransfer.StringSelection
 import de.jowisoftware.mining.model.nodes.TicketRepository
 import java.util.Locale
 import java.io.File
+import org.neo4j.cypher.ExecutionResult
+import scala.swing.Dialog
 
-class StructureAnalyzer extends Analyzer {
-  def userOptions() = new StructreUserOptions
+class StructureAnalyzer(db: Database[RootNode],
+    options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
-  def analyze(db: Database[RootNode],
-    options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) = {
-
-    val nodes = db.rootNode.ticketRepositoryCollection.neighbors(
+  lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.neighbors(
       Direction.OUTGOING, Seq(Contains.relationType))
       .map(_.asInstanceOf[TicketRepository].id)
       .mkString(", ")
 
+  def run() {
+    val result = findStateChanges
+    val deadEnds = createDeadEndMap(findDeadEnds)
+
+    val resultWindow: Dialog = options("visualization") match {
+        case "Graph" => createDotWindow(result, deadEnds)
+        case "Matrix" => createMatrixWindow(result, deadEnds)
+    }
+
+    waitDialog.hide
+    resultWindow.visible = true
+  }
+
+  private def findStateChanges: ExecutionResult = {
     val query = """
-      START r=node(%s) // ticket collection
-      MATCH r --> n -[:has_status]-> s1,
-        s2 <-[:has_status]- m -[:updates]-> n
-      WHERE s1 <> s2
-      RETURN s1.name AS from, s2.name AS to, count(*) AS count
+      START repository=node(%s) // ticket collection
+      MATCH repository --> ticket1 -[:has_status]-> status1,
+        status2 <-[:has_status]- ticket2 -[:updates]-> ticket1
+      WHERE status1 <> status2
+      RETURN status1.name AS from, status2.name AS to, count(*) AS count
       ORDER BY from, count DESC;
-      """ format (nodes)
+      """ format (repositoryNodes)
 
     val engine = new ExecutionEngine(db.service)
     val result = engine.execute(query)
+    result
+  }
 
+  private def findDeadEnds: ExecutionResult = {
+    val query = """
+      START repository=node(%s) // ticket collection
+      MATCH
+        repository --> ticket1 -[:has_status]-> status,
+        ticket2 -[r?:updates]-> ticket1
+      WHERE ticket2 IS NULL
+      RETURN status.name AS name, count(*) AS count;
+    """ format (repositoryNodes)
+
+    val engine = new ExecutionEngine(db.service)
+    val result = engine.execute(query)
+    result
+  }
+
+  private def createDeadEndMap(result: ExecutionResult) = {
+      val mapIterator = for (row <- result) yield {
+        row("name").asInstanceOf[String] -> row("count").asInstanceOf[Long]
+      }
+
+      mapIterator.toMap
+  }
+
+  private def createMatrixWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
+    val buffered = result.toSeq
+    var namesSet: Set[String] = Set()
+
+    for (row <- buffered) {
+      namesSet += row("from").asInstanceOf[String]
+      namesSet += row("to").asInstanceOf[String]
+    }
+
+    val matrix = new TextMatrix((namesSet.toSeq.sorted :+ "(final)"): _*)
+
+    for (status <- deadEnds) {
+      matrix.set(status._1, "(final)", status._2)
+    }
+
+    for (row <- buffered) {
+      matrix.set(row("from").asInstanceOf[String], row("to").asInstanceOf[String], row("count").asInstanceOf[Long])
+    }
+
+    new MatrixDialog(matrix)
+  }
+
+  private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
+    val (lines, nodeNames) = formatResultToDotNodes(result)
+    val graphText = "digraph {"+
+        getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
+        lines.mkString("\n\t", "\n\t", "\n")+
+        "}"
+
+        println(graphText)
+    val graph = new DotWrapper(new File(options("dot"))).run(graphText)
+
+    new ImageDialog(graph)
+  }
+
+  def getEdgeString(from: String, to: String, count: Long, factor: Double) = {
+    val weight = ((1 - factor) * 200).intValue
+    val width = (3 * factor) max 1
+    val red = (factor * 255).intValue
+
+    """%s -> %s [weight = %d, label = "%s", penwidth = %f, color = "#%2x0000", fontcolor="#%6$2x0000"];""" formatLocal (
+      Locale.ENGLISH,
+      from, to, weight, count, width, red)
+  }
+
+  private def formatResultToDotNodes(result: ExecutionResult): (List[String], Map[String, String]) = {
     var lastFrom = ""
     var lastCount = 0L
     var nodeNames: Map[String, String] = Map()
@@ -50,52 +134,29 @@ class StructureAnalyzer extends Analyzer {
       val to = row("to").asInstanceOf[String]
       val count = row("count").asInstanceOf[Long]
 
-      val first = if (from != lastFrom) {
+      if (from != lastFrom) {
         lastFrom = from
         lastCount = count
-        true
-      } else
-        false
+      }
 
       val fromNodeName = nodeName(from)
       val toNodeName = nodeName(to)
 
       nodeNames += fromNodeName -> from
       nodeNames += toNodeName -> to
-      lines = getEdgeString(fromNodeName, toNodeName, count, count.doubleValue / lastCount, first) :: lines
+      lines = getEdgeString(fromNodeName, toNodeName, count, count.doubleValue / lastCount) :: lines
     }
 
-    val graphText = "digraph {"+
-      getNodesStrings(nodeNames).mkString("\n\t", "\n\t", "\n") +
-      lines.mkString("\n\t", "\n\t", "\n")+
-      "}"
-
-    val graph = new DotWrapper(new File(options("dot"))).run(graphText)
-
-    waitDialog.hide
-    new ImageDialog(graph).visible = true
+    (lines, nodeNames)
   }
 
-  def getEdgeString(from: String, to: String, count: Long, factor: Double, first: Boolean) =
-    if (first) {
-      """%s -> %s [weight = 0, label = "%s", penwidth = 3, color = "#ff0000", fontcolor="#ff0000"];""" format (
-        from, to, count)
-    } else {
-      val weight = ((1 - factor) * 200).intValue
-      val width = (3 * factor) max 1
-      val red = (255 - factor * 255).intValue
-      """%s -> %s [weight = %d, label = "%s", penwidth = %f, color = "#%2x0000", fontcolor="#%6$2x0000"];""" formatLocal (
-        Locale.ENGLISH,
-        from, to, weight, count, width, red)
-    }
-
-  def nodeName(s: String) = s
+  private def nodeName(s: String) = s
     .replaceAll("[^A-Za-z0-9]+", "_")
     .replaceAll("^_+|_+$", "")
 
-  def getNodesStrings(names: Map[String, String]): Iterable[String] =
+  private def getNodesStrings(names: Map[String, String], deadEnds: Map[String, Long]): Iterable[String] =
     names.map {
       case (id, text) =>
-        """%s [text = "%s"];""" format (id, text)
+        """%s [label = "%s; final: %d"];""" format (id, text, deadEnds(id))
     }
 }
