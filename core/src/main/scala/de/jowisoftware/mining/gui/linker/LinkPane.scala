@@ -108,7 +108,6 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
           if (db.rootNode.state() < 2) {
             db.inTransaction { transaction =>
               transaction.rootNode.state(2)
-              println(transaction.rootNode.state())
               transaction.success()
             }
           }
