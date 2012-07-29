@@ -12,10 +12,6 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
   private var _value = 0L
 
   title = "Progress"
-  modal = true
-  size = new Dimension(500, 140)
-  centerOnScreen()
-
   peer.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
 
   val bar = new ProgressBar()
@@ -32,6 +28,10 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
     layout += bar -> Position.Center
     layout += status -> Position.South
   }
+
+  modal = true
+  size = new Dimension(200, 70)
+  centerOnScreen()
 
   def show() = visible = true
 
@@ -81,5 +81,6 @@ class ProgressDialog(p: Frame) extends Dialog(p) {
     status.visible = true
     val oldDimension = this.size
     this.size = new Dimension(oldDimension.width, oldDimension.height + status.preferredSize.height)
+    centerOnScreen()
   }
 }
