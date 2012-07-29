@@ -1,7 +1,0 @@
-description "project structure analyzer plugin"
-
-eclipse {
-  project {
-    name = 'analyzer-structure'
-  }
-}

@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.analyzer.structure
+package de.jowisoftware.mining.analyzer.workflow
 
 class TextMatrix(titles: String*) {
   private val cells: Array[Array[Double]] = Array.fill(titles.size, titles.size)(0)

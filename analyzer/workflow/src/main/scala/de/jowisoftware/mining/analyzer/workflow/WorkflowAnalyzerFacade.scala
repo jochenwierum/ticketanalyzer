@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.analyzer.structure
+package de.jowisoftware.mining.analyzer.workflow
 
 import de.jowisoftware.mining.gui.ProgressDialog
 import scala.collection.immutable.Map
@@ -8,9 +8,9 @@ import de.jowisoftware.mining.analyzer.Analyzer
 import scala.swing.Frame
 import de.jowisoftware.mining.model.nodes.RootNode
 
-class StructureAnalyzerFacade extends Analyzer {
+class WorkflowAnalyzerFacade extends Analyzer {
   def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) =
-    new StructureAnalyzer(db, options, parent, waitDialog).run()
+    new WorkflowAnalyzer(db, options, parent, waitDialog).run()
 
-  def userOptions() = new StructreUserOptions
+  def userOptions() = new WorkflowUserOptions
 }

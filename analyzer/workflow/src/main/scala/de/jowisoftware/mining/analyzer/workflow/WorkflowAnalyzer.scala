@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.analyzer.structure
+package de.jowisoftware.mining.analyzer.workflow
 
 import de.jowisoftware.mining.gui.ProgressDialog
 import scala.collection.immutable.Map
@@ -19,21 +19,21 @@ import java.io.File
 import org.neo4j.cypher.ExecutionResult
 import scala.swing.Dialog
 
-class StructureAnalyzer(db: Database[RootNode],
+class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
   lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.neighbors(
-      Direction.OUTGOING, Seq(Contains.relationType))
-      .map(_.asInstanceOf[TicketRepository].id)
-      .mkString(", ")
+    Direction.OUTGOING, Seq(Contains.relationType))
+    .map(_.asInstanceOf[TicketRepository].id)
+    .mkString(", ")
 
   def run() {
     val result = findStateChanges
     val deadEnds = createDeadEndMap(findDeadEnds)
 
     val resultWindow: Dialog = options("visualization") match {
-        case "Graph" => createDotWindow(result, deadEnds)
-        case "Matrix" => createMatrixWindow(result, deadEnds)
+      case "Graph" => createDotWindow(result, deadEnds)
+      case "Matrix" => createMatrixWindow(result, deadEnds)
     }
 
     waitDialog.hide
@@ -71,11 +71,11 @@ class StructureAnalyzer(db: Database[RootNode],
   }
 
   private def createDeadEndMap(result: ExecutionResult) = {
-      val mapIterator = for (row <- result) yield {
-        row("name").asInstanceOf[String] -> row("count").asInstanceOf[Long]
-      }
+    val mapIterator = for (row <- result) yield {
+      row("name").asInstanceOf[String] -> row("count").asInstanceOf[Long]
+    }
 
-      mapIterator.toMap
+    mapIterator.toMap
   }
 
   private def createMatrixWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
@@ -87,6 +87,11 @@ class StructureAnalyzer(db: Database[RootNode],
       namesSet += row("to").asInstanceOf[String]
     }
 
+    for (dead <- deadEnds.keys) {
+      namesSet += dead
+    }
+
+    println(namesSet)
     val matrix = new TextMatrix((namesSet.toSeq.sorted :+ "(final)"): _*)
 
     for (status <- deadEnds) {
@@ -103,11 +108,10 @@ class StructureAnalyzer(db: Database[RootNode],
   private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
     val (lines, nodeNames) = formatResultToDotNodes(result)
     val graphText = "digraph {"+
-        getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
-        lines.mkString("\n\t", "\n\t", "\n")+
-        "}"
+      getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
+      lines.mkString("\n\t", "\n\t", "\n")+
+      "}"
 
-        println(graphText)
     val graph = new DotWrapper(new File(options("dot"))).run(graphText)
 
     new ImageDialog(graph)

@@ -1,0 +1,7 @@
+description "project workflow analyzer plugin"
+
+eclipse {
+  project {
+    name = 'analyzer-workflow'
+  }
+}

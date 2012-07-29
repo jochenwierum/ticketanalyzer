@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.analyzer.structure
+package de.jowisoftware.mining.analyzer.workflow
 
 import java.io.File
 import scala.io.Source
