@@ -12,4 +12,11 @@ class AbbrevFilterTest extends AbstractFilterTest {
     check("rest", FilterResult.Undecide)
     check("test", FilterResult.Undecide)
   }
+
+  it must """never accept "not", "and" and "or"""" in {
+    check("not", FilterResult.Reject)
+    check("and", FilterResult.Reject)
+    check("or", FilterResult.Reject)
+    check("NoT", FilterResult.Reject)
+  }
 }

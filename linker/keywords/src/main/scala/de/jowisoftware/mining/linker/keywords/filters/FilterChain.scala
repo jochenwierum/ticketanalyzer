@@ -7,10 +7,10 @@ import grizzled.slf4j.Logging
 class FilterChain extends Logging {
   val filters = new ArrayBuffer[Filter]
 
-  @tailrec private def checkWord(word: String, filterList: Iterator[Filter]): Boolean =
+  @tailrec private def checkWord(word: String, filterList: Iterator[Filter], default: Boolean): Boolean =
     if (filterList.isEmpty) {
       trace("Accepted '"+word+"' because no filter matched")
-      true
+      default
     } else {
       val currentFilter = filterList.next
       currentFilter.apply(word) match {
@@ -20,18 +20,16 @@ class FilterChain extends Logging {
         case FilterResult.Reject =>
           trace("Rejected '"+word+"' by "+currentFilter.getClass.getSimpleName)
           false
-        case FilterResult.Undecide => checkWord(word, filterList)
+        case FilterResult.Undecide => checkWord(word, filterList, default)
       }
     }
 
-  def apply(words: Iterable[String]) = {
+  def apply(words: Iterable[String], defaultValue: Boolean) =
     for {
       word <- words
-      if checkWord(word, filters.iterator)
+      if checkWord(word, filters.iterator, defaultValue)
     } yield word
-  }
 
-  def addFilter(filter: Filter) {
+  def addFilter(filter: Filter) =
     filters += filter
-  }
 }

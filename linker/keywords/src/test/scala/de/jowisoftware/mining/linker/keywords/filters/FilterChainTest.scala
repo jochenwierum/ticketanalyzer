@@ -7,11 +7,18 @@ import de.jowisoftware.mining.test.MockHelper
 import org.mockito.Mockito._
 
 class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
-  "A filter Chain" should "accept by default" in {
+  "A filter Chain" should "accept by default if requested" in {
     val chain = new FilterChain()
 
-    (chain(Set("1", "2", "3"))) should equal(Set("1", "2", "3"))
-    (chain(Set("a", "b"))) should equal(Set("a", "b"))
+    (chain(Set("1", "2", "3"), true)) should equal(Set("1", "2", "3"))
+    (chain(Set("a", "b"), true)) should equal(Set("a", "b"))
+  }
+
+  "A filter Chain" should "reject by default if requested" in {
+    val chain = new FilterChain()
+
+    (chain(Set("1", "2", "3"), false)) should equal(Set())
+    (chain(Set("a", "b"), false)) should equal(Set())
   }
 
   it should "accept when no filter matches" in {
@@ -21,7 +28,18 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter.apply("x")).thenReturn(FilterResult.Undecide)
       chain.addFilter(filter)
 
-      (chain(Set("x"))) should equal(Set("x"))
+      (chain(Set("x"), true)) should equal(Set("x"))
+    }
+  }
+
+  it should "reject when no filter matches" in {
+    withMocks { context =>
+      val filter: Filter = context.mock[Filter]("filter")
+      val chain = new FilterChain()
+      when(filter.apply("x")).thenReturn(FilterResult.Undecide)
+      chain.addFilter(filter)
+
+      (chain(Set("x"), false)) should equal(Set())
     }
   }
 
@@ -41,7 +59,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter2.apply("word1")).thenReturn(FilterResult.Accept)
       when(filter1.apply("word2")).thenReturn(FilterResult.Accept)
 
-      chain(list) should equal(list)
+      chain(list, true) should equal(list)
 
       verify(filter1).apply("word1")
       verify(filter2).apply("word1")
@@ -63,7 +81,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter1.apply("word1")).thenReturn(FilterResult.Reject)
       when(filter1.apply("word2")).thenReturn(FilterResult.Reject)
 
-      chain(list) should equal(Set())
+      chain(list, true) should equal(Set())
 
       verify(filter1).apply("word1")
       verify(filter1).apply("word2")

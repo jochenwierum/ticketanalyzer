@@ -12,6 +12,7 @@
 # This regex accepts all keywords that ends with "exception"
 # +.*exception
 
+# Abbrevs
 -[Ee]\.[Gg]
 -[Ii]\.[Ee]
 -[Zz]\.[Bb]
@@ -19,20 +20,20 @@
 -[Dd]\.[Hh]
 -[Ss]\.[Uu]
 
-+.*[a-z][A-Z].*
+# Already filtered by preStem
+-.*[a-z][A-Z].*
+-.*[_.;()\[\]$].*
+-.*null.*
+-.+[eE]xcep.*
+-.+[eE]rr.*
+-javax?\..*
+-(?i:oom)
+-(?i:npe)
 
-+.*[_.;].*
-+.*null.*
-+.+[eE]xcep.*
-+.+[eE]rr.*
-+.*\.(class|java)
-+javax?\..*
 +key.*
 +kei
 +password
 +ui
-+(?i:oom)
-+(?i:npe)
 
 # these words don't add value - en
 -\d+

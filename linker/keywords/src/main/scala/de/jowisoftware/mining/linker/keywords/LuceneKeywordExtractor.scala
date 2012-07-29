@@ -8,6 +8,10 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.util.Version
 import de.jowisoftware.mining.linker.Linker
 
+object LuceneKeywordExtractor {
+  private val forbidden = Set("AND", "NOT", "OR")
+}
+
 class LuceneKeywordExtractor(lang: String) {
   private val analyzer = createAnalyzer(lang)
 
@@ -31,7 +35,10 @@ class LuceneKeywordExtractor(lang: String) {
 
     var uniqueWords: Set[String] = Set()
     while (tokenStream.incrementToken) {
-      uniqueWords += term.toString
+      val word = term.toString
+      if (!LuceneKeywordExtractor.forbidden.contains(word.toUpperCase)) {
+        uniqueWords += word
+      }
     }
 
     uniqueWords

@@ -1,0 +1,35 @@
+# <- This is a comment
+# This file is scanned from top to bottom
+# Each line contains a regex and an indicator whether a match should accept
+# or reject the keyword. If the regex does not match, the next line is scanned.
+# note that the full keyword has to match (use .* where needed)
+#
+# A possitive (accept) regex can be specified by prepending a '+', a negative
+# one by preprending a '-'.
+#
+# This regex discards all keywords that contain a number
+# -.*\d.*
+# This regex accepts all keywords that ends with "exception"
+# +.*exception
+
+# Lucene Keywords
+-(?i:not)
+-(?i:and)
+-(?i:or)
+
+# CamelCase (class/namespace names?)
++.*[a-z][A-Z].*
++javax?\..*
+
+# File names are matched by the code fragments regex
+#+.*\.(class|java)
+
+# Code fragments (class.method())
++.*[_.;()\[\]$].*
+
+# All kinds of errors
++.*null.*
++.+[eE]xcep.*
++.+[eE]rr.*
++(?i:oom)
++(?i:npe)
