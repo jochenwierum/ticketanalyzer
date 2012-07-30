@@ -95,6 +95,8 @@ class KeywordLinker(
       i += 1
       events.reportProgress(i, size, "Extracting keywords")
     }
+
+    events.finish
   }
 
   private def processTags(ticket: Ticket) =
