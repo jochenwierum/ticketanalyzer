@@ -1,0 +1,7 @@
+description "roles analyzer plugin"
+
+eclipse {
+  project {
+    name = 'analyzer-roles'
+  }
+}
