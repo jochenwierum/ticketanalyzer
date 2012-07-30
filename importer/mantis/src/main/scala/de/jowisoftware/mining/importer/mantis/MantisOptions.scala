@@ -11,13 +11,16 @@ import scala.swing.Alignment
 import java.awt.Insets
 
 class MantisOptions extends UserOptions {
-  protected var result: Map[String, String] = Map(
-    ("url" -> "http://jowisoftware.de/mant/"),
-    ("username" -> "administrator"), ("password" -> "test"), ("repositoryname" -> "default"),
-    ("project" -> "1"), ("filter" -> "1"),
-    ("dateformat" -> "en"))
+  protected val defaultResult: Map[String, String] = Map(
+    "url" -> "http://jowisoftware.de/mant/",
+    "username" -> "administrator",
+    "password" -> "test",
+    "repositoryname" -> "default",
+    "project" -> "1",
+    "filter" -> "1",
+    "dateformat" -> "en")
 
-  val getHtmlDescription =
+  protected val htmlDescription =
     """<p><b>Mantis importer</b><br><br>
     This importer reads a mantis repository.<br>
     To use this importer, make sure, that:
@@ -28,7 +31,7 @@ class MantisOptions extends UserOptions {
     </ul>
     """
 
-  def fillPanel(panel: CustomizedGridBagPanel) {
+  protected def fillPanel(panel: CustomizedGridBagPanel) {
     panel.add("Url", text("url"))
     panel.add("Project Id", text("project"))
     panel.add("User", text("username"))

@@ -5,9 +5,9 @@ import scala.swing.GridPanel
 import scala.swing.Panel
 
 class LinkerOptions extends UserOptions {
-  protected var result: Map[String, String] = Map()
+  protected val defaultResult: Map[String, String] = Map()
 
-  val getHtmlDescription = """<b>Trac Style Linker</b><p>
+  protected val htmlDescription = """<b>Trac Style Linker</b><p>
     This linker links tickets and commits with the following patterns<br />
     (note that this linker is not limited to trac itself):
     </p><ul>
@@ -27,5 +27,5 @@ class LinkerOptions extends UserOptions {
       </ul></li>
     </ul><p>Alpha numerical commit ids are also supported</p>"""
 
-  def fillPanel(panel: CustomizedGridBagPanel) {}
+  protected def fillPanel(panel: CustomizedGridBagPanel) {}
 }

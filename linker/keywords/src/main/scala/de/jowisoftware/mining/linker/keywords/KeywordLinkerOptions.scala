@@ -5,7 +5,7 @@ import scala.swing.Label
 import scala.swing.Alignment
 
 class KeywordLinkerOptions extends UserOptions {
-  protected var result: Map[String, String] = Map(
+  protected val defaultResult: Map[String, String] = Map(
     "language" -> "en",
     "parseTags" -> "true",
     "parseTitle" -> "true",
@@ -21,9 +21,9 @@ class KeywordLinkerOptions extends UserOptions {
     "filterCamelCase" -> "true",
     "filterAccept" -> "true")
 
-  def getHtmlDescription(): String = """<b>Keyword Linker</b>"""
+  protected val htmlDescription = """<b>Keyword Linker</b>"""
 
-  def fillPanel(panel: CustomizedGridBagPanel) {
+  protected def fillPanel(panel: CustomizedGridBagPanel) {
     panel.add("Stemmer language", combobox("language", Seq("de", "en")))
     panel.addSpace()
 

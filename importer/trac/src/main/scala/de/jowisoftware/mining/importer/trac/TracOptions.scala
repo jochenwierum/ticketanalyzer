@@ -5,11 +5,13 @@ import scala.swing.{ Panel, GridPanel }
 import de.jowisoftware.mining.UserOptions
 
 class TracOptions extends UserOptions {
-  protected var result: Map[String, String] = Map(
-    ("url" -> "http://jowisoftware.de/trac/test/login/xmlrpc"),
-    ("username" -> "test"), ("password" -> "test"), ("repositoryname" -> "default"))
+  protected val defaultResult: Map[String, String] = Map(
+    "url" -> "http://jowisoftware.de/trac/test/login/xmlrpc",
+    "username" -> "test",
+    "password" -> "test",
+    "repositoryname" -> "default")
 
-  def getHtmlDescription = """<p><b>Trac Importer</b><br />
+  protected val htmlDescription = """<p><b>Trac Importer</b><br />
     Import tickets from a trac instance. To be able to do so:
     </p><ul>
       <li>Trac must have the TracXMLRPC plugin</li>
@@ -18,7 +20,7 @@ class TracOptions extends UserOptions {
         is recommendet</li>
     </ul>"""
 
-  def fillPanel(panel: CustomizedGridBagPanel) {
+  protected def fillPanel(panel: CustomizedGridBagPanel) {
     panel.add("Url", text("url"))
     panel.add("User", text("username"))
     panel.add("Password", password("password"))

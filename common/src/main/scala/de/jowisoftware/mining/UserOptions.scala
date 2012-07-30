@@ -62,19 +62,21 @@ abstract class UserOptions {
     }
   }
 
-  protected var result: Map[String, String]
+  protected val defaultResult: Map[String, String]
+  protected var result: Map[String, String] = Map()
+
+  protected val htmlDescription: String
+  protected def fillPanel(panel: CustomizedGridBagPanel)
 
   def getUserInput: Map[String, String] = result
   def getPanel(): Panel = {
-    val panel = new CustomizedGridBagPanel(getHtmlDescription)
+    result = defaultResult
+    val panel = new CustomizedGridBagPanel(htmlDescription)
     panel.addTitle
     fillPanel(panel)
     panel.fillToBottom
     panel
   }
-
-  def getHtmlDescription: String
-  def fillPanel(panel: CustomizedGridBagPanel)
 
   protected def label(text: String) = {
     val label = new Label(text+":")
@@ -85,8 +87,7 @@ abstract class UserOptions {
   protected def text(name: String) = {
     val field = new TextField
     field.reactions += {
-      case ValueChanged(_) =>
-        result += (name -> field.text)
+      case ValueChanged(_) => result += (name -> field.text)
     }
     field.text = result(name)
     field
