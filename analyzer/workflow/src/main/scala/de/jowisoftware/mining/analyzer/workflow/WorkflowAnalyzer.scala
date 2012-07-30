@@ -89,14 +89,15 @@ class WorkflowAnalyzer(db: Database[RootNode],
       namesSet += dead
     }
 
-    val matrix = new TextMatrix((namesSet.toSeq.sorted :+ "(final)"): _*)
+    val titles = namesSet.toSeq.sorted
+    val matrix = new TextMatrix(titles :+ "(final)", titles)
 
     for (status <- deadEnds) {
-      matrix.set(status._1, "(final)", status._2)
+      matrix.set("(final)", status._1 , status._2)
     }
 
     for (row <- buffered) {
-      matrix.set(row("from").asInstanceOf[String], row("to").asInstanceOf[String], row("count").asInstanceOf[Long])
+      matrix.set(row("to").asInstanceOf[String], row("from").asInstanceOf[String], row("count").asInstanceOf[Long])
     }
 
     new MatrixDialog(matrix)

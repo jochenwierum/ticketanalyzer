@@ -11,12 +11,12 @@ import scala.swing.Label
 class MatrixDialog(matrix: TextMatrix) extends Dialog {
   title = "Propability Matrix"
 
-  val description = new Label("""<html><p>This window shows the possibility that
+  private val description = new Label("""<html><p>This window shows the possibility that
       | a ticket changes its state (left) to another state (top). <br />The
       | value &quot;(final)&quot; means, that the ticket will stay in the
       | current state.</p></html>""".stripMargin)
 
-  val content = new BorderPanel
+  private val content = new BorderPanel
   content.layout(createTable) = BorderPanel.Position.Center
   content.layout(description) = BorderPanel.Position.North
 
@@ -27,25 +27,26 @@ class MatrixDialog(matrix: TextMatrix) extends Dialog {
   pack()
   centerOnScreen()
 
-  def createTable = {
-    val headers = "" +: matrix.columns.map { "<html><b>"+_+"</b></html>" }
-    val values = matrix.normalizedValues.map {
+  private def createTable = {
+    val headers = "" +: matrix.columnTitles.map { "<html><b>"+_+"</b></html>" }
+    val rowHeaders = matrix.rowTitles.map { "<html><b>"+_+"</b></html>" }
+
+    val values = matrix.normalizedRows.map {
       _ map { cell =>
         if (cell.isNaN) "0.0"
         else cell.formatted("%.2f")
       }
     }
 
-    val tableModel = new DefaultTableModel(0, values.size + 1) {
+    val tableModel = new DefaultTableModel(0, values(0).size + 1) {
       override def isCellEditable(x: Int, y: Int) = false
 
       this.addRow(headers.toArray[Object])
 
-      for ((rowData, row) <- values.view.zipWithIndex) {
-        // the last row "(final)" is skipped - it contains only zeros
-        if (row < rowData.length - 1) {
-          this.addRow((headers(row + 1) +: rowData).toArray[Object])
-        }
+      println(rowHeaders.deep.toString)
+      println(values.deep.toString)
+      for ((rowData, row) <- values.zipWithIndex) {
+        this.addRow((rowHeaders(row) +: rowData).toArray[Object])
       }
     }
 

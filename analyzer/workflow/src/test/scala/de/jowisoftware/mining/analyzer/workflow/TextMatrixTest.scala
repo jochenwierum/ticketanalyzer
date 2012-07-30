@@ -5,47 +5,51 @@ import org.scalatest.matchers.ShouldMatchers
 
 class TextMatrixTest extends FlatSpec with ShouldMatchers {
   """A TextMatrix""" should "return the column names in the initial order" in {
-    val matrix = new TextMatrix("a", "c", "b")
-    (matrix.columns) should equal(Array("a", "c", "b"))
+    val matrix = new TextMatrix(Seq("a", "c", "b"), Seq())
+    (matrix.columnTitles) should equal(Array("a", "c", "b"))
 
-    val matrix2 = new TextMatrix("test", "test2")
-    (matrix2.columns) should equal(Array("test", "test2"))
+    val matrix2 = new TextMatrix(Seq("test", "test2"), Seq())
+    (matrix2.columnTitles) should equal(Array("test", "test2"))
   }
 
   it should "also return the row names in the initial order" in {
-    val matrix = new TextMatrix("a", "c", "b")
-    (matrix.rows) should equal(Array("a", "c", "b"))
+    val matrix = new TextMatrix(Seq(), Seq("a", "c", "b"))
+    (matrix.rowTitles) should equal(Array("a", "c", "b"))
 
-    val matrix2 = new TextMatrix("test", "test2")
-    (matrix2.rows) should equal(Array("test", "test2"))
+    val matrix2 = new TextMatrix(Seq(), Seq("test", "test2"))
+    (matrix2.rowTitles) should equal(Array("test", "test2"))
   }
 
   it should "return 0 as the default value for all cells" in {
-    val matrix = new TextMatrix("a", "b")
-    matrix.values.forall(_.forall(_ == 0)) should equal(true)
+    val matrix = new TextMatrix(Seq("a", "b"), Seq("x", "y"))
+    matrix.rows.forall(_.forall(_ == 0)) should equal(true)
   }
 
   it should "save values at the given position" in {
-    val matrix = new TextMatrix("b", "a")
-    matrix.set("b", "a", 2)
-    matrix.set("a", "a", 7)
-    matrix.set("a", "b", -2)
+    val matrix = new TextMatrix(Seq("b", "a"), Seq("x", "y", "z"))
+    matrix.set("b", "x", 2)
+    matrix.set("a", "x", 7)
+    matrix.set("a", "y", -2)
+    matrix.set("a", "z", 9)
+    matrix.set("b", "z", -8)
 
-    val values = matrix.values
-    (values(0)(0)) should equal(0)
-    (values(0)(1)) should equal(2)
-    (values(1)(0)) should equal(-2)
-    (values(1)(1)) should equal(7)
+    val values = matrix.rows
+    (values(0)(0)) should equal(2)
+    (values(0)(1)) should equal(7)
+    (values(1)(0)) should equal(0)
+    (values(1)(1)) should equal(-2)
+    (values(2)(0)) should equal(-8)
+    (values(2)(1)) should equal(9)
   }
 
   it should "be able to normalize the values" in {
-    val matrix = new TextMatrix("a", "b")
+    val matrix = new TextMatrix(Seq("a", "b"), Seq("a", "b"))
     matrix.set("a", "a", 2.0)
-    matrix.set("a", "b", 2.0)
-    matrix.set("b", "a", 75)
+    matrix.set("b", "a", 2.0)
+    matrix.set("a", "b", 75)
     matrix.set("b", "b", 25)
 
-    val values = matrix.normalizedValues
+    val values = matrix.normalizedRows
     (values(0)(1)) should equal(0.5)
     (values(0)(0)) should equal(0.5)
     (values(1)(0)) should equal(0.75)
@@ -54,10 +58,10 @@ class TextMatrixTest extends FlatSpec with ShouldMatchers {
 
   it should "throw errors if the referenced column or row does not exist" in {
     intercept[IllegalArgumentException] {
-      new TextMatrix("a").set("a", "b", 2.0)
+      new TextMatrix(Seq("x"), Seq("b")).set("a", "b", 2.0)
     }
     intercept[IllegalArgumentException] {
-      new TextMatrix("c").set("c", "x", 3.0)
+      new TextMatrix(Seq("c"), Seq("y")).set("c", "x", 3.0)
     }
   }
 }

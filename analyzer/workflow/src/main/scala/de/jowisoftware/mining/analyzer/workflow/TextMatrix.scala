@@ -1,26 +1,26 @@
 package de.jowisoftware.mining.analyzer.workflow
 
-class TextMatrix(titles: String*) {
-  private val cells: Array[Array[Double]] = Array.fill(titles.size, titles.size)(0)
+class TextMatrix(xtitles: Seq[String], ytitles: Seq[String]) {
+  private val cells: Array[Array[Double]] = Array.fill(ytitles.size, xtitles.size)(0)
 
-  def columns = titles.toArray
-  def rows = titles.toArray
+  def columnTitles = xtitles.toArray
+  def rowTitles = ytitles.toArray
 
-  def values = Array.tabulate(cells.size, cells.size)((x, y) => cells(x)(y))
+  def rows = Array.tabulate(ytitles.size, xtitles.size)((y, x) => cells(y)(x))
 
-  def normalizedValues = {
+  def normalizedRows = {
     cells.map{ row =>
       val sum = row.sum
       row.map { _ / sum}
     }
   }
 
-  def set(fromTitle: String, toTitle: String, value: Double) {
-    val xPos = titles.indexWhere(_ == fromTitle)
-    require(xPos >= 0, "illegal from: "+fromTitle)
-    val yPos = titles.indexWhere(_ == toTitle)
-    require(yPos >= 0, "illegal to: "+toTitle)
+  def set(xTitle: String, yTitle: String, value: Double) {
+    val xPos = xtitles.indexWhere(_ == xTitle)
+    require(xPos >= 0, "illegal x: "+xTitle)
+    val yPos = ytitles.indexWhere(_ == yTitle)
+    require(yPos >= 0, "illegal y: "+yTitle)
 
-    cells(xPos)(yPos) = value
+    cells(yPos)(xPos) = value
   }
 }
