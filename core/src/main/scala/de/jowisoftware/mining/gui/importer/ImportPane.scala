@@ -32,16 +32,16 @@ class ImportPane(
       name + (if (data.contains("repositoryname")) " ["+data("repositoryname")+"]" else "")
   }
 
+  private var selectedPlugin: Importer = _
+  private var importerOptions: UserOptions = _
+  private var tasks: List[Task] = Nil
+
   private val importButton = new Button("Import")
   private val deleteButton = new Button("Delete")
   private val addButton = new Button("Add")
   private val pluginList = new ComboBox(makePluginList)
   private val pluginDetails = new ScrollPane
   private val taskList = new ListView[Task]
-
-  private var selectedPlugin: Importer = _
-  private var importerOptions: UserOptions = _
-  private var tasks: List[Task] = Nil
 
   private val buttons = new GridPanel(2, 1) {
     contents += deleteButton
@@ -59,8 +59,6 @@ class ImportPane(
     layout += buttons -> Position.South
   }
 
-  addButton.enabled = false
-
   listenTo(deleteButton)
   listenTo(importButton)
   listenTo(addButton)
@@ -73,6 +71,7 @@ class ImportPane(
     case SelectionChanged(`pluginList`) => updateSelection()
   }
 
+  updateTaskList()
   updateSelection()
 
   def makePluginList =
@@ -106,8 +105,6 @@ class ImportPane(
       contents += Swing.VGlue
     }
     pluginDetails.revalidate()
-
-    addButton.enabled = true
   }
 
   def runImport() {
