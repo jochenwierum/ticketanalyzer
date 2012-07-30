@@ -22,10 +22,8 @@ import scala.swing.Dialog
 class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
-  lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.neighbors(
-    Direction.OUTGOING, Seq(Contains.relationType))
-    .map(_.asInstanceOf[TicketRepository].id)
-    .mkString(", ")
+  lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.children
+    .map(_.id).mkString(", ")
 
   def run() {
     val result = findStateChanges
@@ -91,7 +89,6 @@ class WorkflowAnalyzer(db: Database[RootNode],
       namesSet += dead
     }
 
-    println(namesSet)
     val matrix = new TextMatrix((namesSet.toSeq.sorted :+ "(final)"): _*)
 
     for (status <- deadEnds) {
