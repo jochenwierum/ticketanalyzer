@@ -12,4 +12,6 @@ object PriorityRepository extends NodeCompanion[PriorityRepository] {
 class PriorityRepository extends MiningNode with EmptyNode with HasChildWithName[Priority] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Priority)
+
+  def children = children(Contains, Priority)
 }

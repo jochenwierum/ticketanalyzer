@@ -12,4 +12,6 @@ object TypeRepository extends NodeCompanion[TypeRepository] {
 class TypeRepository extends MiningNode with EmptyNode with HasChildWithName[Type] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Type)
+
+  def children = children(Contains, Type)
 }

@@ -12,4 +12,6 @@ object ComponentRepository extends NodeCompanion[ComponentRepository] {
 class ComponentRepository extends MiningNode with EmptyNode with HasChildWithName[Component] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Component)
+
+  def children = children(Contains, Component)
 }

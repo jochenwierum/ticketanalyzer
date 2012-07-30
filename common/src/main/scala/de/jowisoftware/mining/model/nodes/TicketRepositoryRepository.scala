@@ -11,4 +11,6 @@ object TicketRepositoryRepository extends NodeCompanion[TicketRepositoryReposito
 class TicketRepositoryRepository extends MiningNode with EmptyNode with HasChildWithName[TicketRepository] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, TicketRepository)
+
+  def children = children(Contains, TicketRepository)
 }

@@ -12,4 +12,6 @@ object MilestoneRepository extends NodeCompanion[MilestoneRepository] {
 class MilestoneRepository extends MiningNode with EmptyNode with HasChildWithName[Milestone] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Milestone)
+
+  def children = children(Contains, Milestone)
 }

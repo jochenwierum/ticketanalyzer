@@ -12,4 +12,6 @@ object SeverityRepository extends NodeCompanion[SeverityRepository] {
 class SeverityRepository extends MiningNode with EmptyNode with HasChildWithName[Severity] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Severity)
+
+  def children = children(Contains, Severity)
 }

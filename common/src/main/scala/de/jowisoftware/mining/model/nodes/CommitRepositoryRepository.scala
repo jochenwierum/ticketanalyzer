@@ -14,4 +14,6 @@ object CommitRepositoryRepository extends NodeCompanion[CommitRepositoryReposito
 class CommitRepositoryRepository extends MiningNode with EmptyNode with HasChildWithName[CommitRepository] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, CommitRepository)
+
+  def children = children(Contains, CommitRepository)
 }

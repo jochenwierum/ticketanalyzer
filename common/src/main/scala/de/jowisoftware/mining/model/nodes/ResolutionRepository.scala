@@ -12,4 +12,6 @@ object ResolutionRepository extends NodeCompanion[ResolutionRepository] {
 class ResolutionRepository extends MiningNode with EmptyNode with HasChildWithName[Resolution] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Resolution)
+
+  def children = children(Contains, Resolution)
 }

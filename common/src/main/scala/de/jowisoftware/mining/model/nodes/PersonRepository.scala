@@ -12,4 +12,6 @@ object PersonRepository extends NodeCompanion[PersonRepository] {
 class PersonRepository extends MiningNode with EmptyNode with HasChildWithName[Person] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Person)
+
+  def children = children(Contains, Person)
 }

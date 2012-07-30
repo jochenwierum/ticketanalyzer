@@ -12,4 +12,6 @@ object TagRepository extends NodeCompanion[TagRepository] {
 class TagRepository extends MiningNode with EmptyNode with HasChildWithName[Tag] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Tag)
+
+  def children = children(Contains, Tag)
 }

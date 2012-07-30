@@ -20,4 +20,6 @@ class KeywordRepository extends MiningNode with EmptyNode with HasChildWithName[
         add(node, Contains)
         node
     }
+
+  def children = children(Contains, Keyword)
 }

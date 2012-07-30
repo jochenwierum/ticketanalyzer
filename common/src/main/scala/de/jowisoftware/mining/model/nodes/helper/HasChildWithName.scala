@@ -26,5 +26,9 @@ protected trait HasChildWithName[A <: HasName] extends MiningNode {
     }
   }
 
+  protected def children(relationship: RelationshipCompanion[_ <: Relationship], nodeType: NodeCompanion[A]): Iterable[A] =
+    neighbors(Direction.OUTGOING, List(relationship.relationType)).map (_.asInstanceOf[A])
+
   def findOrCreateChild(name: String): A
+  def children: Iterable[A]
 }

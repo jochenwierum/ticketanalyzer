@@ -12,4 +12,6 @@ object StatusRepository extends NodeCompanion[StatusRepository] {
 class StatusRepository extends MiningNode with EmptyNode with HasChildWithName[Status] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Status)
+
+  def children = children(Contains, Status)
 }

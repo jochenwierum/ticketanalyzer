@@ -11,4 +11,6 @@ object VersionRepository extends NodeCompanion[VersionRepository] {
 class VersionRepository extends MiningNode with EmptyNode with HasChildWithName[Version] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Version)
+
+  def children = children(Contains, Version)
 }

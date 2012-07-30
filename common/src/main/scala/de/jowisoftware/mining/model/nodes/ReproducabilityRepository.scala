@@ -12,4 +12,6 @@ object ReproducabilityRepository extends NodeCompanion[ReproducabilityRepository
 class ReproducabilityRepository extends MiningNode with EmptyNode with HasChildWithName[Reproducability] {
   def findOrCreateChild(name: String) =
     findOrCreateChild(name, Contains, Reproducability)
+
+  def children = children(Contains, Reproducability)
 }
