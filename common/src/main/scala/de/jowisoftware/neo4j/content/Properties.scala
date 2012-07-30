@@ -39,6 +39,9 @@ trait Properties[A <: PropertyContainer] {
   protected def optionalStringProperty(name: String, indexed: Boolean = false) =
     new OptionalNodeProperty[String, A](this, name, index(indexed, name)) with CastingObjectPersister[String]
 
+  protected def optionalIntProperty(name: String, indexed: Boolean = false) =
+    new OptionalNodeProperty[Int, A](this, name, index(indexed, name)) with CastingObjectPersister[Int]
+
   protected def stringArrayProperty(name: String) =
     new NodeProperty[Array[String], A](this, name, Array[String](), NullIndex) with CastingObjectPersister[Array[String]]
 

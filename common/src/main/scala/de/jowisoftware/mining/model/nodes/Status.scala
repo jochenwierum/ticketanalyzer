@@ -8,4 +8,10 @@ object Status extends NodeCompanion[Status] {
   def apply = new Status
 }
 
-class Status extends MiningNode with HasName with EmptyNode
+class Status extends MiningNode with HasName {
+  val version = 1
+  def updateFrom(version: Int) {}
+
+  lazy val logicalType = optionalIntProperty("logicalType")
+
+}

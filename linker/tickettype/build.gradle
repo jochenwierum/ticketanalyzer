@@ -1,0 +1,7 @@
+description "ticket type linker plugin"
+
+eclipse {
+  project {
+    name = 'linker-tickettype'
+  }
+}

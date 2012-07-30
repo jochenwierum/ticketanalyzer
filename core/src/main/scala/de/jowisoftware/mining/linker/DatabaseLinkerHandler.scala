@@ -48,6 +48,13 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
     safePointReached
   }
 
+  def foundStatusMap(status: Status, foundType: StatusType.Value) {
+    // we use a separate transaction here, so we have to re-lookup the node
+    val statusNode = transaction.getUnknownNode(status.id).asInstanceOf[Status]
+    statusNode.logicalType(Option(foundType.id))
+    safePointReached
+  }
+
   def ticketRepository: TicketRepository =
     root.ticketRepositoryCollection.findOrCreateChild(ticketRepositoryName)
   def commitRepository: CommitRepository =
