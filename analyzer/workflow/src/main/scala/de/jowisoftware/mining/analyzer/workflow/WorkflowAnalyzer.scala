@@ -18,6 +18,7 @@ import java.util.Locale
 import java.io.File
 import org.neo4j.cypher.ExecutionResult
 import scala.swing.Dialog
+import de.jowisoftware.mining.analyzer.data.TextMatrix
 
 class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {

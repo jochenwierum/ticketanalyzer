@@ -1,4 +1,6 @@
-package de.jowisoftware.mining.analyzer.workflow
+package de.jowisoftware.mining.analyzer.data
+
+import scala.Array.canBuildFrom
 
 class TextMatrix(xtitles: Seq[String], ytitles: Seq[String]) {
   private val cells: Array[Array[Double]] = Array.fill(ytitles.size, xtitles.size)(0)

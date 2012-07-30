@@ -1,4 +1,4 @@
-package de.jowisoftware.mining.analyzer.workflow
+package de.jowisoftware.mining.analyzer.data
 
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers

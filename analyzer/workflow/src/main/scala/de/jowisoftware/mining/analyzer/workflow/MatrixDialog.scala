@@ -7,6 +7,8 @@ import java.awt.Dimension
 import java.awt.BorderLayout
 import scala.swing.BorderPanel
 import scala.swing.Label
+import de.jowisoftware.mining.analyzer.data.TextMatrix
+import de.jowisoftware.mining.analyzer.data.TextMatrixSwingTable
 
 class MatrixDialog(matrix: TextMatrix) extends Dialog {
   title = "Propability Matrix"
@@ -17,7 +19,7 @@ class MatrixDialog(matrix: TextMatrix) extends Dialog {
       | current state.</p></html>""".stripMargin)
 
   private val content = new BorderPanel
-  content.layout(createTable) = BorderPanel.Position.Center
+  content.layout(new TextMatrixSwingTable(matrix)) = BorderPanel.Position.Center
   content.layout(description) = BorderPanel.Position.North
 
   contents = content
@@ -26,32 +28,4 @@ class MatrixDialog(matrix: TextMatrix) extends Dialog {
   resizable = false
   pack()
   centerOnScreen()
-
-  private def createTable = {
-    val headers = "" +: matrix.columnTitles.map { "<html><b>"+_+"</b></html>" }
-    val rowHeaders = matrix.rowTitles.map { "<html><b>"+_+"</b></html>" }
-
-    val values = matrix.normalizedRows.map {
-      _ map { cell =>
-        if (cell.isNaN) "0.0"
-        else cell.formatted("%.2f")
-      }
-    }
-
-    val tableModel = new DefaultTableModel(0, values(0).size + 1) {
-      override def isCellEditable(x: Int, y: Int) = false
-
-      this.addRow(headers.toArray[Object])
-
-      println(rowHeaders.deep.toString)
-      println(values.deep.toString)
-      for ((rowData, row) <- values.zipWithIndex) {
-        this.addRow((rowHeaders(row) +: rowData).toArray[Object])
-      }
-    }
-
-    new Table() {
-      model = tableModel
-    }
-  }
 }
