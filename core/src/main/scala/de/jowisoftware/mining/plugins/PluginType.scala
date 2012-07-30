@@ -14,6 +14,4 @@ object PluginType extends Enumeration {
         throw new RuntimeException(
           "Not a valid plugin type: "+name, e)
     }
-
-  def types = SCM :: ITS :: Linker :: Analyzer :: Nil
 }
