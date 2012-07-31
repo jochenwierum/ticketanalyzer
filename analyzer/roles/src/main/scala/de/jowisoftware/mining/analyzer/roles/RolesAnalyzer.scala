@@ -18,7 +18,7 @@ class RolesAnalyzer extends Analyzer {
     val stateMap = buildStateMap(db)
 
     val matrix = new TextMatrix(
-      StatusType.values.filter(_ != StatusType.ignore).map(_.toString).toSeq.sorted,
+      StatusType.values.filter(_ != StatusType.ignore).map(StatusType.roleName).toSeq.sorted,
       stateMap.keys.toSeq.sorted)
 
     for {
@@ -26,7 +26,7 @@ class RolesAnalyzer extends Analyzer {
       (role, count) <- sumMap
       if (role != StatusType.ignore)
     } {
-      matrix.set(role.toString(), person, count)
+      matrix.set(StatusType.roleName(role), person, count)
     }
 
     waitDialog.hide()
