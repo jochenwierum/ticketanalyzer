@@ -67,7 +67,7 @@ class TruckAnalyzer extends Analyzer {
     val result = engine.execute(queryString)
 
     Swing.onEDTWait {
-      waitDialog.close
+      waitDialog.hide()
       new ResultWindow(parent, result).visible = true
     }
   }
