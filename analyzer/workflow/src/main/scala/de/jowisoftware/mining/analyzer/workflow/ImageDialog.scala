@@ -5,8 +5,9 @@ import java.awt.image.BufferedImage
 import java.awt.Dimension
 import scala.swing.Dialog
 import java.awt.Graphics2D
+import scala.swing.Frame
 
-class ImageDialog(image: BufferedImage) extends Dialog {
+class ImageDialog(image: BufferedImage, parent: Frame) extends Dialog(parent) {
   class DotImage extends Component {
     val imageSize = new Dimension(image.getWidth, image.getHeight)
     preferredSize = imageSize

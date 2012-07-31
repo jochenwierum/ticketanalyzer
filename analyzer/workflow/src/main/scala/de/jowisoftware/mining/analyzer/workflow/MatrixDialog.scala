@@ -9,8 +9,9 @@ import scala.swing.BorderPanel
 import scala.swing.Label
 import de.jowisoftware.mining.analyzer.data.TextMatrix
 import de.jowisoftware.mining.analyzer.data.TextMatrixSwingTable
+import scala.swing.Frame
 
-class MatrixDialog(matrix: TextMatrix) extends Dialog {
+class MatrixDialog(matrix: TextMatrix, parent: Frame) extends Dialog(parent) {
   title = "Propability Matrix"
 
   private val description = new Label("""<html><p>This window shows the possibility that

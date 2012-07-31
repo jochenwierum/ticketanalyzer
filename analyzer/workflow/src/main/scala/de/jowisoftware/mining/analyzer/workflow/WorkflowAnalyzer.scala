@@ -19,6 +19,7 @@ import java.io.File
 import org.neo4j.cypher.ExecutionResult
 import scala.swing.Dialog
 import de.jowisoftware.mining.analyzer.data.TextMatrix
+import scala.swing.Swing
 
 class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
@@ -31,12 +32,14 @@ class WorkflowAnalyzer(db: Database[RootNode],
     val deadEnds = createDeadEndMap(findDeadEnds)
 
     val resultWindow: Dialog = options("visualization") match {
-      case "Graph" => createDotWindow(result, deadEnds)
-      case "Matrix" => createMatrixWindow(result, deadEnds)
+      case "Graph" => createDotWindow(result, deadEnds, parent)
+      case "Matrix" => createMatrixWindow(result, deadEnds, parent)
     }
 
-    waitDialog.hide
-    resultWindow.visible = true
+    Swing.onEDTWait {
+      waitDialog.hide()
+      resultWindow.visible = true
+    }
   }
 
   private def findStateChanges: ExecutionResult = {
@@ -77,7 +80,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
     mapIterator.toMap
   }
 
-  private def createMatrixWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
+  private def createMatrixWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
     val buffered = result.toSeq
     var namesSet: Set[String] = Set()
 
@@ -94,17 +97,17 @@ class WorkflowAnalyzer(db: Database[RootNode],
     val matrix = new TextMatrix(titles :+ "(final)", titles)
 
     for (status <- deadEnds) {
-      matrix.set("(final)", status._1 , status._2)
+      matrix.set("(final)", status._1, status._2)
     }
 
     for (row <- buffered) {
       matrix.set(row("to").asInstanceOf[String], row("from").asInstanceOf[String], row("count").asInstanceOf[Long])
     }
 
-    new MatrixDialog(matrix)
+    new MatrixDialog(matrix, parent)
   }
 
-  private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long]): Dialog = {
+  private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
     val (lines, nodeNames) = formatResultToDotNodes(result)
     val graphText = "digraph {"+
       getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
@@ -113,7 +116,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
 
     val graph = new DotWrapper(new File(options("dot"))).run(graphText)
 
-    new ImageDialog(graph)
+    new ImageDialog(graph, parent)
   }
 
   def getEdgeString(from: String, to: String, count: Long, factor: Double) = {
