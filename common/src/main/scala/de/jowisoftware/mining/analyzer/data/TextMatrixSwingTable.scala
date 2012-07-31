@@ -19,8 +19,6 @@ class TextMatrixSwingTable(matrix: TextMatrix) extends Table {
 
     this.addRow(headers.toArray[Object])
 
-    println(rowHeaders.deep.toString)
-    println(values.deep.toString)
     for ((rowData, row) <- values.zipWithIndex) {
       this.addRow((rowHeaders(row) +: rowData).toArray[Object])
     }
