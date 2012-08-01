@@ -20,17 +20,18 @@ object TruckAnalyzer {
   val queryMap: Map[String, (DBWithTransaction[RootNode], Int) => String] =
     Map("Ciritcal keywords" -> {
       case (db, limit) =>
+        val personCount = db.rootNode.personCollection.children.size
         val node = db.rootNode.keywordCollection.id
         """START n=node(%d) // keyword collection
         MATCH n --> keyword --> ticket <-[:owns]- person
         RETURN keyword.name AS keyword,
-          (count(distinct ticket.id) / count(distinct person.name)) AS ratio,
+          count(distinct ticket.id) * (1 - count(distinct person.name) / %d) AS ratio,
           count(distinct ticket.id) AS ticketCount,
           count(distinct person.name) AS personCount,
           collect(distinct person.name) AS persons,
           collect(distinct ticket.id) AS tickets
         ORDER BY (ratio) DESC
-        LIMIT %d;""" format (node, limit)
+        LIMIT %d;""" format (node, personCount, limit)
     },
       "Ciritcal files" -> {
         case (db, limit) =>
