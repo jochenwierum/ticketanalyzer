@@ -3,12 +3,6 @@
         <resetJUL>true</resetJUL>
     </contextListener>
 
-    <if condition='isDefined("ECLIPSE")'>
-        <then>
-            <consolePlugin />
-        </then>
-    </if>
-
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg%n</pattern>
@@ -22,10 +16,23 @@
             <pattern>%d{HH:mm:ss.SSS} %-18([%thread]) %-5level %logger{36} - %msg %n</pattern>
         </encoder>
     </appender>
+    
+    <appender name="BEAGLE" class="ch.qos.logback.classic.net.SocketAppender">
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4321</port>
+      <reconnectionDelay>10000</reconnectionDelay>
+      <includeCallerData>true</includeCallerData>
+    </appender>
 
     <logger name="de.jowisoftware" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
+        
+        <if condition='isDefined("ECLIPSE")'>
+            <then>
+                <appender-ref ref="BEAGLE" />
+            </then>
+        </if>
     </logger>
 
     <!-- see src/main/resources/logback.xml -->
