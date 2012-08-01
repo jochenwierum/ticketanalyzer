@@ -7,6 +7,7 @@ import javax.swing.table.AbstractTableModel
 import org.neo4j.graphdb.Relationship
 import org.neo4j.graphdb.Node
 import org.neo4j.graphdb.PropertyContainer
+import scala.swing.Swing
 
 class ResultTablePane(result: ExecutionResult) extends ScrollPane {
   def this() = this(null)
@@ -31,7 +32,9 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
       rowData
     }).toArray
 
-    updateTable(tableData, columnNames.toSeq)
+    Swing.onEDT {
+      updateTable(tableData, columnNames.toSeq)
+    }
   }
 
   private def updateTable(tableData: Array[Array[CellData]], columnNames: Seq[String]) {
@@ -52,6 +55,9 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
       case rel: Relationship =>
         CellData(formatRelationship(rel, identity),
           clearNamespaces(formatRelationship(rel, shortenString(40))))
+      case n @ (_: Float | _: Double) =>
+        val formatted = n.formatted("%.4f")
+        CellData(formatted, formatted)
       case x => CellData(x.toString, shortenString(40)(x.toString))
     }
 

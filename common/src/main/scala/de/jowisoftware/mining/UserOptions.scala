@@ -111,7 +111,7 @@ abstract class UserOptions {
     field
   }
 
-  protected def combobox(name: String, texts: Seq[String]) = {
+  protected def combobox(name: String, texts: Seq[String]): ComboBox[String] = {
     val box = new ComboBox(texts)
     box.selection.item = result(name)
     box.selection.reactions += {
@@ -119,4 +119,7 @@ abstract class UserOptions {
     }
     box
   }
+
+  protected def combobox(name: String, texts: Set[String]): ComboBox[String] =
+    combobox(name, texts.toSeq)
 }
