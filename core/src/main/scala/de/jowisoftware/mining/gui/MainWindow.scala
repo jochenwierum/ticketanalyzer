@@ -23,7 +23,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, this))
   private val linkPane = new TabbedPane.Page("2) Link data", new LinkPane(db, pluginManager, this))
   private val analyzePane = new TabbedPane.Page("3) Analyze", new AnalyzerPane(db, pluginManager, this))
-  private val shellPane = new TabbedPane.Page("4) Shell", new ShellPane(db.service))
+  private val shellPane = new TabbedPane.Page("4) Shell", new ShellPane(db.service, this))
 
   private val tabs = new TabbedPane {
     tabPlacement(Alignment.Left)

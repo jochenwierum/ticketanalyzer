@@ -7,7 +7,7 @@ import java.awt.Dimension
 
 class ShellWindow(db: AbstractGraphDatabase) extends Frame {
   title = "Database Shell"
-  contents = new ShellPane(db)
+  contents = new ShellPane(db, this)
 
   reactions += {
     case WindowClosing(_) =>

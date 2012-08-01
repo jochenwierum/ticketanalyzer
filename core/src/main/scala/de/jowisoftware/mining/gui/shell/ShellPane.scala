@@ -1,18 +1,21 @@
 package de.jowisoftware.mining.gui.shell
 
 import java.net.URI
-import scala.swing.{ BorderPanel, Dialog, Button, TextArea, SplitPane, ScrollPane }
+import scala.swing.{ BorderPanel, Button, Dialog, ScrollPane, SplitPane, TextArea }
 import scala.swing.BorderPanel.Position
 import scala.swing.Dialog.Message
+import scala.swing.Swing
 import scala.swing.event.ButtonClicked
 import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.kernel.AbstractGraphDatabase
 import de.jowisoftware.mining.{ Main => MainApp }
-import de.jowisoftware.mining.gui.GuiTab
+import de.jowisoftware.mining.gui.{ GuiTab, ProgressDialog }
 import de.jowisoftware.mining.gui.components.Link
 import de.jowisoftware.mining.gui.results.ResultTablePane
+import grizzled.slf4j.Logging
+import scala.swing.Frame
 
-class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
+class ShellPane(db: AbstractGraphDatabase, parent: Frame) extends SplitPane with GuiTab with Logging {
   private val engine = new ExecutionEngine(db)
 
   private val textInput = new TextArea
@@ -43,14 +46,29 @@ class ShellPane(db: AbstractGraphDatabase) extends SplitPane with GuiTab {
 
   private def doSearch() {
     val text = textInput.text
-    try {
-      val result = engine.execute(text)
-      resultTable.processResult(result)
-    } catch {
-      case e: Exception =>
-        Dialog.showMessage(resultTable, "<html>Could not execute query: <br /><pre>"+
-          maskHTML(e.getMessage)+"</pre></html>", "Error", Message.Error)
-    }
+
+    val dialog = new ProgressDialog(parent)
+    new Thread("query-thread") {
+      override def run() {
+        val start = System.currentTimeMillis
+        try {
+          val result = engine.execute(text)
+          resultTable.processResult(result)
+          warn("Query finished in "+(System.currentTimeMillis - start)+" ms")
+        } catch {
+          case e: Exception =>
+            Swing.onEDT {
+              Dialog.showMessage(resultTable, "<html>Could not execute query: <br /><pre>"+
+                maskHTML(e.getMessage)+"</pre></html>", "Error", Message.Error)
+            }
+        } finally {
+          Swing.onEDT {
+            dialog.hide()
+          }
+        }
+      }
+    }.start()
+    dialog.show()
   }
 
   private def maskHTML(s: String) =
