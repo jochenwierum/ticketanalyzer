@@ -1,4 +1,5 @@
 # <- This is a comment
+# It is UTF-8
 # This file is scanned from top to bottom
 # Each line contains a regex and an indicator whether a match should accept
 # or reject the keyword. If the regex does not match, the next line is scanned.
@@ -12,20 +13,14 @@
 # This regex accepts all keywords that ends with "exception"
 # +.*exception
 
-# Lucene Keywords
--(?i:not)
--(?i:and)
--(?i:or)
-
 # CamelCase (class/namespace names?)
 +.*[a-z][A-Z].*
-+javax?\..*
 
-# File names are matched by the code fragments regex
-#+.*\.(class|java)
+# nonsense (only special chars)
+-[^\p{L}\d]+
 
-# Code fragments (class.method())
-+.*[_.;()\[\]$].*
+# Code fragments (words with special chars, e.g. class.method()), filenames and namespaces with dots, etc.
++.*[^-\p{L}\d].*
 
 # All kinds of errors
 +.*null.*
@@ -33,3 +28,62 @@
 +.+[eE]rr.*
 +(?i:oom)
 +(?i:npe)
+
+# Default Stopwords (from lucene)
+-[Aa][stnm]?
+-[Aa]ls
+-[Aa]nd
+-[Aa]re
+-[Aa]u[fs]
+-[Bb][ey]
+-[Bb]ut
+-[Dd]as
+-[Dd]ass
+-[Dd]aß
+-[Dd]er
+-[Dd]ich
+-[Dd]i[er]
+-[Dd]u
+-[Dd]urch
+-[Ee][rs]
+-[Ee]ine[mrns]?
+-[Ff]or
+-[Ff]ür
+-[Ii][fnst]
+-[Ii][nm]
+-[Ii]hr
+-[Ii]hre
+-[Ii]hres
+-[Ii]nto
+-[Ii]st
+-[Mm]ein
+-[Mm]ich
+-[Mm]i[rt]
+-[Nn]o
+-[Nn]ot
+-[Oo][fnr]
+-[Oo]der
+-[Oo]hne
+-[SsKk]ein
+-[Ss]ein
+-[Ss]ie
+-[Ss]uch
+-[Tt]hat
+-[Tt]he
+-[Tt]he[rs]e
+-[Tt]heir
+-[Tt]hen
+-[Tt]hey
+-[Tt]his
+-[Tt]o
+-[Uu]nd
+-[Vv]on
+-[Ww]a[rs]
+-[Ww]egen
+-[Ww]er
+-[Ww]ie
+-[Ww]ill
+-[Ww]ir
+-[Ww]ird
+-[Ww]ith
+-[Üü]ber

@@ -7,20 +7,16 @@ import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.util.Version
 import de.jowisoftware.mining.linker.Linker
-
-object LuceneKeywordExtractor {
-  private val forbidden = Set("AND", "NOT", "OR")
-}
+import org.apache.lucene.queryParser.QueryParser
+import de.jowisoftware.neo4j.content.IndexAccess
+import org.apache.lucene.search.TermQuery
 
 class LuceneKeywordExtractor(lang: String) {
   private val analyzer = createAnalyzer(lang)
+  private val parser = new QueryParser(Version.LUCENE_35, "", analyzer)
 
-  def getKeywords(text: String): Set[String] = {
-    val reader = new StringReader(text)
-    val tokenStream = analyzer.tokenStream("contents", reader)
-
-    convertTokenStreamToString(tokenStream)
-  }
+  def getKeyword(word: String): String =
+    parser.parse(IndexAccess.mask(word)).toString
 
   private def createAnalyzer(lang: String) =
     lang match {
@@ -29,18 +25,4 @@ class LuceneKeywordExtractor(lang: String) {
       case unknown => sys.error("Unknown language: "+unknown)
     }
 
-  private def convertTokenStreamToString(tokenStream: TokenStream): Set[String] = {
-    val term = tokenStream.addAttribute(classOf[CharTermAttribute])
-    val resultBuilder = StringBuilder.newBuilder
-
-    var uniqueWords: Set[String] = Set()
-    while (tokenStream.incrementToken) {
-      val word = term.toString
-      if (!LuceneKeywordExtractor.forbidden.contains(word.toUpperCase)) {
-        uniqueWords += word
-      }
-    }
-
-    uniqueWords
-  }
 }

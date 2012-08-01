@@ -7,39 +7,21 @@ import de.jowisoftware.mining.test.MockHelper
 import org.mockito.Mockito._
 
 class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
-  "A filter Chain" should "accept by default if requested" in {
+  "A filter Chain" should "return 'undecide' by default" in {
     val chain = new FilterChain()
 
-    (chain(Set("1", "2", "3"), true)) should equal(Set("1", "2", "3"))
-    (chain(Set("a", "b"), true)) should equal(Set("a", "b"))
+    (chain(Set("1", "2", "3"))) should equal(Set(), Set("1", "2", "3"))
+    (chain(Set("a", "b"))) should equal(Set(), Set("a", "b"))
   }
 
-  "A filter Chain" should "reject by default if requested" in {
-    val chain = new FilterChain()
-
-    (chain(Set("1", "2", "3"), false)) should equal(Set())
-    (chain(Set("a", "b"), false)) should equal(Set())
-  }
-
-  it should "accept when no filter matches" in {
+  it should "put words into the 'undecided' list when no filter matches" in {
     withMocks { context =>
       val filter: Filter = context.mock[Filter]("filter")
       val chain = new FilterChain()
       when(filter.apply("x")).thenReturn(FilterResult.Undecide)
       chain.addFilter(filter)
 
-      (chain(Set("x"), true)) should equal(Set("x"))
-    }
-  }
-
-  it should "reject when no filter matches" in {
-    withMocks { context =>
-      val filter: Filter = context.mock[Filter]("filter")
-      val chain = new FilterChain()
-      when(filter.apply("x")).thenReturn(FilterResult.Undecide)
-      chain.addFilter(filter)
-
-      (chain(Set("x"), false)) should equal(Set())
+      (chain(Set("x"))) should equal(Set(), Set("x"))
     }
   }
 
@@ -59,7 +41,7 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter2.apply("word1")).thenReturn(FilterResult.Accept)
       when(filter1.apply("word2")).thenReturn(FilterResult.Accept)
 
-      chain(list, true) should equal(list)
+      chain(list) should equal(list, Set())
 
       verify(filter1).apply("word1")
       verify(filter2).apply("word1")
@@ -81,10 +63,37 @@ class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
       when(filter1.apply("word1")).thenReturn(FilterResult.Reject)
       when(filter1.apply("word2")).thenReturn(FilterResult.Reject)
 
-      chain(list, true) should equal(Set())
+      chain(list) should equal(Set(), Set())
 
       verify(filter1).apply("word1")
       verify(filter1).apply("word2")
+      verifyNoMoreInteractions(filter1, filter2)
+    }
+  }
+
+  it should "sort word by a filter's result" in {
+    withMocks { context =>
+      val filter1: Filter = context.mock[Filter]("filter1")
+      val filter2: Filter = context.mock[Filter]("filter2")
+
+      val chain = new FilterChain()
+      val list = Set("word1", "word2", "word3")
+      chain.addFilter(filter1)
+      chain.addFilter(filter2)
+
+      when(filter1.apply("word1")).thenReturn(FilterResult.Undecide)
+      when(filter2.apply("word1")).thenReturn(FilterResult.Undecide)
+      when(filter1.apply("word2")).thenReturn(FilterResult.Undecide)
+      when(filter2.apply("word2")).thenReturn(FilterResult.Reject)
+      when(filter1.apply("word3")).thenReturn(FilterResult.Accept)
+
+      chain(list) should equal(Set("word3"), Set("word1"))
+
+      verify(filter1).apply("word1")
+      verify(filter2).apply("word1")
+      verify(filter1).apply("word2")
+      verify(filter2).apply("word2")
+      verify(filter1).apply("word3")
       verifyNoMoreInteractions(filter1, filter2)
     }
   }

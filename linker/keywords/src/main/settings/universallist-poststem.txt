@@ -1,4 +1,5 @@
 # <- This is a comment
+# It is UTF-8
 # This file is scanned from top to bottom
 # Each line contains a regex and an indicator whether a match should accept
 # or reject the keyword. If the regex does not match, the next line is scanned.
@@ -19,16 +20,6 @@
 -[Pp]\.[Aa]
 -[Dd]\.[Hh]
 -[Ss]\.[Uu]
-
-# Already filtered by preStem
--.*[a-z][A-Z].*
--.*[_.;()\[\]$].*
--.*null.*
--.+[eE]xcep.*
--.+[eE]rr.*
--javax?\..*
--(?i:oom)
--(?i:npe)
 
 +key.*
 +kei
