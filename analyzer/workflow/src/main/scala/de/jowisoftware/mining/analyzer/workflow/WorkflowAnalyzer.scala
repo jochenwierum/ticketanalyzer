@@ -46,8 +46,9 @@ class WorkflowAnalyzer(db: Database[RootNode],
     val query = """
       START repository=node(%s) // ticket collection
       MATCH repository --> ticket1 -[:has_status]-> status1,
-        status2 <-[:has_status]- ticket2 -[:updates]-> ticket1
-      WHERE status1 <> status2
+        status2 <-[:has_status]- ticket2 -[:updates]-> ticket1,
+        ticket1 <-[:owns]- owner1, ticket2 <-[:owns]- owner2
+      WHERE status1 <> status2 OR owner1 <> owner2
       RETURN status1.name AS from, status2.name AS to, count(*) AS count
       ORDER BY from, count DESC;
       """ format (repositoryNodes)
