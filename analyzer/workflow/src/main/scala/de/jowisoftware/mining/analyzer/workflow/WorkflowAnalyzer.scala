@@ -53,8 +53,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
       """ format (repositoryNodes)
 
     val engine = new ExecutionEngine(db.service)
-    val result = engine.execute(query)
-    result
+    engine.execute(query)
   }
 
   private def findDeadEnds: ExecutionResult = {
@@ -68,8 +67,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
     """ format (repositoryNodes)
 
     val engine = new ExecutionEngine(db.service)
-    val result = engine.execute(query)
-    result
+    engine.execute(query)
   }
 
   private def createDeadEndMap(result: ExecutionResult) = {
@@ -110,6 +108,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
   private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
     val (lines, nodeNames) = formatResultToDotNodes(result)
     val graphText = "digraph {"+
+      "concentrate=true;"+
       getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
       lines.mkString("\n\t", "\n\t", "\n")+
       "}"
@@ -120,7 +119,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
   }
 
   def getEdgeString(from: String, to: String, count: Long, factor: Double) = {
-    val weight = ((1 - factor) * 200).intValue
+    val weight = (factor * 1000).intValue
     val width = (3 * factor) max 1
     val red = (factor * 255).intValue
 
@@ -161,8 +160,11 @@ class WorkflowAnalyzer(db: Database[RootNode],
     .replaceAll("^_+|_+$", "")
 
   private def getNodesStrings(names: Map[String, String], deadEnds: Map[String, Long]): Iterable[String] =
-    names.map {
+    (names.map {
       case (id, text) =>
-        """%s [label = "%s; final: %d"];""" format (id, text, deadEnds(id))
-    }
+        """%s [label = "%s (final: %d)"];""" format (id, text, deadEnds.getOrElse(text, 0))
+    }) ++ ((deadEnds.keySet -- names.keySet) map {
+      case text =>
+        """%s [label = "%s (final: %d)"];""" format (nodeName(text), text, deadEnds(text))
+    })
 }
