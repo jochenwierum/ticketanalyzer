@@ -7,7 +7,7 @@ class WorkflowUserOptions extends UserOptions {
     "dot" -> """c:\Program Files (x86)\Graphviz2.26.3\bin\dot.exe""",
     "visualization" -> "Matrix")
 
-  protected val htmlDescription = """<b>Structure Analyzer</b>"""
+  protected val htmlDescription = """<b>Ticket Workflow Analyzer</b>"""
 
   protected def fillPanel(panel: CustomizedGridBagPanel) = {
     panel.add("Visualization", combobox("visualization", Seq("Graph", "Matrix")))
