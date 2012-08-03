@@ -24,6 +24,14 @@ import scala.swing.Swing
 class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
+  require(options contains "visualization")
+  require(options contains "dpi")
+  require(options("dpi").toInt > 0)
+
+  if (options("visualization") == "Graph")
+    require(new File(options("dot")).exists)
+
+
   lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.children
     .map(_.id).mkString(", ")
 
@@ -109,7 +117,8 @@ class WorkflowAnalyzer(db: Database[RootNode],
   private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
     val (lines, nodeNames) = formatResultToDotNodes(result)
     val graphText = "digraph {"+
-      "concentrate=true;"+
+      "concentrate=true;\n"+
+      "dpi="+options("dpi")+";\n"+
       getNodesStrings(nodeNames, deadEnds).mkString("\n\t", "\n\t", "\n") +
       lines.mkString("\n\t", "\n\t", "\n")+
       "}"

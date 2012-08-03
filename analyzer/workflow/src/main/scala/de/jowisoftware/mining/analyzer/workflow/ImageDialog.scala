@@ -14,7 +14,9 @@ class ImageDialog(image: BufferedImage, parent: Frame) extends Dialog(parent) {
     maximumSize = imageSize
 
     override def paintComponent(g: Graphics2D) {
-      g.drawImage(image, 0, 0, this.peer)
+      val winSize = size
+      g.drawImage(image, 0, 0, winSize.width, winSize.height,
+          0, 0, imageSize.width, imageSize.height, this.peer)
     }
   }
 
@@ -23,7 +25,7 @@ class ImageDialog(image: BufferedImage, parent: Frame) extends Dialog(parent) {
   val imageComponent = new DotImage()
   contents = imageComponent
 
-  resizable = false
+  resizable = true
   modal = true
   pack
   centerOnScreen

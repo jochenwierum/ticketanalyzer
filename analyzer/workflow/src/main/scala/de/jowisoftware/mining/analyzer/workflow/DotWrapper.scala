@@ -6,14 +6,15 @@ import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import scala.collection.mutable.Buffer
 import javax.imageio.ImageIO
+import grizzled.slf4j.Logging
 
-class DotWrapper(dotPath: File) {
-
+class DotWrapper(dotPath: File) extends Logging {
   def run(input: String) = {
     val process = startProcess
 
     writeDot(input, process)
     val image = ImageIO.read(process.getInputStream)
+    dumpError(process)
 
     process.waitFor
     image
@@ -31,5 +32,12 @@ class DotWrapper(dotPath: File) {
     builder.command(dotPath.getCanonicalPath, "-Tpng")
     val process = builder.start
     process
+  }
+
+  private def dumpError(process: Process) {
+    val lines = Source.fromInputStream(process.getErrorStream).getLines
+    for (line <- lines) {
+      error("dot: " + line)
+    }
   }
 }
