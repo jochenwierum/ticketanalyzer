@@ -15,12 +15,14 @@ import de.jowisoftware.neo4j.Database
 import java.io.File
 
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
-  var service: AbstractGraphDatabase = _
+  var databaseService: AbstractGraphDatabase = _
   init()
   addShutdownHook()
 
+  def service = databaseService
+
   protected def init() {
-    service = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
+    databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
   }
 
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {

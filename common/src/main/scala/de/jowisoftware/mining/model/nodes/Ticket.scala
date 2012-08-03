@@ -1,11 +1,12 @@
 package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.mining.model.relationships.{Updates, HasTag, HasComment}
 import de.jowisoftware.neo4j.ReadOnlyDatabase
 import de.jowisoftware.neo4j.content.{NodeCompanion, IndexAccess}
 import helper.MiningNode
+import de.jowisoftware.neo4j.content.Node
+import de.jowisoftware.mining.model.relationships.RootOf
 
 object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
@@ -18,8 +19,20 @@ object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
 }
 
 class Ticket extends MiningNode {
-  val version = 1
-  def updateFrom(version: Int) = {}
+  val version = 2
+  def updateFrom(oldVersion: Int) = {
+    if (oldVersion < 2) {
+      def findRoot(e: Node): Node =
+        e.neighbors(Direction.OUTGOING, Seq(Updates.relationType)).toList match {
+          case Nil => e
+          case x :: tail => findRoot(x)
+        }
+
+      val parent = findRoot(this)
+      if (parent != this)
+        parent.add(this, RootOf)
+    }
+  }
 
   lazy val uid = stringProperty("uid", "", true)
   lazy val ticketId = intProperty("id")

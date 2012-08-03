@@ -10,15 +10,29 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
   private[neo4j]type companion <: RelationshipCompanion[Relationship]
   private[neo4j] val indexCreator = RelationshipIndexCreator
 
-  private[neo4j] var sourceNode: companion#sourceType = _
-  private[neo4j] var sinkNode: companion#sinkType = _
+  private[neo4j] var cachedSourceNode: Option[companion#sourceType] = None
+  private[neo4j] var cachedSinkNode: Option[companion#sinkType] = None
   private[neo4j] var innerRelationship: NeoRelationship = _
 
   protected[neo4j] def content = innerRelationship
 
-  def source = sourceNode
-  def sink = sinkNode
-  def getRelationship = innerRelationship
+  def sink = cachedSinkNode match {
+    case Some(node) => node
+    case None =>
+      val node = Node.neoNode2Node(innerRelationship.getEndNode(), innerDB).get.asInstanceOf[companion#sinkType]
+      cachedSinkNode = Option(node)
+      node
+  }
+
+  def source = cachedSourceNode match {
+    case Some(node) => node
+    case None =>
+      val node = Node.neoNode2Node(innerRelationship.getStartNode(), innerDB).get.asInstanceOf[companion#sourceType]
+      cachedSourceNode = Option(node)
+      node
+  }
+
+  def relationship = innerRelationship
 
   protected final def getIndex = readableDb.service.index.forRelationships(getClass().getName)
 
@@ -26,8 +40,6 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
     sanityCheck(relationship)
     this.innerRelationship = relationship
     this.innerDB = db
-    sourceNode = Node.neoNode2Node(relationship.getStartNode(), db).get.asInstanceOf[companion#sourceType]
-    sinkNode = Node.neoNode2Node(relationship.getEndNode(), db).get.asInstanceOf[companion#sinkType]
   }
 
   override def toString() = toString(innerRelationship.getId(), innerRelationship)

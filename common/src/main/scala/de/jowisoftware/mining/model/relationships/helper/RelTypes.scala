@@ -33,6 +33,7 @@ object RelTypes {
   val hasComment = ScalaRelationshipType("has_comment")
 
   val updates = ScalaRelationshipType("updates")
+  val rootOf = ScalaRelationshipType("root_of")
   val references = ScalaRelationshipType("references")
 
   val childOf = ScalaRelationshipType("child_of")
