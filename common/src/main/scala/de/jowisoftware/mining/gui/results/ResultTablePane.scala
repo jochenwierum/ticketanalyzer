@@ -26,7 +26,7 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
       val rowData: Array[CellData] = new Array[CellData](columnNames.size)
       row.foreach({
         case (key, value) =>
-          rowData(columnMap(key)) = anyToString(value)
+          rowData(columnMap(key)) = anyToCellData(value)
       })
 
       rowData
@@ -46,47 +46,55 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
     }
   }
 
-  private def anyToString(obj: Any): CellData =
-    obj match {
-      case null => CellData("(null)", "(null)")
-      case node: Node =>
-        CellData(formatNode(node, identity),
-          clearNamespaces(formatNode(node, shortenString(40))))
-      case rel: Relationship =>
-        CellData(formatRelationship(rel, identity),
-          clearNamespaces(formatRelationship(rel, shortenString(40))))
+  private def anyToCellData(obj: Any): CellData = obj match {
+    case null => CellData("(null)", "(null)")
+    case node: Node =>
+      CellData(formatNode(node, identity),
+        clearNamespaces(formatNode(node, shortenString(40))))
+    case rel: Relationship =>
+      CellData(formatRelationship(rel, identity),
+        clearNamespaces(formatRelationship(rel, shortenString(40))))
+    case _ => CellData(anyToString(obj, identity), anyToString(obj, shortenString(40)))
+  }
+
+  private def anyToString(obj: Any, formatter: String => String): String = {
+    val unmasked = obj match {
       case n @ (_: Float | _: Double) =>
-        val formatted = n.formatted("%.4f")
-        CellData(formatted, formatted)
-      case x => CellData(x.toString, shortenString(40)(x.toString))
+        n.formatted("%.4f")
+      case a: Array[_] =>
+        a.map(x => formatter(x.toString)).deep.toString
+      case x => formatter(x.toString)
     }
 
-  private def clearNamespaces(text: String) =
+    unmasked.replace("\\", "\\\\").replace("\n", "\\n")
+      .replace("&", "&amp;")
+      .replace("<", "&lt;")
+      .replace(">", "&gt;")
+      .replace("\"", "&quot;")
+  }
+
+  private def clearNamespaces(text: String): String =
     text.replace("de.jowisoftware.mining.model.", "")
 
-  private def formatNode(node: Node, formatter: String => String) =
-    "<b>Node["+node.getId+"]: "+getClassFromProperties(node)+"</b>"+formatProperties(node, formatter)
+  private def formatNode(node: Node, formatter: String => String): String =
+    "<b>Node["+node.getId+"]: "+getClassFromProperties(node)+
+      "</b><br />\n"+formatProperties(node, formatter)
 
-  private def formatRelationship(relationship: Relationship, formatter: String => String) =
+  private def formatRelationship(relationship: Relationship, formatter: String => String): String =
     "<b>Relationship["+relationship.getId+"]: "+getClassFromProperties(relationship)+
-      "</b>"+formatProperties(relationship, formatter)
+      "</b><br />\n"+formatProperties(relationship, formatter)
 
-  private def formatProperties(properties: PropertyContainer, formatter: String => String) =
-    formatPropertyLines(properties).map("<br>\n"+formatter(_)).mkString("")
-
-  private def getClassFromProperties(properties: PropertyContainer) =
+  private def getClassFromProperties(properties: PropertyContainer): String =
     properties.getProperty("_class", "(?)").toString
 
-  private def formatPropertyLines(properties: PropertyContainer) =
-    properties.getPropertyKeys.filter(!_.startsWith("_")).map { property =>
-      property+": "+properties.getProperty(property).toString
-        .replace("\\", "\\\\").replace("\n", "\\n")
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
+  private def formatProperties(properties: PropertyContainer, formatter: String => String) =
+    formatPropertyLines(properties, formatter).mkString("<br />\n")
+
+  private def formatPropertyLines(properties: PropertyContainer, formatter: String => String): Seq[String] =
+    properties.getPropertyKeys.toSeq.sorted.withFilter(!_.startsWith("_")).map { property =>
+      property+": "+anyToString(properties.getProperty(property), formatter)
     }
 
-  private def shortenString(length: Int)(text: String) =
+  private def shortenString(length: Int)(text: String): String =
     if (text.length > length) text.substring(0, length - 3)+"..." else text
 }
