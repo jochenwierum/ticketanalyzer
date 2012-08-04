@@ -19,7 +19,10 @@ class ShellPane(db: AbstractGraphDatabase, parent: Frame) extends SplitPane with
   private val engine = new ExecutionEngine(db)
 
   private val textInput = new TextArea
-  textInput.text = "START f=node(20)\nMATCH f-[x]->to\nRETURN f, to, x, type(x)"
+  textInput.text = """START root=node(0)
+    |MATCH root-[:contains]->collection
+    |RETURN root, collection
+    |LIMIT 20;""".stripMargin
   private val startButton = new Button(">>")
   private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in browser")
 
