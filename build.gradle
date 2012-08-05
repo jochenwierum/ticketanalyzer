@@ -142,15 +142,7 @@ task writeStartScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.appl
   
 }
 
-task writeShellScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
-  File dist = new File("$buildDir/dist")
-  applicationName = "ticketanalyzershell"
-  classpath = fileTree(dir: new File(dist, 'lib'), include: '*.jar')
-  mainClassName = "de.jowisoftware.mining.gui.shell.Main"
-  outputDir = mkdir(new File(dist, "bin"))
-}
-
-task dist(dependsOn: [copyDistFiles, writeStartScripts, writeShellScripts])
+task dist(dependsOn: [copyDistFiles, writeStartScripts])
 
 task start(dependsOn: copyDistFiles) << {
   javaexec{
