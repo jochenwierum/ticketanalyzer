@@ -81,9 +81,6 @@ class KeywordLinker(
     var i = 0
 
     for (ticket <- tickets.tickets) {
-      if (ticket.id == 12455)
-        println("debug")
-
       val keywords = processTitle(ticket) ++
         processText(ticket) ++
         processTags(ticket) ++
