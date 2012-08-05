@@ -55,7 +55,9 @@ class ShellPane(db: AbstractGraphDatabase, parent: Frame) extends SplitPane with
       override def run() {
         val start = System.currentTimeMillis
         try {
-          val result = engine.execute(text)
+          val query = engine.prepare(text)
+          info("Executing: "+query.toString)
+          val result = query.execute(Map())
           resultTable.processResult(result)
           warn("Query finished in "+(System.currentTimeMillis - start)+" ms")
         } catch {
