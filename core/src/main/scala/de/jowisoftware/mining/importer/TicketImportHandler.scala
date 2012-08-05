@@ -140,7 +140,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
         trace("Connecting node "+recent.id+" with Node "+head.id)
         head.add(recent, Updates)
         trace("Connecting node "+recent.id+" with Root "+rootVersion.id)
-        root.add(recent, RootOf)
+        rootVersion.add(recent, RootOf)
         connect(head :: tail)
       case recent :: Nil =>
     }
