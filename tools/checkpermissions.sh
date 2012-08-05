@@ -2,6 +2,7 @@
 
 fail=0
 
+echo "Checking for illegal file permissions..."
 while IFS= read -r f; do
 	dir=${f%%/*}
 	if [ -x "$f" -a $dir != 'tools' -a $dir != 'gradlew' -a $dir != 'gradlew.bat' ]; then
