@@ -5,7 +5,7 @@ import scala.util.matching.Regex
 
 private[trac] object TicketScanner {
   private def ticketRegexes = List("""#(\d+)(?=\W|$)""".r, """ticket:(\d+)(?=\W|$)""".r,
-    new Regex("""(?i)mantis:\s?(\d+)(?=\W|$)"""))
+    """(?i)mantis:\s?(\d+)(?=\W|$)""".r, """^0*(\d+)""".r)
 }
 
 private[trac] class TicketScanner {
