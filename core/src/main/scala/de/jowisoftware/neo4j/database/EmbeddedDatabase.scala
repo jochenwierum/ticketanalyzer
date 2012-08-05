@@ -15,7 +15,7 @@ import de.jowisoftware.neo4j.Database
 import java.io.File
 
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
-  var databaseService: AbstractGraphDatabase = _
+  private var databaseService: AbstractGraphDatabase = _
   init()
   addShutdownHook()
 
@@ -23,6 +23,9 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
 
   protected def init() {
     databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
+
+    // make sure the root note is initialized
+    inTransaction { _.rootNode }
   }
 
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {
@@ -63,7 +66,7 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     })
   }
 
-  lazy val rootNode: T =
+  def rootNode: T =
     Node.wrapNeoNode(service.getReferenceNode, this, rootCompanion)
 
   def getUnknownNode(id: Long): Node =

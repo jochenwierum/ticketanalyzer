@@ -5,7 +5,7 @@ import org.neo4j.kernel.AbstractGraphDatabase
 import de.jowisoftware.neo4j.content.NodeCompanion
 
 trait ReadOnlyDatabase[T <: Node] {
-  val rootNode: T
+  def rootNode: T
 
   /**
     * Public only for testing
