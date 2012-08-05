@@ -25,7 +25,10 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
 
     // make sure the root note is initialized
-    inTransaction { _.rootNode }
+    inTransaction { transaction =>
+      transaction.rootNode
+      transaction.success
+    }
   }
 
   def inTransaction[S](body: DBWithTransaction[T] => S): S = {
