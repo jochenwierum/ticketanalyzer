@@ -33,7 +33,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     }
 
     debug("Connecting versions of ticket "+ticketVersions.head(id))
-    connectVersions(versionNodes.toList)
+    connectVersions(versionNodes, versionNodes.last)
     debug("Connecting references from ticket "+ticketVersions.head(id))
     connectReferences(ticketVersions, versionNodes, repository)
     debug("Catching up missing links to this ticket...")
@@ -134,11 +134,13 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     }
   }
 
-  private def connectVersions(ticketVersions: List[Ticket]) {
+  private def connectVersions(ticketVersions: List[Ticket], rootVersion: Ticket) {
     def connect(next: Seq[Ticket]): Unit = next match {
       case recent :: head :: tail =>
         trace("Connecting node "+recent.id+" with Node "+head.id)
         head.add(recent, Updates)
+        trace("Connecting node "+recent.id+" with Root "+rootVersion.id)
+        root.add(recent, RootOf)
         connect(head :: tail)
       case recent :: Nil =>
     }
