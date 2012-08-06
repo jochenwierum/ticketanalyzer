@@ -2,6 +2,6 @@ description "trucknumber analyzer plugin"
 
 eclipse {
   project {
-    name = 'analyzer-trucknumber'
+    name = 'analyzer-trucknumber-tickets'
   }
 }
