@@ -1,10 +1,36 @@
 package de.jowisoftware.neo4j.content
 
 import org.neo4j.graphdb.{ RelationshipType, Relationship => NeoRelationship }
-
 import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase, Database, DBWithTransaction }
 import de.jowisoftware.neo4j.content.index.RelationshipIndexCreator
 import properties.Versionable
+import org.xml.sax.helpers.NewInstance
+
+object Relationship extends ClassCache[RelationshipCompanion[_ <: Relationship]] {
+  implicit def relationship2RelationshipType(r: RelationshipCompanion[_]): RelationshipType =
+    r.relationType
+  implicit def relationshipCompanion2RelationshipType(r: Relationship): RelationshipType =
+    r.innerRelationship.getType()
+
+  def wrapNeoRelationship[T <: Relationship](
+    neoNode: NeoRelationship,
+    db: ReadOnlyDatabase[_ <: Node], companion: RelationshipCompanion[T]): T = {
+    val node = companion()
+    node initWith (neoNode, db)
+    node
+  }
+
+  def wrapNeoRelationship(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]): Option[Relationship] = {
+    try {
+      val className = relationship.getProperty("_class").asInstanceOf[String]
+      val obj = getCompanion(className).apply()
+      obj initWith (relationship, db)
+      Some(obj)
+    } catch {
+      case e: Exception => None
+    }
+  }
+}
 
 trait Relationship extends Versionable with Properties[NeoRelationship] {
   private[neo4j]type companion <: RelationshipCompanion[Relationship]
@@ -19,7 +45,7 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
   def sink = cachedSinkNode match {
     case Some(node) => node
     case None =>
-      val node = Node.neoNode2Node(innerRelationship.getEndNode(), innerDB).get.asInstanceOf[companion#sinkType]
+      val node = Node.wrapNeoNode(innerRelationship.getEndNode(), innerDB).get.asInstanceOf[companion#sinkType]
       cachedSinkNode = Option(node)
       node
   }
@@ -27,7 +53,7 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
   def source = cachedSourceNode match {
     case Some(node) => node
     case None =>
-      val node = Node.neoNode2Node(innerRelationship.getStartNode(), innerDB).get.asInstanceOf[companion#sourceType]
+      val node = Node.wrapNeoNode(innerRelationship.getStartNode(), innerDB).get.asInstanceOf[companion#sourceType]
       cachedSourceNode = Option(node)
       node
   }
@@ -36,20 +62,14 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
 
   protected final def getIndex = readableDb.service.index.forRelationships(getClass().getName)
 
-  def initWith(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]) {
+  def initWith(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]) = {
     sanityCheck(relationship)
     this.innerRelationship = relationship
     this.innerDB = db
+    this
   }
 
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
 
   def delete = innerRelationship.delete()
-}
-
-object Relationship {
-  implicit def relationship2RelationshipType(r: RelationshipCompanion[_]): RelationshipType =
-    r.relationType
-  implicit def relationshipCompanion2RelationshipType(r: Relationship): RelationshipType =
-    r.innerRelationship.getType()
 }

@@ -19,7 +19,7 @@ import de.jowisoftware.neo4j.ReadWriteDatabase
 import de.jowisoftware.neo4j.ReadWriteDatabase
 import de.jowisoftware.neo4j.ReadWriteDatabase
 
-object Node {
+object Node extends ClassCache[NodeCompanion[_ <: Node]] {
   def wrapNeoNode[T <: Node](
     neoNode: NeoNode,
     db: ReadOnlyDatabase[_ <: Node], companion: NodeCompanion[T]): T = {
@@ -28,10 +28,10 @@ object Node {
     node
   }
 
-  def neoNode2Node(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]): Option[Node] = {
+  def wrapNeoNode(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]): Option[Node] = {
     try {
-      val clazz = node.getProperty("_class").asInstanceOf[String]
-      val obj = Class.forName(clazz).newInstance().asInstanceOf[Node]
+      val className = node.getProperty("_class").asInstanceOf[String]
+      val obj = getCompanion(className).apply()
       obj initWith (node, db)
       Some(obj)
     } catch {
@@ -88,8 +88,15 @@ trait Node extends Versionable with Properties[NeoNode] {
     }
   }
 
-  def neighbors2(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipCompanion[_]] = List()) =
-    neighbors(direction, relTypes.map { _.relationType })
+  def relations(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipType] = List()) = {
+    val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
+    else innerNode.getRelationships(direction, relTypes: _*)
+
+    for (
+      Some(node) <- nodes.map(
+        n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
+    ) yield node
+  }
 
   def neighbors(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipType] = List()) = {
     val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
@@ -97,7 +104,7 @@ trait Node extends Versionable with Properties[NeoNode] {
 
     for (
       Some(node) <- nodes.map(
-        n => Node.neoNode2Node(n.getOtherNode(innerNode), innerDB))
+        n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
     ) yield node
   }
 

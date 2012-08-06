@@ -131,16 +131,19 @@ class KeywordLinker(
   private def cleanChars(s: String): String = {
     var result = s
 
-    if (result.matches("""[("].*""")) {
+    if (result.matches("""[('"].*""")) {
       result = result.substring(1)
     }
 
-    if (result.matches(""".*"""")) {
+    if (result.matches(""".*["']""")) {
       result = result.substring(0, result.length - 1)
     }
 
     if (result.matches("""[^(]*\)""")) {
       result = result.substring(0, result.length - 1)
+      if (result.matches(""".*["']""")) {
+        result = result.substring(0, result.length - 1)
+      }
     }
 
     if (result.matches("""[A-Z]\w+""")) {

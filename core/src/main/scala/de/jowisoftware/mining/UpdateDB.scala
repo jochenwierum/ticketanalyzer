@@ -22,12 +22,12 @@ object UpdateDB {
     println("Updating nodes...")
     performUpgrade[NeoNode](db,
       GlobalGraphOperations.at(db.service).getAllNodes,
-      n => Node.neoNode2Node(n, db))
+      n => Node.wrapNeoNode(n, db))
 
     println("Updating relationships...")
     performUpgrade[NeoRelationship](db,
       GlobalGraphOperations.at(db.service).getAllRelationships,
-      r => updateRelationship(r, db))
+      r => Relationship.wrapNeoRelationship(r, db))
 
     println("Update finished")
     db.shutdown
@@ -52,11 +52,5 @@ object UpdateDB {
     }
     transaction.success
     transaction.finish
-  }
-
-  private def updateRelationship(rel: NeoRelationship, db: EmbeddedDatabase[RootNode]) {
-    val className = rel.getProperty("_class").asInstanceOf[String]
-    val target = Class.forName(className).newInstance.asInstanceOf[Relationship]
-    target.initWith(rel, db)
   }
 }

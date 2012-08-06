@@ -25,6 +25,6 @@ private[neo4j] class DefaultTransaction[T <: Node](
     Node.wrapNeoNode(db.service.getNodeById(id), this, companion)
 
   def getUnknownNode(id: Long): Node =
-    Node.neoNode2Node(db.service.getNodeById(id), this).get
+    Node.wrapNeoNode(db.service.getNodeById(id), this).get
 
 }

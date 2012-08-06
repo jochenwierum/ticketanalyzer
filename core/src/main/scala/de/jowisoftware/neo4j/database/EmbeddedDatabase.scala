@@ -73,7 +73,7 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     Node.wrapNeoNode(service.getReferenceNode, this, rootCompanion)
 
   def getUnknownNode(id: Long): Node =
-    Node.neoNode2Node(service.getNodeById(id), this).get
+    Node.wrapNeoNode(service.getNodeById(id), this).get
 
   def getNode[S <: Node](id: Long, companion: NodeCompanion[S]): S =
     Node.wrapNeoNode(service.getNodeById(id), this, companion)
