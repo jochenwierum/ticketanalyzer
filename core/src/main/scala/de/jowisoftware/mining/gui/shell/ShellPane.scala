@@ -74,12 +74,15 @@ class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with Gu
     dialog.show()
   }
 
-  private def maskHTML(s: String) =
+  private def maskHTML(s: String) = if (s == null) {
+    "(null)"
+  } else {
     s.replace("&", "&amp;")
       .replace("<", "&lt;")
       .replace(">", "&gt;")
       .replace("\"", "&quot;")
       .replace("\n", "<br />")
+  }
 
   private var lastState = Integer.MAX_VALUE
   def newViewState(state: Int) =
