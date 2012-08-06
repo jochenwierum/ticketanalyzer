@@ -9,21 +9,25 @@ import org.neo4j.graphdb.Node
 import org.neo4j.graphdb.PropertyContainer
 import scala.swing.Swing
 
-class ResultTablePane(result: ExecutionResult) extends ScrollPane {
-  def this() = this(null)
+class ResultTablePane(result: Iterator[Map[String, Any]], columnOrder: Seq[String]) extends ScrollPane {
+  def this() = this(null, null)
+  def this(result: ExecutionResult) = this(result, result.columns)
 
   private val table = new ResultTable()
   contents = table
 
   if (result != null)
-    processResult(result)
+    processResult(result, columnOrder)
 
   def processResult(result: ExecutionResult) {
-    val columnNames = result.columns
-    val columnMap = Map(columnNames.zipWithIndex: _*)
+    processResult(result, result.columns)
+  }
+
+  def processResult(result: Iterator[Map[String, Any]], columnOrder: Seq[String]) {
+    val columnMap = Map(columnOrder.zipWithIndex: _*)
 
     val tableData: Array[Array[CellData]] = (result map { row =>
-      val rowData: Array[CellData] = new Array[CellData](columnNames.size)
+      val rowData: Array[CellData] = new Array[CellData](columnOrder.size)
       row.foreach({
         case (key, value) =>
           rowData(columnMap(key)) = CellFormatter.anyToCellData(value)
@@ -33,7 +37,7 @@ class ResultTablePane(result: ExecutionResult) extends ScrollPane {
     }).toArray
 
     Swing.onEDT {
-      updateTable(tableData, columnNames.toSeq)
+      updateTable(tableData, columnOrder)
     }
   }
 

@@ -1,0 +1,7 @@
+description "trucknumber file analyzer plugin"
+
+eclipse {
+  project {
+    name = 'analyzer-trucknumber-file'
+  }
+}

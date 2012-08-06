@@ -22,7 +22,9 @@ object CellFormatter {
       case n @ (_: Float | _: Double) =>
         n.formatted("%.4f")
       case a: Array[_] =>
-        a.map(x => formatter(x.toString)).deep.toString
+        a.map(x => formatter(x.toString)).mkString(", ")
+      case s: Iterable[_] =>
+        s.map(x => formatter(x.toString)).mkString(", ")
       case x => formatter(x.toString)
     }
 
