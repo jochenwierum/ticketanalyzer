@@ -57,7 +57,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     commit.date(commitData(date))
     commit.message(commitData(message))
 
-    commit.add(getPerson(commitData(author)), Owns)
+    getPerson(commitData(author)).add(commit, Owns)
 
     debug("Adding files...")
     addFiles(commitData, repository, commit)
