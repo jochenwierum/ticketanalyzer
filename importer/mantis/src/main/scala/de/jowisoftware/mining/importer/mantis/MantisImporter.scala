@@ -21,8 +21,8 @@ object MantisImporter {
   def fromComplexDate(value: String) = dateFormat.parseDateTime(value).toDate()
 
   private val simpleDateFormat = Map(
-      "en" -> DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"),
-      "de" -> DateTimeFormat.forPattern("dd.MM.yyyy HH:mm"))
+    "en" -> DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"),
+    "de" -> DateTimeFormat.forPattern("dd.MM.yyyy HH:mm"))
   def fromSimpleDate(value: String, lang: String) = simpleDateFormat(lang).parseDateTime(value).toDate()
 
   object MantisConstants {
@@ -146,6 +146,7 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
         comment(TicketCommentDataFields.text) = (commentNode \ "text").text
         comment(TicketCommentDataFields.created) = fromComplexDate(commentNode \ "date_submitted" text)
         comment(TicketCommentDataFields.modified) = fromComplexDate(commentNode \ "last_modified" text)
+        comment(TicketCommentDataFields.author) = author
         Some(comment)
       } else {
         None
