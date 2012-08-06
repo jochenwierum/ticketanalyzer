@@ -59,7 +59,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     node.created(comment(TicketCommentDataFields.created))
     node.modified(comment(TicketCommentDataFields.modified))
 
-    node.add(getPerson(comment(TicketCommentDataFields.author)), Created)
+    getPerson(comment(TicketCommentDataFields.author)).add(node, Created)
 
     node
   }

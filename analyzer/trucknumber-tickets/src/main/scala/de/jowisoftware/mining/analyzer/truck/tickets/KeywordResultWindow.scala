@@ -21,7 +21,7 @@ class KeywordResultWindow(parent: Frame, result: Iterator[Map[String, Any]], act
     for (row <- result) {
       val persons = row("persons").asInstanceOf[Set[String]]
       val missingPersons = sortedActive -- persons
-      add(row("keyword").asInstanceOf[String], row("ratio").asInstanceOf[Double].toString,
+      add(row("keyword").asInstanceOf[String], row("ratio").asInstanceOf[Float].toString,
         persons.toSeq.sorted.mkString(", "), missingPersons.toSeq.mkString(", "))
     }
   }

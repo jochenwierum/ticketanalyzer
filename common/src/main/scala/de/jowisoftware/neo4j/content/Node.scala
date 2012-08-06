@@ -92,20 +92,14 @@ trait Node extends Versionable with Properties[NeoNode] {
     val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
     else innerNode.getRelationships(direction, relTypes: _*)
 
-    for (
-      Some(node) <- nodes.map(
-        n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
-    ) yield node
+    nodes.flatMap(n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
   }
 
   def neighbors(direction: Direction = Direction.BOTH, relTypes: Seq[RelationshipType] = List()) = {
     val nodes = if (relTypes.isEmpty) innerNode.getRelationships(direction)
     else innerNode.getRelationships(direction, relTypes: _*)
 
-    for (
-      Some(node) <- nodes.map(
-        n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
-    ) yield node
+    nodes.flatMap(n => Node.wrapNeoNode(n.getOtherNode(innerNode), innerDB))
   }
 
   def getFirstNeighbor[A <: Node](direction: Direction = Direction.BOTH,
@@ -115,9 +109,19 @@ trait Node extends Versionable with Properties[NeoNode] {
     innerNode.getRelationships(relType, direction).find { rel =>
       val otherNode = rel.getOtherNode(innerNode)
       otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
-    } match {
-      case Some(node) => Some(Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB, nodeType))
-      case _ => None
+    } map {
+      node => Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB, nodeType)
+    }
+  }
+
+  def getFirstRelationship[A <: Relationship](direction: Direction = Direction.BOTH,
+    relCompanion: RelationshipCompanion[A]): Option[A] = {
+
+    val targetClass = relCompanion.apply().getClass().getName()
+    innerNode.getRelationships(relCompanion.relationType, direction).find { rel =>
+      rel.hasProperty("_class") && rel.getProperty("_class") == targetClass
+    } map {
+      rel => Relationship.wrapNeoRelationship(rel, innerDB, relCompanion)
     }
   }
 

@@ -12,7 +12,7 @@ object PersonHasComittedFilter extends Filter {
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean =
     ticket.neighbors(Direction.BOTH, Seq(Links.relationType)).exists {
       case commit: Commit =>
-        commit.getFirstNeighbor(Direction.OUTGOING, Owns, Person).get == person // ouch!
+        commit.getFirstNeighbor(Direction.INCOMING, Owns, Person).get == person
       case _ => false
     }
 }

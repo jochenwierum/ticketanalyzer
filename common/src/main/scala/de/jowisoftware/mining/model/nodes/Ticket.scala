@@ -1,12 +1,13 @@
 package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.{Updates, HasTag, HasComment}
+import de.jowisoftware.mining.model.relationships.{ Updates, HasTag, HasComment }
 import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.content.{NodeCompanion, IndexAccess}
+import de.jowisoftware.neo4j.content.{ NodeCompanion, IndexAccess }
 import helper.MiningNode
 import de.jowisoftware.neo4j.content.Node
 import de.jowisoftware.mining.model.relationships.RootOf
+import de.jowisoftware.mining.model.relationships.ChangedTicket
 
 object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
@@ -70,4 +71,24 @@ class Ticket extends MiningNode {
   def tags = neighbors(Direction.OUTGOING, Seq(HasTag.relationType)) map {
     _.asInstanceOf[Tag]
   }
+
+  def allVersions = {
+    var newTicket: Option[Ticket] = Some(this)
+    var allTickets: List[Ticket] = Nil
+
+    while (newTicket.isDefined) {
+      allTickets = newTicket.get :: allTickets
+      newTicket = newTicket.get.getFirstNeighbor(Direction.OUTGOING, Updates.relationType, Ticket)
+    }
+
+    newTicket = getFirstNeighbor(Direction.INCOMING, Updates.relationType, Ticket)
+    while (newTicket.isDefined) {
+      allTickets = newTicket.get :: allTickets
+      newTicket = newTicket.get.getFirstNeighbor(Direction.INCOMING, Updates.relationType, Ticket)
+    }
+
+    allTickets
+  }
+
+  def change = getFirstRelationship(Direction.INCOMING, ChangedTicket)
 }

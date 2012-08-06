@@ -6,10 +6,14 @@ import de.jowisoftware.mining.model.nodes.Ticket
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.HasStatus
 import de.jowisoftware.mining.model.nodes.Status
+import de.jowisoftware.mining.linker.StatusType
 
-class StatusFilter(allowed: String*) extends Filter {
+object StatusFilter extends Filter {
+  private val allowed = StatusType.assigned :: StatusType.inReview :: StatusType.qa :: Nil
+
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean = {
-    val status = ticket.getFirstNeighbor(Direction.OUTGOING, HasStatus, Status) map (_.name()) getOrElse ""
+    val status = ticket.getFirstNeighbor(Direction.OUTGOING, HasStatus, Status).map(
+      _.logicalType().map(x => StatusType(x))) getOrElse StatusType.ignore
     allowed.contains(status)
   }
 }

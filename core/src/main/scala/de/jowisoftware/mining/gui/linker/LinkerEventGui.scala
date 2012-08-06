@@ -8,7 +8,7 @@ trait LinkerEventGui extends LinkEvents {
 
   abstract override def reportProgress(progress: Long, max: Long, message: String) {
     progressDialog.update(progress, max)
-    progressDialog.status(message)
+    progressDialog.status = message
 
     super.reportProgress(progress, max, message)
   }

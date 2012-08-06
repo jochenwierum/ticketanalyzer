@@ -5,6 +5,7 @@ import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.RelationshipType
 import de.jowisoftware.neo4j.traversing.Traverser
 import helper._
+import de.jowisoftware.mining.model.relationships.Created
 
 object TicketComment extends NodeCompanion[TicketComment] with IndexAccess[TicketComment] {
   def apply = new TicketComment
@@ -22,4 +23,6 @@ class TicketComment extends MiningNode {
   lazy val text = stringProperty("text", "", true)
   lazy val created = dateProperty("created")
   lazy val modified = dateProperty("modified")
+
+  def author = getFirstNeighbor(Direction.INCOMING, Created.relationType, Person)
 }
