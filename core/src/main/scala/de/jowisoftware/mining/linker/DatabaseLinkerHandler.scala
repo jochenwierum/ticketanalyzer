@@ -33,19 +33,20 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
     debug("Found link from "+sourceNode.getClass.getSimpleName+" "+
       sourceNode.content.getProperty("uid")+" to "+link)
 
-    val (destNode: Option[_], linkType) = (link match {
+    val (destNodes, linkType) = (link match {
       case ScmLink(ref, linkType, _) =>
-        (commitRepository.findCommit(ref), linkType)
+        (commitRepository.findCommit(ref).toSeq, linkType)
       case TicketLink(id, linkType) =>
-        (ticketRepository.findRecentVersionOf(id), linkType)
+        (ticketRepository.findAllVersionsOf(id), linkType)
     })
 
-    destNode match {
-      case None => error("Node "+sourceNode+" refers to unknown target "+link)
-      case Some(node) =>
-        sourceNode.add(node.asInstanceOf[MiningNode], Links).linkType(linkType.toString)
+    if (destNodes.isEmpty) {
+      error("Node "+sourceNode+" refers to unknown target "+link)
+    } else {
+      destNodes.foreach(node =>
+        sourceNode.add(node, Links).linkType(linkType.toString))
+      safePointReached
     }
-    safePointReached
   }
 
   def foundStatusMap(status: Status, foundType: StatusType.Value) {
