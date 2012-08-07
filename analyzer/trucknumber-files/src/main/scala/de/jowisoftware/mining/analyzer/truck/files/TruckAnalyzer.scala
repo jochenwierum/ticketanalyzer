@@ -37,7 +37,7 @@ class TruckAnalyzer extends Analyzer {
         .mkString(", ")
 
       val query = """START n=node(%s) // commit collection -> file collection
-      MATCH n-->file<-[:changed_file]-commit-[:owns]->person
+      MATCH n-->file<-[:changed_file]-commit<-[:owns]-person
       %s
       RETURN
         file.name as file,
