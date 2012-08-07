@@ -4,7 +4,7 @@ import de.jowisoftware.mining.model.nodes.Person
 import de.jowisoftware.mining.model.nodes.Ticket
 import de.jowisoftware.mining.model.nodes.Keyword
 
-object PersonChangedStatus extends Filter {
+object PersonChangedStatusFilter extends Filter {
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean =
     ticket.allVersions.find(_.change map (_.changes() contains "status") getOrElse false).isDefined
 }

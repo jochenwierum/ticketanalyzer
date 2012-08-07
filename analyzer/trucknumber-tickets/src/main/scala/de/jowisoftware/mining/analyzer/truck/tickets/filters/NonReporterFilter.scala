@@ -9,12 +9,12 @@ import de.jowisoftware.mining.model.relationships.Reported
 
 object NonReporterFilter extends Filter {
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean = {
-    val result = for {
+    val isOtherPerson = for {
       rootTicket <- ticket.getFirstNeighbor(Direction.OUTGOING, RootOf.relationType, Ticket)
       reporter <- rootTicket.getFirstNeighbor(Direction.INCOMING, Reported.relationType, Person)
     } yield {
       person != reporter
     }
-    result getOrElse true
+    isOtherPerson getOrElse true
   }
 }

@@ -46,14 +46,14 @@ class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
   private def createFilters(options: Map[String, String]) = {
     def isSet(name: String) = options(name).toLowerCase() == "true"
 
-    val filter = new FilterAndCollection()
-    if (isSet("filter-change-status")) filter add PersonChangedStatus
+    val filter = new AndCollectionFilter()
+    if (isSet("filter-change-status")) filter add PersonChangedStatusFilter
     if (isSet("filter-reporter")) filter add NonReporterFilter
     if (isSet("filter-comment")) filter add WroteCommentFilter
     if (isSet("filter-commit")) filter add PersonHasComittedFilter
     if (isSet("filter-status")) filter add StatusFilter
     if (isSet("filter-comment-commit"))
-      filter add new FilterOrCollection(PersonHasComittedFilter, WroteCommentFilter)
+      filter add new OrCollectionFilter(PersonHasComittedFilter, WroteCommentFilter)
 
     filter
   }
