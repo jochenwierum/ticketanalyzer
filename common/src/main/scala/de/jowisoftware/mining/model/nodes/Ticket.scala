@@ -8,6 +8,7 @@ import helper.MiningNode
 import de.jowisoftware.neo4j.content.Node
 import de.jowisoftware.mining.model.relationships.RootOf
 import de.jowisoftware.mining.model.relationships.ChangedTicket
+import de.jowisoftware.mining.model.relationships.HasStatus
 
 object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
@@ -91,4 +92,5 @@ class Ticket extends MiningNode {
   }
 
   def change = getFirstRelationship(Direction.INCOMING, ChangedTicket)
+  def status = getFirstNeighbor(Direction.OUTGOING, HasStatus, Status)
 }

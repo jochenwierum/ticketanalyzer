@@ -12,8 +12,8 @@ object StatusFilter extends Filter {
   private val allowed = StatusType.assigned :: StatusType.inReview :: StatusType.qa :: Nil
 
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean = {
-    val status = ticket.getFirstNeighbor(Direction.OUTGOING, HasStatus, Status).map(
-      _.logicalType().map(x => StatusType(x))) getOrElse StatusType.ignore
+    val status = ticket.status
+      .flatMap(_.logicalType().map(StatusType.apply)) getOrElse StatusType.ignore
     allowed.contains(status)
   }
 }
