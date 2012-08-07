@@ -13,8 +13,8 @@ object NonReporterFilter extends Filter {
       rootTicket <- ticket.getFirstNeighbor(Direction.OUTGOING, RootOf.relationType, Ticket)
       reporter <- rootTicket.getFirstNeighbor(Direction.INCOMING, Reported.relationType, Person)
     } yield {
-      person == reporter
+      person != reporter
     }
-    result getOrElse false
+    result getOrElse true
   }
 }
