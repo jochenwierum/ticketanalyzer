@@ -18,6 +18,7 @@ class TicketScannerTest extends FlatSpec with ShouldMatchers {
 
   "A TicketScanner" should "should find single tickets referenced by '#'" in {
     check("Implemented #1 and #4 and CR:#3", links(1, 4, 3))
+    check("[DW#12] [BF #13] it works!", links(12, 13))
   }
 
   it should "find single tickets referenced by 'ticket'" in {
@@ -25,7 +26,11 @@ class TicketScannerTest extends FlatSpec with ShouldMatchers {
   }
 
   it should "support mantis links (case insensitive with optional space)" in {
-    check("Implemented Mantis:1, mantis:2, MantiS: 3 and Mantis: 4!", links(1, 2, 3, 4))
+    check("Implemented Mantis:1, mantis:2, MantiS: 3 and Mantis   4!", links(1, 2, 3, 4))
+  }
+
+  it should "support links in curly brackets" in {
+    check("[1], [2], and [864]!", links(1, 2, 864))
   }
 
   it should "not find a link when it contains characters" in {
@@ -35,5 +40,6 @@ class TicketScannerTest extends FlatSpec with ShouldMatchers {
   it should "find a reference if the text starts with a number" in {
     check("1234: a test", links(1234))
     check("00246: a test", links(246))
+    check("[TAG] 00123: a test", links(123))
   }
 }
