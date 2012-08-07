@@ -110,7 +110,7 @@ trait Node extends Versionable with Properties[NeoNode] {
       val otherNode = rel.getOtherNode(innerNode)
       otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
     } map {
-      node => Node.wrapNeoNode(node.getOtherNode(innerNode), innerDB, nodeType)
+      rel => Node.wrapNeoNode(rel.getOtherNode(innerNode), innerDB, nodeType)
     }
   }
 
