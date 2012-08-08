@@ -28,7 +28,7 @@ class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
   private def createCriticalKeywordsWindow: Dialog =
     db.inTransaction { transaction =>
       val limit = options("limit").toInt
-      val ignoredList = options("inactive").split("""\s*,\s*""")
+      val ignoredList = options("inactive").trim.split("""\s*,\s*""")
       val activePersons = getActivePersons(transaction, ignoredList).toSet
       val filters = createFilters(options)
 
