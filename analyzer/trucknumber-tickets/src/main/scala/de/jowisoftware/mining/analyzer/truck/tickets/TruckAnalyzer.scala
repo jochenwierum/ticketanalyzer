@@ -32,8 +32,7 @@ class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
       val activePersons = getActivePersons(transaction, ignoredList).toSet
       val filters = createFilters(options)
 
-      val rows = findRows(transaction, activePersons, filters.accept)
-      val groupedRows = groupRows(rows, activePersons.size)
+      val groupedRows = findOccurrences(transaction, activePersons, filters.accept)
       val result = formatResult(groupedRows, limit)
 
       if (options("output") == "raw")
@@ -64,47 +63,39 @@ class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
       .filterNot(name => name == "" || ignoredList.contains(name))
       .toSeq
 
-  private def findRows(transaction: DBWithTransaction[RootNode],
+  private def findOccurrences(transaction: DBWithTransaction[RootNode],
     activePersons: Set[String],
     accept: (Keyword, Ticket, Person) => Boolean): Seq[Map[String, Any]] = {
 
-    waitDialog.status = "Scanning database"
+    waitDialog.status = "Counting keywords"
     waitDialog.max = transaction.rootNode.keywordCollection.children.size
+    waitDialog.status = "Searching keyword occurrences"
 
-    (transaction.rootNode.keywordCollection.children.flatMap { keyword =>
+    (transaction.rootNode.keywordCollection.children.map { keyword =>
       waitDialog.tick()
 
-      (keyword.neighbors(Direction.OUTGOING, Seq(Links.relationType)).collect {
-        case ticket: Ticket =>
-          ticket.neighbors(Direction.INCOMING, Seq(Owns.relationType)).collect {
-            case person: Person if ((activePersons contains person.name()) && accept(keyword, ticket, person)) =>
-              Map("keyword" -> keyword.name(), "ticket" -> ticket.ticketId(), "person" -> person.name())
-          }
-      }).toList
-    }).flatten.toSeq
-  }
+      val occurrences = findKeywordOccurrences(activePersons, accept, keyword)
 
-  private def groupRows(queryResult: Seq[Map[String, Any]], personCount: Int): Seq[Map[String, Any]] = {
-    waitDialog.status = "Grouping results"
-    waitDialog.update(0, 1)
+      val tickets = occurrences.map(_("ticket")).toSet
+      val persons = occurrences.map(_("person")).toSet
+      val ratio = tickets.size * 1 - (persons.size.floatValue() / activePersons.size)
 
-    val keywords = queryResult.groupBy(_("keyword").asInstanceOf[String])
-    waitDialog.max = keywords.size
-
-    keywords.map {
-      case (keyword, data) =>
-        waitDialog.tick
-        val tickets = data.map(_("ticket")).toSet
-        val persons = data.map(_("person")).toSet
-        val ratio = tickets.size * 1 - (persons.size.floatValue() / personCount)
-
-        Map("keyword" -> keyword, "ratio" -> ratio, "ticketCount" -> tickets.size,
-          "personCount" -> persons.size, "tickets" -> tickets,
-          "persons" -> persons)
-    }.toList
+      Map("keyword" -> keyword.name(), "ratio" -> ratio, "ticketCount" -> tickets.size,
+        "personCount" -> persons.size, "tickets" -> tickets,
+        "persons" -> persons)
+    }).toList
   }
 
   private def formatResult(queryResult: Seq[Map[String, Any]], limit: Int): Seq[Map[String, Any]] =
     queryResult.sortBy(_("ratio").asInstanceOf[Float]).reverse take limit
 
+  private def findKeywordOccurrences(activePersons: Set[String], accept: (Keyword, Ticket, Person) => Boolean,
+    keyword: Keyword): List[Map[String, Any]] =
+    (keyword.neighbors(Direction.OUTGOING, Seq(Links.relationType)).collect {
+      case ticket: Ticket =>
+        ticket.neighbors(Direction.INCOMING, Seq(Owns.relationType)).collect {
+          case person: Person if ((activePersons contains person.name()) && accept(keyword, ticket, person)) =>
+            Map("ticket" -> ticket.ticketId(), "person" -> person.name())
+        }
+    }).flatten.toList
 }
