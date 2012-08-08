@@ -78,7 +78,7 @@ class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
 
       val tickets = occurrences.map(_("ticket")).toSet
       val persons = occurrences.map(_("person")).toSet
-      val ratio = tickets.size * 1 - (persons.size.floatValue() / activePersons.size)
+      val ratio = tickets.size * (1 - persons.size.floatValue() / activePersons.size)
 
       Map("keyword" -> keyword.name(), "ratio" -> ratio, "ticketCount" -> tickets.size,
         "personCount" -> persons.size, "tickets" -> tickets,
