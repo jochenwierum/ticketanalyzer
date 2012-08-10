@@ -144,7 +144,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
         val start = System.currentTimeMillis
         try {
           tasks.foreach(runTask(_, dialog))
-          warn("Import process took "+(System.currentTimeMillis - start)+" ms")
+          warn("Linking process took "+(System.currentTimeMillis - start)+" ms")
           updateDBState
           tasks = Nil
         } finally {
