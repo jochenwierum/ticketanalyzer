@@ -1,23 +1,18 @@
 package de.jowisoftware.mining
 
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.database.EmbeddedDatabase
-import de.jowisoftware.mining.plugins._
-import javax.swing.SwingUtilities
-import gui.MainWindow
-import de.jowisoftware.mining.settings.Settings
-import java.io.File
-import javax.swing.UIManager
-import scala.swing.Swing
+import scala.swing.{Dialog, Swing}
+
 import org.slf4j.bridge.SLF4JBridgeHandler
-import scala.swing.Dialog
-import de.jowisoftware.neo4j.database.EmbeddedDatabaseWithConsole
+
+import de.jowisoftware.mining.model.nodes.RootNode
+import de.jowisoftware.mining.plugins.{PluginManager, PluginScanner, PluginType}
+import de.jowisoftware.neo4j.database.{EmbeddedDatabase, EmbeddedDatabaseWithConsole}
 import de.jowisoftware.util.AppUtil
-import org.neo4j.graphdb.GraphDatabaseService
+import grizzled.slf4j.Logging
+import gui.MainWindow
+import javax.swing.UIManager
 
-object Main {
-  val settings = new Settings("config.properties")
-
+object Main extends Logging {
   lazy val compactMode = try {
     Class.forName("org.neo4j.server.WrappingNeoServerBootstrapper")
     false
@@ -45,7 +40,7 @@ object Main {
   }
 
   private def preparePluginManager = {
-    val pluginDirs = settings.getArray("plugindirs")
+    val pluginDirs = AppUtil.appSettings.getArray("plugindirs")
     val pluginManager = new PluginManager()
     val scanner = new PluginScanner(AppUtil.basePath, pluginDirs: _*)
     scanner.scan(pluginManager)
@@ -60,7 +55,8 @@ object Main {
   }
 
   private def openDatabase: EmbeddedDatabase[RootNode] = {
-    val dbPath = new File(AppUtil.basePath, settings.getString("db")).getCanonicalFile
+    val dbPath = AppUtil.projectFile(AppUtil.appSettings.getString("db"))
+    info("Using database at "+dbPath)
     if (compactMode)
       new EmbeddedDatabase(dbPath, RootNode)
     else

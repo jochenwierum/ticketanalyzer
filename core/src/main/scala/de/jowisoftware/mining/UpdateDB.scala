@@ -15,8 +15,7 @@ import de.jowisoftware.neo4j.content.Relationship
 
 object UpdateDB {
   def main(args: Array[String]) {
-    val settings = new Settings("config.properties")
-    val dbPath = new File(AppUtil.basePath, settings.getString("db")).getCanonicalFile
+    val dbPath = AppUtil.projectFile(AppUtil.appSettings.getString("db"))
     val db = new EmbeddedDatabase(dbPath, RootNode)
 
     println("Updating nodes...")

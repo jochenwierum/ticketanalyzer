@@ -1,16 +1,18 @@
 package de.jowisoftware.mining.linker.tickettype
 
-import java.io.{FileInputStream, File}
+import java.io.{ FileInputStream, File }
 import java.util.Properties
 import scala.collection.JavaConversions._
 import scala.collection.immutable.Map
 import scala.util.Properties
-import de.jowisoftware.mining.linker.{StatusType, Linker, LinkEvents}
-import de.jowisoftware.mining.model.nodes.{TicketRepository, CommitRepository}
+import de.jowisoftware.mining.linker.{ StatusType, Linker, LinkEvents }
+import de.jowisoftware.mining.model.nodes.{ TicketRepository, CommitRepository }
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.util.AppUtil
 import grizzled.slf4j.Logging
 import de.jowisoftware.mining.model.nodes.Status
+import de.jowisoftware.util.AppUtil
+import de.jowisoftware.util.AppUtil
 
 class TicketTypeLinker extends Linker with Logging {
   def userOptions() = new TicketLinkerOptions
@@ -31,26 +33,22 @@ class TicketTypeLinker extends Linker with Logging {
   }
 
   private def readStatusProperties(): Map[String, StatusType.Value] = {
-    val properties = AppUtil.withSettingsInputstream("statusmap.properties") { stream =>
-      val p = new Properties()
-      p.load(stream)
-      p
-    } getOrElse {
-      sys.error("Missing file: settings/statusmap.properties")
+    val properties = AppUtil.loadSettings("linker-type-statusmap.properties") getOrElse {
+      sys.error("Missing file: settings/linker-type-statusmap.properties")
     }
 
-    properties.stringPropertyNames.map { name =>
-        (name, findStatusByName(properties.getProperty(name)))
+    properties.propertyNames.map { name =>
+      (name, findStatusByName(properties.getString(name)))
     } toMap
   }
 
   private def findStatusByName(name: String): StatusType.Value =
-      try {
-        StatusType.withName(name)
-      } catch {
+    try {
+      StatusType.withName(name)
+    } catch {
       case e: NoSuchElementException =>
         error("Could not find state '"+name+"', please use only: "+
           StatusType.values.map(_.toString).mkString(", "))
         StatusType.ignore
-      }
+    }
 }

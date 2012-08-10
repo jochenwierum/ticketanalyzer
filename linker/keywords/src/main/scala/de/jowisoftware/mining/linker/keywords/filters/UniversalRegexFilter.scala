@@ -5,7 +5,7 @@ import grizzled.slf4j.Logging
 import java.util.regex.Pattern
 
 class UniversalRegexFilter(private var wordlist: Source) extends Filter with Logging {
-  case class RegexContainer(regex: Pattern, value: FilterResult.Value)
+  private case class RegexContainer(regex: Pattern, value: FilterResult.Value)
 
   private def toRegex(s: String) = Pattern.compile("^"+(s.substring(1).trim)+"$")
 

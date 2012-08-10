@@ -7,7 +7,7 @@ class TicketLinkerOptions extends UserOptions {
 
   protected val htmlDescription = """<p><b>Link Ticket Types</b><br />
     Identify ticket states by mapping them according to<br />
-    settings/statusmap.properties</p>"""
+    settings/linker-type-statusmap.properties</p>"""
 
   protected def fillPanel(panel: CustomizedGridBagPanel) {}
 }

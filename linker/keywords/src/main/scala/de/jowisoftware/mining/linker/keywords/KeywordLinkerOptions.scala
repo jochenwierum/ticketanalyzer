@@ -37,14 +37,14 @@ class KeywordLinkerOptions extends UserOptions {
       "The first match decides what happens with the keyword</html>")
     label.horizontalAlignment = Alignment.Left
     panel.add("Filters", label)
-    panel.add("Use universal filter", checkbox("filterUniversal", "Apply all regexes in settings/universallist.txt"))
+    panel.add("Use universal filter", checkbox("filterUniversal", "Apply all regexes in settings/linker-keyword-universal-*.txt"))
     panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than 3 letters"))
     panel.add("Reject numbers", checkbox("filterNum", "Remove words like '2'"))
     panel.add("Reject alphanumerical words", checkbox("filterAlphaNum", "Remove words like 'r4'"))
     panel.add("Accept uppercase abbrevs", checkbox("filterAbbrevs", "Accepts words like 'REST'"))
     panel.add("Accept CamelCase words", checkbox("filterCamelCase", "Accepts words like 'HelloWorld'"))
-    panel.add("Accept by wordlist", checkbox("filterWhitelist", "Accept all words (regexes) in settings/keywordwhitelist-*.txt"))
-    panel.add("Reject by wordlist", checkbox("filterBlacklist", "Reject words (regexes) in settings/keywordblacklist-*.txt"))
+    panel.add("Accept by wordlist", checkbox("filterWhitelist", "Accept all words (regexes) in settings/linker-keyword-whitelist-*.txt"))
+    panel.add("Reject by wordlist", checkbox("filterBlacklist", "Reject words (regexes) in settings/linker-keyword-blacklist-*.txt"))
     panel.addSpace()
 
     panel.add("Accept all other words", checkbox("filterAccept", "Allow the rest (otherwise, they are rejected)"))

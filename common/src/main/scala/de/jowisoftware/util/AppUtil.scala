@@ -5,39 +5,47 @@ import java.io.InputStream
 import scala.io.Source
 import scala.io.Codec
 import java.io.FileInputStream
+import de.jowisoftware.mining.settings.Settings
+import grizzled.slf4j.Logging
 
-object AppUtil {
+object AppUtil extends Logging {
   /**
     * Base path of the application. Points to a directory which contains lib/, bin/ and db/
     * when the app runs in a compiled form. Points to build/classes when running from eclipse.
     */
   lazy val basePath = {
-    val file = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
-    if (file.isDirectory)
-      file
+    val sourceCodeFile = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
+    val parentDir = if (sourceCodeFile.isDirectory)
+      sourceCodeFile
     else
-      file.getParentFile
-  }.getParentFile.getCanonicalFile
-
-  def withSettingsSource[T](name: String)(block: Source => T): Option[T] = {
-    val file = new File(new File(basePath, "settings"), name)
-    if (!file.isFile())
-      None
-    else
-      Option(block(Source.fromFile(file)(Codec.UTF8)))
+      sourceCodeFile.getParentFile
+    val projectDir = parentDir.getParentFile.getCanonicalFile
+    info("Found project dir at "+projectDir)
+    projectDir
   }
 
-  def withSettingsInputstream[T](name: String)(block: InputStream => T): Option[T] = {
-    val file = new File(new File(basePath, "settings"), name)
-    if (!file.isFile()) {
-      None
-    } else {
+  lazy val appSettings = Settings("config.properties")
+  lazy val defaultSettings = Settings("defaults.properties")
+
+  def projectFile(name: String) = new File(basePath, name).getCanonicalFile()
+
+  def withSettingsSource[T](name: String)(block: Source => T): Option[T] =
+    findSettings(name) map { file =>
+      block(Source.fromFile(file)(Codec.UTF8))
+    }
+
+  def loadSettings[T](name: String): Option[Settings] =
+    findSettings(name) map { file =>
       val stream = new FileInputStream(file)
       try {
-        Option(block(stream))
+        Settings(stream)
       } finally {
         stream.close()
       }
     }
-  }
+
+  def findSettings(name: String): Option[File] =
+    appSettings.getArray("settingsdirs").flatMap(FileUtils.expandPath(basePath, _)) map {
+      new File(_, name)
+    } find (_.exists)
 }

@@ -41,12 +41,12 @@ class KeywordLinker(
     def addFilter(chain: FilterChain, filter: Option[Filter], warnName: String) = filter match {
       case Some(value) => chain.addFilter(value)
       case None =>
-        error("Ignoring selected filter: settings file " + warnName + " does not exist")
+        error("Ignoring selected filter: settings file "+warnName+" does not exist")
     }
 
     if (isSet("filterUniversal")) {
-      addFilter(preStemChain, AppUtil.withSettingsSource("universallist-prestem.txt")(new UniversalRegexFilter(_)), "universallist-prestem.txt")
-      addFilter(postStemChain, AppUtil.withSettingsSource("universallist-poststem.txt")(new UniversalRegexFilter(_)), "universallist-prestem.txt")
+      addFilter(preStemChain, AppUtil.withSettingsSource("linker-keywords-universal-prestem.txt")(new UniversalRegexFilter(_)), "linker-keywords-universal-prestem.txt")
+      addFilter(postStemChain, AppUtil.withSettingsSource("linker-keywords-universal-poststem.txt")(new UniversalRegexFilter(_)), "linker-keywords-universal-poststem.txt")
     }
     if (isSet("filterShort")) postStemChain.addFilter(new MinLengthFilter(3))
     if (isSet("filterNum")) preStemChain.addFilter(NumericFilter)
@@ -55,11 +55,11 @@ class KeywordLinker(
     if (isSet("filterCamelCase")) preStemChain.addFilter(CamelCaseFilter)
 
     if (isSet("filterWhitelist")) {
-      addFilter(postStemChain, AppUtil.withSettingsSource("keywordwhitelist.txt")(new WordListAcceptFilter(_)), "keywordwhitelist.txt")
+      addFilter(postStemChain, AppUtil.withSettingsSource("linker-keywords-whitelist.txt")(new WordListAcceptFilter(_)), "linker-keywords-whitelist.txt")
     }
 
     if (isSet("filterBlacklist")) {
-      addFilter(postStemChain, AppUtil.withSettingsSource("keywordblacklist.txt")(new WordListRejectFilter(_)), "keywordblacklist.txt")
+      addFilter(postStemChain, AppUtil.withSettingsSource("linker-keywords-blacklist.txt")(new WordListRejectFilter(_)), "linker-keywords-blacklist.txt")
     }
 
     if (!isSet("filterAccept")) postStemChain.addFilter(RejectFilter)
