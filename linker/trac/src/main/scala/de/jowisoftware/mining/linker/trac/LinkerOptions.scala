@@ -4,7 +4,7 @@ import de.jowisoftware.mining.UserOptions
 import scala.swing.GridPanel
 import scala.swing.Panel
 
-class LinkerOptions extends UserOptions {
+class LinkerOptions extends UserOptions("linker.tracstyle") {
   protected val defaultResult: Map[String, String] = Map()
 
   protected val htmlDescription = """<b>Trac Style Linker</b><p>

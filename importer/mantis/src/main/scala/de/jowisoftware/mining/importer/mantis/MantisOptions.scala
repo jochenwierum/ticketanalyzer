@@ -10,11 +10,11 @@ import javax.swing.BorderFactory
 import scala.swing.Alignment
 import java.awt.Insets
 
-class MantisOptions extends UserOptions {
+class MantisOptions extends UserOptions("importer.mantis") {
   protected val defaultResult: Map[String, String] = Map(
-    "url" -> "http://jowisoftware.de/mant/",
+    "url" -> "http://example.org/mantis",
     "username" -> "administrator",
-    "password" -> "test",
+    "password" -> "",
     "repositoryname" -> "default",
     "project" -> "1",
     "filter" -> "1",

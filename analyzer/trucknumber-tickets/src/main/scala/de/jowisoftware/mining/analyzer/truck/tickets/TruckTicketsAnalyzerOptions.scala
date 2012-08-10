@@ -3,7 +3,7 @@ package de.jowisoftware.mining.analyzer.truck.tickets
 import de.jowisoftware.mining.UserOptions
 import scala.swing.Label
 
-class TruckAnalyzerOptions() extends UserOptions {
+class TruckTicketsAnalyzerOptions extends UserOptions("analyzer.truck.tickets") {
   protected val defaultResult = Map[String, String](
     "output" -> "raw",
     "limit" -> "50",

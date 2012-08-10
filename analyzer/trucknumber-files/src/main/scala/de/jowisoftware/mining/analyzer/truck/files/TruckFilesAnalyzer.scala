@@ -14,8 +14,8 @@ import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.model.nodes.CommitRepository
 import scala.swing.Dialog
 
-class TruckAnalyzer extends Analyzer {
-  def userOptions() = new TruckAnalyzerOptions()
+class TruckFilesAnalyzer extends Analyzer {
+  def userOptions() = new TruckFilesAnalyzerOptions()
 
   def analyze(db: Database[RootNode], options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {

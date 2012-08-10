@@ -4,12 +4,12 @@ import scala.swing.{ TextField, PasswordField, Panel, Label, GridPanel }
 import de.jowisoftware.mining.UserOptions
 import scala.swing.event.KeyPressed
 
-class SVNOptions extends UserOptions {
+class SVNOptions extends UserOptions("importer.svn") {
   protected val defaultResult = Map(
-      "url" -> "https://jowisoftware.de:4443/svn/ssh",
-      "username" -> "",
-      "password" -> "",
-      "repositoryname" -> "default")
+    "url" -> "https://example.org/myrepository",
+    "username" -> "",
+    "password" -> "",
+    "repositoryname" -> "default")
 
   protected val htmlDescription = """<p><b>SVN Importer</b></p>"""
 

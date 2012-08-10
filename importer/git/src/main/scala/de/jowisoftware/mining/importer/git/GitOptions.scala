@@ -4,10 +4,10 @@ import de.jowisoftware.mining.UserOptions
 import scala.swing.GridPanel
 import scala.swing.Panel
 
-class GitOptions extends UserOptions {
+class GitOptions extends UserOptions("importer.git") {
   protected val defaultResult = Map(
-      "gitdir" -> "c:/temp/testrepos/.git",
-      "repositoryname" -> "default")
+    "gitdir" -> "/tmp/mygit/.git",
+    "repositoryname" -> "default")
 
   protected val htmlDescription = """<p><b>Git Importer</b><br>
     Import a local git repository</p>"""

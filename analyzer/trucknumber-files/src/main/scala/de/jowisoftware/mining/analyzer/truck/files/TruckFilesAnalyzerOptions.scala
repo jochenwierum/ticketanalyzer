@@ -2,7 +2,7 @@ package de.jowisoftware.mining.analyzer.truck.files
 
 import de.jowisoftware.mining.UserOptions
 
-class TruckAnalyzerOptions() extends UserOptions {
+class TruckFilesAnalyzerOptions extends UserOptions("analyzer.truck.files") {
   protected val defaultResult = Map[String, String](
     "output" -> "raw",
     "limit" -> "50",

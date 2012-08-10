@@ -10,7 +10,7 @@ import de.jowisoftware.mining.model.nodes._
 import de.jowisoftware.mining.model.relationships.{ Links, Owns }
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 
-class TruckAnalyzer(db: Database[RootNode], options: Map[String, String],
+class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {
 
   def run() {

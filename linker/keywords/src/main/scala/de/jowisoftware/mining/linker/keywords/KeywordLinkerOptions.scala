@@ -4,7 +4,7 @@ import de.jowisoftware.mining.UserOptions
 import scala.swing.Label
 import scala.swing.Alignment
 
-class KeywordLinkerOptions extends UserOptions {
+class KeywordLinkerOptions extends UserOptions("linker.keyword") {
   protected val defaultResult: Map[String, String] = Map(
     "language" -> "en",
     "parseTags" -> "true",

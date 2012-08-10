@@ -7,11 +7,10 @@ import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.Database
 
-class TruckAnalyzerFacade extends Analyzer {
-  def userOptions() = new TruckAnalyzerOptions()
+class TruckTicketsAnalyzerFacade extends Analyzer {
+  def userOptions() = new TruckTicketsAnalyzerOptions()
 
   def analyze(db: Database[RootNode], options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) =
-    new TruckAnalyzer(db, options, parent, waitDialog).run()
-
+    new TruckTicketsAnalyzer(db, options, parent, waitDialog).run()
 }

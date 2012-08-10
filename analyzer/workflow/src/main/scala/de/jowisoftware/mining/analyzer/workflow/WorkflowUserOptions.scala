@@ -2,9 +2,9 @@ package de.jowisoftware.mining.analyzer.workflow
 
 import de.jowisoftware.mining.UserOptions
 
-class WorkflowUserOptions extends UserOptions {
+class WorkflowUserOptions extends UserOptions("analyzer.workflow") {
   protected val defaultResult: Map[String, String] = Map(
-    "dot" -> """c:\Program Files (x86)\Graphviz2.26.3\bin\dot.exe""",
+    "dot" -> "/usr/bin/dot",
     "visualization" -> "Matrix",
     "dpi" -> "72")
 

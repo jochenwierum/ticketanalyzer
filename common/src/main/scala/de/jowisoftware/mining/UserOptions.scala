@@ -4,8 +4,9 @@ import java.awt.Insets
 import scala.swing._
 import scala.swing.event.{ ValueChanged, ButtonClicked }
 import scala.swing.event.SelectionChanged
+import de.jowisoftware.util.AppUtil
 
-abstract class UserOptions {
+abstract class UserOptions(namespace: String) {
   protected class CustomizedGridBagPanel(htmlDescrition: String) extends GridBagPanel {
     var line = 1
 
@@ -68,9 +69,12 @@ abstract class UserOptions {
   protected val htmlDescription: String
   protected def fillPanel(panel: CustomizedGridBagPanel)
 
+  private def getDefault(name: String): String =
+    AppUtil.defaultSettings.getString(namespace+"."+name, defaultResult(name))
+
   def getUserInput: Map[String, String] = result
   def getPanel(): Panel = {
-    result = defaultResult
+    result = defaultResult map { case (k, _) => k -> getDefault(k) }
     val panel = new CustomizedGridBagPanel(htmlDescription)
     panel.addTitle
     fillPanel(panel)

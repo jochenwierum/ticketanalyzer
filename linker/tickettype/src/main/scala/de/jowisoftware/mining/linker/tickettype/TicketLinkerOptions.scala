@@ -2,7 +2,7 @@ package de.jowisoftware.mining.linker.tickettype
 
 import de.jowisoftware.mining.UserOptions
 
-class TicketLinkerOptions extends UserOptions {
+class TicketLinkerOptions extends UserOptions("linker.trac") {
   protected val defaultResult: Map[String, String] = Map()
 
   protected val htmlDescription = """<p><b>Link Ticket Types</b><br />

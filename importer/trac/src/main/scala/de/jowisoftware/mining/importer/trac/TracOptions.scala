@@ -4,11 +4,11 @@ import scala.swing.{ Panel, GridPanel }
 
 import de.jowisoftware.mining.UserOptions
 
-class TracOptions extends UserOptions {
+class TracOptions extends UserOptions("importer.trac") {
   protected val defaultResult: Map[String, String] = Map(
-    "url" -> "http://jowisoftware.de/trac/test/login/xmlrpc",
-    "username" -> "test",
-    "password" -> "test",
+    "url" -> "http://example.org/mytrac/login/xmlrpc",
+    "username" -> "",
+    "password" -> "",
     "repositoryname" -> "default")
 
   protected val htmlDescription = """<p><b>Trac Importer</b><br />

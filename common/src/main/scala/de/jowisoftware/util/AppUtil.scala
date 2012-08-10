@@ -25,7 +25,7 @@ object AppUtil extends Logging {
   }
 
   lazy val appSettings = Settings("config.properties")
-  lazy val defaultSettings = Settings("defaults.properties")
+  lazy val defaultSettings = loadSettings("defaults.properties") getOrElse Settings.empty
 
   def projectFile(name: String) = new File(basePath, name).getCanonicalFile()
 
