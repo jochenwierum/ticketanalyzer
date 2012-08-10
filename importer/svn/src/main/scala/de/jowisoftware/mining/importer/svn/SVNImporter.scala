@@ -29,16 +29,23 @@ class SVNImporter extends Importer {
     val cm = SVNClientManager.newInstance(svnOptions, authManager)
     val lc = cm.getLogClient()
 
-    val svnurl = SVNURL.parseURIDecoded(config("url"))
+    val svnurl = SVNURL.parseURIDecoded(if(config("url") contains "@")
+      config("url").substring(0, config("url").indexOf("@"))
+      else config("url"))
     val rev0 = SVNRevision.create(1)
+    val pegRevision = if (config("url") contains "@") {
+      SVNRevision.create(config("url").substring(config("url").indexOf('@') + 1).toLong)
+    } else {
+      SVNRevision.HEAD
+    }
 
-    val info = cm.getWCClient().doInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD)
+    val info = cm.getWCClient().doInfo(svnurl, pegRevision, pegRevision)
     val latestRevision = info.getCommittedRevision()
 
     events.countedCommits(latestRevision.getNumber())
 
     val parents = mutable.Map[String, Long]()
-    lc.doLog(svnurl, Array[String]("."), latestRevision, latestRevision,SVNRevision.create(1),
+    lc.doLog(svnurl, Array[String]("."), pegRevision, latestRevision, SVNRevision.create(1),
       false, true, -1, new ISVNLogEntryHandler() {
         def handleLogEntry(entry: SVNLogEntry) {
           val commitData = handle(entry, parents)
