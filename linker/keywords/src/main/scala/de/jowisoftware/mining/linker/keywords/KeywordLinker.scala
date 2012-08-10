@@ -5,7 +5,6 @@ import de.jowisoftware.mining.linker.LinkEvents
 import de.jowisoftware.mining.linker.keywords.filters.{ RejectFilter, NumericFilter, MinLengthFilter, FilterChain, CamelCaseFilter, AlphaNumericFilter, AbbrevFilter }
 import de.jowisoftware.mining.model.nodes.{ TicketRepository, Ticket, CommitRepository }
 import de.jowisoftware.mining.linker.keywords.filters.WordListAcceptFilter
-import de.jowisoftware.util.AppUtil
 import java.io.File
 import scala.swing.Dialog
 import grizzled.slf4j.Logging
@@ -16,6 +15,9 @@ import org.slf4j.LoggerFactory
 import de.jowisoftware.mining.linker.keywords.filters.UniversalRegexFilter
 import scala.io.UTF8Codec
 import scala.io.Codec
+import de.jowisoftware.util.AppUtil
+import de.jowisoftware.mining.linker.keywords.filters.Filter
+import de.jowisoftware.mining.linker.keywords.filters.WordListRejectFilter
 
 object KeywordLinker {
   private val splitRegex = """[,.?!;:]?([\s\t\n\r]+|$)"""
@@ -36,17 +38,15 @@ class KeywordLinker(
     val preStemChain = new FilterChain
     val postStemChain = new FilterChain
 
+    def addFilter(chain: FilterChain, filter: Option[Filter], warnName: String) = filter match {
+      case Some(value) => chain.addFilter(value)
+      case None =>
+        error("Ignoring selected filter: settings file " + warnName + " does not exist")
+    }
+
     if (isSet("filterUniversal")) {
-      val preStemFile = new File(AppUtil.basePath, "settings/universallist-prestem.txt")
-      val postStemFile = new File(AppUtil.basePath, "settings/universallist-poststem.txt")
-      if (!preStemFile.isFile()) {
-        error("Ignoring universal filter: file settings/universallist-prestem.txt not exist")
-      }
-      if (!postStemFile.isFile()) {
-        error("Ignoring universal filter: file settings/universallist-prestem.txt not exist")
-      }
-      preStemChain.addFilter(new UniversalRegexFilter(Source.fromFile(preStemFile)(Codec.UTF8)))
-      postStemChain.addFilter(new UniversalRegexFilter(Source.fromFile(postStemFile)(Codec.UTF8)))
+      addFilter(preStemChain, AppUtil.withSettingsSource("universallist-prestem.txt")(new UniversalRegexFilter(_)), "universallist-prestem.txt")
+      addFilter(postStemChain, AppUtil.withSettingsSource("universallist-poststem.txt")(new UniversalRegexFilter(_)), "universallist-prestem.txt")
     }
     if (isSet("filterShort")) postStemChain.addFilter(new MinLengthFilter(3))
     if (isSet("filterNum")) preStemChain.addFilter(NumericFilter)
@@ -55,21 +55,13 @@ class KeywordLinker(
     if (isSet("filterCamelCase")) preStemChain.addFilter(CamelCaseFilter)
 
     if (isSet("filterWhitelist")) {
-      val file = new File(AppUtil.basePath, "settings/keywordwhitelist.txt")
-      if (file.isFile()) {
-        postStemChain.addFilter(new WordListAcceptFilter(Source.fromFile(file)))
-      } else {
-        error("Ignoring whitelist filter: file settings/keywordwhitelist.txt does not exist")
-      }
+      addFilter(postStemChain, AppUtil.withSettingsSource("keywordwhitelist.txt")(new WordListAcceptFilter(_)), "keywordwhitelist.txt")
     }
+
     if (isSet("filterBlacklist")) {
-      val file = new File(AppUtil.basePath, "settings/keywordblacklist.txt")
-      if (file.isFile()) {
-        postStemChain.addFilter(new WordListAcceptFilter(Source.fromFile(file)))
-      } else {
-        error("Ignoring blacklist filter: file settings/keywordblacklist.txt does not exist")
-      }
+      addFilter(postStemChain, AppUtil.withSettingsSource("keywordblacklist.txt")(new WordListRejectFilter(_)), "keywordblacklist.txt")
     }
+
     if (!isSet("filterAccept")) postStemChain.addFilter(RejectFilter)
 
     (preStemChain, postStemChain)

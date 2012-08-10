@@ -31,10 +31,13 @@ class TicketTypeLinker extends Linker with Logging {
   }
 
   private def readStatusProperties(): Map[String, StatusType.Value] = {
-    val properties = new Properties()
-    val fis = new FileInputStream(new File(AppUtil.basePath, "settings/statusmap.properties"))
-    properties.load(fis)
-    fis.close()
+    val properties = AppUtil.withSettingsInputstream("statusmap.properties") { stream =>
+      val p = new Properties()
+      p.load(stream)
+      p
+    } getOrElse {
+      sys.error("Missing file: settings/statusmap.properties")
+    }
 
     properties.stringPropertyNames.map { name =>
         (name, findStatusByName(properties.getProperty(name)))
