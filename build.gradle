@@ -5,10 +5,20 @@ apply plugin: 'application'
 
 import org.gradle.plugins.ide.eclipse.model.SourceFolder 
 
-subprojects {
+allprojects {
   apply plugin: 'eclipse'
+
+  tasks.eclipse << {
+    if (subprojects.size() != 0) {
+      delete '.project', '.settings', '.classpath'
+    }
+  }
+}
+
+subprojects {
   apply plugin: 'scala'
-  
+  apply plugin: 'eclipse'
+
   repositories {
     mavenCentral()
     mavenLocal()
@@ -39,7 +49,7 @@ subprojects {
   test << {
       def oldLevel = logging.getLevel()
       logging.setLevel(LogLevel.INFO) 
-	  def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
+    def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
       ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: cp)
       ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
           reporter(type: 'stdout', config: "D")
@@ -66,7 +76,7 @@ subprojects {
             entry.path.contains('scala-library-2.9.2.jar') ||
             entry.path.contains('scala-swing-2.9.2.jar') ||
             entry.path.endsWith('.pom') ||
-			(entry instanceof SourceFolder && entry.path.startsWith("src/main/resources"))
+            (entry instanceof SourceFolder && entry.path.startsWith("src/main/resources"))
           })
         }
       }
@@ -83,8 +93,8 @@ copyDistFiles << {
   File dist = mkdir("$buildDir/dist")
   
   copy {
-	fileMode = 0644
-	dirMode = 0755
+  fileMode = 0644
+  dirMode = 0755
     into mkdir(new File(dist, "lib"))
     subprojects.each {
       from it.configurations.runtime.filter {!it.name.endsWith(".pom")}
@@ -94,8 +104,8 @@ copyDistFiles << {
   }
   
   copy {
-	fileMode = 0644
-	dirMode = 0755
+  fileMode = 0644
+  dirMode = 0755
     into mkdir(new File(dist, "plugins/importer"))
     project(':importer').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -103,8 +113,8 @@ copyDistFiles << {
   }
   
   copy {
-	fileMode = 0644
-	dirMode = 0755
+  fileMode = 0644
+  dirMode = 0755
     into mkdir(new File(dist, "plugins/linker"))
     project(':linker').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -112,8 +122,8 @@ copyDistFiles << {
   }
 
   copy {
-	fileMode = 0644
-	dirMode = 0755
+  fileMode = 0644
+  dirMode = 0755
     into mkdir(new File(dist, "plugins/analyzer"))
     project(':analyzer').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -121,8 +131,8 @@ copyDistFiles << {
   }
 
   copy {
-	fileMode = 0644
-	dirMode = 0755
+  fileMode = 0644
+  dirMode = 0755
     into mkdir(new File(dist, "settings"))
     subprojects.each {
       File settingsDir = it.file("src/main/settings")
@@ -152,19 +162,19 @@ task start(dependsOn: copyDistFiles) << {
 }
 
 task help() << {
-    println("Userfull tasks:")
-    println("  gradle clean   - remove all generated files *")
-    println("  gradle start   - execute the application *")
-    println("  gradle test    - execute only the tests *")
-    println("  gradle dist    - compile everything you need to distribute")
-    println("                   the application into build/dist/ *")
-    println("  gradle eclipse - create eclipse plugins for all projects")
-    println("  gradle tasks   - show all supported tasks")
-	println("")
-	println("*: you can add '-Pcompact=true' to these commands to produce smaller")
-	println("   artifacts which run without the neo4j web interface")
+  println("Userfull tasks:")
+  println("  gradle clean   - remove all generated files *")
+  println("  gradle start   - execute the application *")
+  println("  gradle test    - execute only the tests *")
+  println("  gradle dist    - compile everything you need to distribute")
+  println("                   the application into build/dist/ *")
+  println("  gradle eclipse - create eclipse plugins for all projects")
+  println("  gradle tasks   - show all supported tasks")
+  println("")
+  println("*: you can add '-Pcompact=true' to these commands to produce smaller")
+  println("   artifacts which run without the neo4j web interface")
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '1.1'
+  gradleVersion = '1.1'
 }
