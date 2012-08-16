@@ -12,6 +12,7 @@ import de.jowisoftware.neo4j.Database
 import scala.swing.SplitPane
 import de.jowisoftware.mining.gui.linker.LinkPane
 import de.jowisoftware.mining.gui.linker.AnalyzerPane
+import de.jowisoftware.mining.gui.shell.StatisticsPane
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -23,7 +24,8 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, this))
   private val linkPane = new TabbedPane.Page("2) Link data", new LinkPane(db, pluginManager, this))
   private val analyzePane = new TabbedPane.Page("3) Analyze", new AnalyzerPane(db, pluginManager, this))
-  private val shellPane = new TabbedPane.Page("4) Shell", new ShellPane(db, this))
+  private val statisticsPane = new TabbedPane.Page("4) Statistics", new StatisticsPane(db, this))
+  private val shellPane = new TabbedPane.Page("5) Shell", new ShellPane(db, this))
 
   private val tabs = new TabbedPane {
     tabPlacement(Alignment.Left)
@@ -32,6 +34,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     pages += importPane
     pages += linkPane
     pages += analyzePane
+    pages += statisticsPane
     pages += shellPane
   }
 
@@ -67,6 +70,8 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     tabs.selection.index = state + 1
 
     shellPane.enabled = state > 0
+    statisticsPane.enabled = state > 0
     shellPane.content.asInstanceOf[ShellPane].newViewState(state)
+    statisticsPane.content.asInstanceOf[StatisticsPane].updateStatistics()
   }
 }

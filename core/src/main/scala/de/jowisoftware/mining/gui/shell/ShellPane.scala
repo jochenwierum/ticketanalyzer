@@ -18,8 +18,6 @@ import de.jowisoftware.neo4j.Database
 import de.jowisoftware.mining.model.nodes.RootNode
 
 class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with GuiTab with Logging {
-  private val engine = new ExecutionEngine(db.service)
-
   private val textInput = new TextArea
   private val startButton = new Button(">>")
   private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in browser")
@@ -53,6 +51,7 @@ class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with Gu
       override def run() {
         val start = System.currentTimeMillis
         try {
+          val engine = new ExecutionEngine(db.service)
           val query = engine.prepare(text)
           info("Executing: "+query.toString)
           val result = query.execute(Map())
