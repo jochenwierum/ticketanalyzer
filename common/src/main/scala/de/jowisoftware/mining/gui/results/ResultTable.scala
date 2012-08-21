@@ -16,11 +16,13 @@ class ResultTable extends Table { that =>
 
   override protected def paintComponent(g: Graphics2D) {
     if (!sizeSet) {
+      // changing the row height triggers a repaint,
+      // so we can skip painting here safely
       calcLineHeight(g.getFontMetrics(this.font))
       sizeSet = true
-      return
+    } else {
+      super.paintComponent(g)
     }
-    super.paintComponent(g)
   }
 
   private def calcLineHeight(fm: FontMetrics) {
@@ -30,7 +32,7 @@ class ResultTable extends Table { that =>
       v = model.getValueAt(row, col).asInstanceOf[CellData].shortText
     } yield v.count(_ == '\n') + 1
 
-    val maxLines = lines.reduce((a, b) => a max b)
+    val maxLines = lines.reduce(_ max _)
     rowHeight = fm.getHeight * maxLines
   }
 

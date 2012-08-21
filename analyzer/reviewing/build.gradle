@@ -1,0 +1,7 @@
+description "reviewing analyzer plugin"
+
+eclipse {
+  project {
+    name = 'analyzer-reviewing'
+  }
+}

@@ -2,8 +2,8 @@ package de.jowisoftware.mining.gui.results
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.iterableAsScalaIterable
-
 import org.neo4j.graphdb.{ Node, PropertyContainer, Relationship }
+import de.jowisoftware.util.HTMLUtil
 
 object CellFormatter {
   def anyToCellData(obj: Any): CellData = obj match {
@@ -28,11 +28,7 @@ object CellFormatter {
       case x => formatter(x.toString)
     }
 
-    unmasked.replace("\\", "\\\\").replace("\n", "\\n")
-      .replace("&", "&amp;")
-      .replace("<", "&lt;")
-      .replace(">", "&gt;")
-      .replace("\"", "&quot;")
+    HTMLUtil.mask(unmasked.replace("\\", "\\\\").replace("\n", "\\n"))
   }
 
   private def clearNamespaces(text: String): String =

@@ -8,8 +8,9 @@ import org.neo4j.graphdb.Relationship
 import org.neo4j.graphdb.Node
 import org.neo4j.graphdb.PropertyContainer
 import scala.swing.Swing
+import scala.collection.Map
 
-class ResultTablePane(result: Iterator[Map[String, Any]], columnOrder: Seq[String]) extends ScrollPane {
+class ResultTablePane(result: Iterator[_ <: Map[String, Any]], columnOrder: Seq[String]) extends ScrollPane {
   def this() = this(null, null)
   def this(result: ExecutionResult) = this(result, result.columns)
 
@@ -23,7 +24,7 @@ class ResultTablePane(result: Iterator[Map[String, Any]], columnOrder: Seq[Strin
     processResult(result, result.columns)
   }
 
-  def processResult(result: Iterator[Map[String, Any]], columnOrder: Seq[String]) {
+  def processResult(result: Iterator[_ <: Map[String, Any]], columnOrder: Seq[String]) {
     val columnMap = Map(columnOrder.zipWithIndex: _*)
 
     val tableData: Array[Array[CellData]] = (result map { row =>

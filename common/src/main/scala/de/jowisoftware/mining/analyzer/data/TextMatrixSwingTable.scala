@@ -9,8 +9,7 @@ class TextMatrixSwingTable(matrix: TextMatrix) extends Table {
 
   private val values = matrix.normalizedRows.map {
     _ map { cell =>
-      if (cell.isNaN) "0.0"
-      else cell.formatted("%.2f")
+      (if (cell.isNaN) 0f else cell * 100).formatted("%.2f %%")
     }
   }
 
