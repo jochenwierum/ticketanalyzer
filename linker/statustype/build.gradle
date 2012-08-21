@@ -1,0 +1,7 @@
+description "status type linker plugin"
+
+eclipse {
+  project {
+    name = 'linker-statustype'
+  }
+}
