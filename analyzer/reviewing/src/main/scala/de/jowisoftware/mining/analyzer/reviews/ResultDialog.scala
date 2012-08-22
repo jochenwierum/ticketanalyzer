@@ -10,7 +10,7 @@ import de.jowisoftware.mining.analyzer.data.TextMatrix
 class ResultDialog(matrix: TextMatrix, parent: Frame) extends Dialog(parent) {
   title = "Reviewing Distribution"
 
-  contents = new TextMatrixSwingTable(matrix)
+  contents = new TextMatrixSwingTable(matrix, true)
 
   modal = true
   pack()
