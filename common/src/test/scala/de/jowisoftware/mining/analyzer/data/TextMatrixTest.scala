@@ -64,4 +64,19 @@ class TextMatrixTest extends FlatSpec with ShouldMatchers {
       new TextMatrix(Seq("c"), Seq("y")).set("c", "x", 3.0)
     }
   }
+
+  it should "be able to add numbers" in {
+    val matrix = new TextMatrix(Seq("a", "b"), Seq("x"))
+    matrix.set("a", "x", 3)
+    matrix.add("a", "x", 1)
+    matrix.set("b", "x", 2)
+
+    val values = matrix.rows
+    (values(0)(0)) should equal(4)
+    (values(0)(1)) should equal(2)
+
+    matrix.set("a", "x", 1)
+    val values2 = matrix.rows
+    (values2(0)(0)) should equal(1)
+  }
 }

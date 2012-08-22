@@ -11,18 +11,27 @@ class TextMatrix(xtitles: Seq[String], ytitles: Seq[String]) {
   def rows = Array.tabulate(ytitles.size, xtitles.size)((y, x) => cells(y)(x))
 
   def normalizedRows = {
-    cells.map{ row =>
+    cells.map { row =>
       val sum = row.sum
-      row.map { _ / sum}
+      row.map { _ / sum }
     }
   }
 
   def set(xTitle: String, yTitle: String, value: Double) {
+    val (xPos, yPos) = findCoords(xTitle, yTitle)
+    cells(yPos)(xPos) = value
+  }
+
+  def add(xTitle: String, yTitle: String, value: Double) {
+    val (xPos, yPos) = findCoords(xTitle, yTitle)
+    cells(yPos)(xPos) += value
+  }
+
+  private def findCoords(xTitle: String, yTitle: String): (Int, Int) = {
     val xPos = xtitles.indexWhere(_ == xTitle)
     require(xPos >= 0, "illegal x: "+xTitle)
     val yPos = ytitles.indexWhere(_ == yTitle)
     require(yPos >= 0, "illegal y: "+yTitle)
-
-    cells(yPos)(xPos) = value
+    (xPos, yPos)
   }
 }

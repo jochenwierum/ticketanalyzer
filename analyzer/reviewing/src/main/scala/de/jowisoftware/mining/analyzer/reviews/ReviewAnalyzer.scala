@@ -20,18 +20,21 @@ class ReviewAnalyzer extends Analyzer {
     waitDialog: ProgressDialog) {
     val result = collectData(db)
     val ignored = options("nonDevs").trim.split("""\s*,\s*""")
+    val other = "(other)"
 
     val names = db.rootNode.personCollection.children.map(_.name()).toSet -- ignored
     val sortedNames = names.toSeq.sorted
-    val matrix = new TextMatrix(sortedNames, sortedNames)
+    val matrix = new TextMatrix(sortedNames :+ other, sortedNames :+ other)
 
     for (row <- result) {
       val from = row("from").asInstanceOf[String]
       val to = row("to").asInstanceOf[String]
       val count = row("count").asInstanceOf[Long]
 
-      if ((names contains from) && (names contains to))
-        matrix.set(to, from, count)
+      val realFrom = if (names contains from) from else other
+      val realTo = if (names contains to) to else other
+
+      matrix.add(realTo, realFrom, count)
     }
 
     Swing.onEDT {
