@@ -19,10 +19,11 @@ class ReviewAnalyzer extends Analyzer {
   def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame,
     waitDialog: ProgressDialog) {
     val result = collectData(db)
-    val ignored = options("nonDevs").trim.split("""\s*,\s*""")
+    val nonDevs = options("nonDevs").trim.split("""\s*,\s*""")
+    val ignored = options("ignore").trim.split("""\s*,\s*""")
     val other = "(other)"
 
-    val names = db.rootNode.personCollection.children.map(_.name()).toSet -- ignored
+    val names = db.rootNode.personCollection.children.map(_.name()).toSet -- nonDevs -- ignored
     val sortedNames = names.toSeq.sorted
     val matrix = new TextMatrix(sortedNames :+ other, sortedNames :+ other)
 
@@ -31,10 +32,12 @@ class ReviewAnalyzer extends Analyzer {
       val to = row("to").asInstanceOf[String]
       val count = row("count").asInstanceOf[Long]
 
-      val realFrom = if (names contains from) from else other
-      val realTo = if (names contains to) to else other
+      if (!(ignored contains from) && !(ignored contains to)) {
+        val realFrom = if (names contains from) from else other
+        val realTo = if (names contains to) to else other
 
-      matrix.add(realTo, realFrom, count)
+        matrix.add(realTo, realFrom, count)
+      }
     }
 
     Swing.onEDT {
