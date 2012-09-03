@@ -18,9 +18,11 @@ import de.jowisoftware.neo4j.{ ReadOnlyDatabase, Database }
 import scala.swing.ListView
 import scala.swing.SplitPane
 import grizzled.slf4j.Logging
+import scala.swing.Dialog
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
-    extends SplitPane(Orientation.Vertical) with GuiTab with Logging {
+    extends SplitPane(Orientation.Vertical) with GuiTab with Logging { that =>
+
   private class Task(val importer: Linker, val data: Map[String, String], val name: String) {
     override def toString = name
   }
@@ -147,6 +149,10 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
           warn("Linking process took "+(System.currentTimeMillis - start)+" ms")
           updateDBState
           tasks = Nil
+        } catch {
+          case e: Exception =>
+          error("Caught exception while running linker " + selectedPlugin.getClass.getName, e)
+          Dialog.showMessage(that, "Error in linker: " + e.getMessage, "Error", Dialog.Message.Error)
         } finally {
           Swing.onEDT {
             updateTaskList()

@@ -1,25 +1,20 @@
 package de.jowisoftware.mining.gui.linker
 
+import scala.swing.{BoxPanel, Button, ComboBox, Dialog, Frame, Orientation, ScrollPane, Swing}
+import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.event.{ SelectionChanged, ButtonClicked }
-import scala.swing.{ Swing, ScrollPane, Orientation, GridPanel, Frame, Button, BoxPanel, BorderPanel, ComboBox }
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.{ ProgressDialog, LeftAlignedLabel }
-import de.jowisoftware.mining.linker.Linker
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasName }
-import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
+import scala.swing.event.{ButtonClicked, SelectionChanged}
+
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
-import de.jowisoftware.mining.linker.ConsoleProgressReporter
-import de.jowisoftware.mining.linker.DatabaseLinkerHandler
-import de.jowisoftware.mining.gui.GuiTab
 import de.jowisoftware.mining.analyzer.Analyzer
+import de.jowisoftware.mining.gui.{GuiTab, ProgressDialog}
+import de.jowisoftware.mining.model.nodes.RootNode
+import de.jowisoftware.mining.plugins.{Plugin, PluginManager, PluginType}
+import de.jowisoftware.neo4j.Database
+import grizzled.slf4j.Logging
 
 class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
-    extends BorderPanel with GuiTab {
+    extends BorderPanel with GuiTab with Logging { that =>
   private val pluginList = new ComboBox[Plugin](makePluginList)
   private val analyzeButton = new Button("Analyze")
   private val pluginDetails = new ScrollPane
@@ -64,6 +59,10 @@ class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent:
         val options = analyzerOptions.getUserInput
         try {
           selectedPlugin.analyze(db, options, parent, dialog)
+        } catch {
+        case e: Exception =>
+          error("Caught exception while running analyzer " + selectedPlugin.getClass.getName, e)
+          Dialog.showMessage(that, "Error in analyzer: " + e.getMessage, "Error", Dialog.Message.Error)
         } finally {
           dialog.hide()
         }
