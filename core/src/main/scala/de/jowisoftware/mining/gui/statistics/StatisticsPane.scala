@@ -21,8 +21,6 @@ class StatisticsPane(db: Database[RootNode], parent: Frame) extends ScrollPane w
 
   contents = table
 
-  asyncUpdate
-
   def updateStatistics() = asyncUpdate
   def align = {}
 
