@@ -7,19 +7,23 @@ class TruckTicketsAnalyzerOptions extends UserOptions("analyzer.truck.tickets") 
   protected val defaultResult = Map[String, String](
     "output" -> "raw",
     "limit" -> "50",
-    "inactive" -> "example1, example2",
+    "members" -> "example1, example2",
+    "members-action" -> "excluded",
     "filter-change-status" -> "false",
     "filter-reporter" -> "false",
     "filter-comment" -> "false",
     "filter-commit" -> "false",
     "filter-comment-commit" -> "false",
-    "filter-status" -> "false")
+    "filter-status" -> "false",
+    "algorithm" -> "log")
 
   protected val htmlDescription = "<b>Truck Number</b><br />How critical is knowledge?"
 
   protected def fillPanel(panel: CustomizedGridBagPanel) {
     panel.add("Limit output to X lines", text("limit"))
-    panel.add("Inactive developers", text("inactive"))
+    panel.add("Weight Algorithm", combobox("algorithm", TruckTicketsAnalyzer.weightAlgorithms.keySet.toSeq.sorted))
+    panel.add("Members to include/exclude", text("members"))
+    panel.add("Tread members list as", combobox("members-action", Seq("included", "excluded")))
     panel.add("Output", combobox("output", Seq("interpreted", "raw")))
     panel.addSpace
     panel.add("A person with knowledge must", new Label(""))
