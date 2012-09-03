@@ -31,9 +31,9 @@ object Main extends Logging {
     SLF4JBridgeHandler.install()
 
     Swing.onEDT {
+      val db = openDatabase
       val pluginManager = preparePluginManager
       checkPlugins(pluginManager)
-      val db = openDatabase
 
       new MainWindow(db, pluginManager).visible = true
     }
@@ -49,17 +49,26 @@ object Main extends Logging {
 
   private def checkPlugins(pluginManager: PluginManager) {
     if (!PluginType.values.forall(pluginManager.getFor(_).size > 0)) {
-      Dialog.showMessage(null, "No plugins found", "Critical Error", Dialog.Message.Error, null)
+      Dialog.showMessage(null, "No plugins found", "Critical Error", Dialog.Message.Error)
       System.exit(1)
     }
   }
 
   private def openDatabase: EmbeddedDatabase[RootNode] = {
     val dbPath = AppUtil.projectFile(AppUtil.appSettings.getString("db"))
+
     info("Using database at "+dbPath)
-    if (compactMode)
-      new EmbeddedDatabase(dbPath, RootNode)
-    else
-      new EmbeddedDatabaseWithConsole(dbPath, RootNode)
+    try {
+      if (compactMode)
+        new EmbeddedDatabase(dbPath, RootNode)
+      else
+        new EmbeddedDatabaseWithConsole(dbPath, RootNode)
+      } catch {
+        case e: IllegalStateException =>
+          Dialog.showMessage(null, "The database is locked - is another instance of this program running?",
+              "Critical Error", Dialog.Message.Error)
+          System.exit(1)
+          null
+    }
   }
 }
