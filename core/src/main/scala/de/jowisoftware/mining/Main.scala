@@ -1,12 +1,12 @@
 package de.jowisoftware.mining
 
-import scala.swing.{Dialog, Swing}
+import scala.swing.{ Dialog, Swing }
 
 import org.slf4j.bridge.SLF4JBridgeHandler
 
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.plugins.{PluginManager, PluginScanner, PluginType}
-import de.jowisoftware.neo4j.database.{EmbeddedDatabase, EmbeddedDatabaseWithConsole}
+import de.jowisoftware.mining.plugins.{ PluginManager, PluginScanner, PluginType }
+import de.jowisoftware.neo4j.database.{ EmbeddedDatabase, EmbeddedDatabaseWithConsole }
 import de.jowisoftware.util.AppUtil
 import grizzled.slf4j.Logging
 import gui.MainWindow
@@ -63,12 +63,12 @@ object Main extends Logging {
         new EmbeddedDatabase(dbPath, RootNode)
       else
         new EmbeddedDatabaseWithConsole(dbPath, RootNode)
-      } catch {
-        case e: IllegalStateException =>
-          Dialog.showMessage(null, "The database is locked - is another instance of this program running?",
-              "Critical Error", Dialog.Message.Error)
-          System.exit(1)
-          null
+    } catch {
+      case e: IllegalStateException =>
+        Dialog.showMessage(null, "The database is locked - is another instance of this program running?",
+          "Critical Error", Dialog.Message.Error)
+        System.exit(1)
+        null
     }
   }
 }
