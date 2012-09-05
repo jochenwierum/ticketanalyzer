@@ -16,10 +16,17 @@ object AppUtil extends Logging {
   lazy val basePath = {
     val sourceCodeFile = new File(getClass.getProtectionDomain.getCodeSource.getLocation.toURI)
     val parentDir = if (sourceCodeFile.isDirectory)
-      sourceCodeFile
-    else
       sourceCodeFile.getParentFile
-    val projectDir = parentDir.getParentFile.getCanonicalFile
+    else
+      sourceCodeFile.getParentFile.getParentFile
+
+    // This "hack" is for eclipse, where a "classes" directory is in the path, too
+    val baseDir = if (parentDir.getName.toLowerCase() == "classes")
+      parentDir.getParentFile()
+    else
+      parentDir
+
+    val projectDir = baseDir.getCanonicalFile
     info("Found project dir at "+projectDir)
     projectDir
   }
