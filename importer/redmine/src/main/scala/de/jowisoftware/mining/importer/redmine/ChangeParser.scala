@@ -12,7 +12,7 @@ class ChangeParser(resolver: CachedResolver, private var project: String) extend
   def createChangesList(hasComment: Boolean, node: Node) = {
     val id = (node \ "@id" intText)
     val date = RedmineImporter.timeParser.parseDateTime(node \ "created_on" text).toDate
-    val user = resolver.getUser(node \ "user" \ "@id" intText)
+    val user = resolver.user(node \ "user" \ "@id" intText)
 
     val changes = (node \ "details" \ "detail" map {
       node => createDetail(date, node, user)
@@ -48,15 +48,15 @@ class ChangeParser(resolver: CachedResolver, private var project: String) extend
         new SimpleChange(date, field, lookupMethod(oldValue.toInt), lookupMethod(newValue.toInt), user)
 
     (node \ "@name" text) match {
-      case "tracker_id" => lookupChange(ticketType, resolver.getTracker(project))
+      case "tracker_id" => lookupChange(ticketType, resolver.tracker(project))
       case "subject" => stringChange(summary)
       case "description" => stringChange(description)
-      case "status_id" => lookupChange(status, resolver.getStatus)
+      case "status_id" => lookupChange(status, resolver.status)
       case "done_ratio" => intChange(progress)
       case "estimated_hours" => floatChange(eta)
-      case "assigned_to_id" => lookupChange(owner, resolver.getUser)
-      case "category_id" => lookupChange(component, resolver.getCategory)
-      case "fixed_version_id" => lookupChange(fixedInVersion, resolver.getVersion)
+      case "assigned_to_id" => lookupChange(owner, resolver.user)
+      case "category_id" => lookupChange(component, resolver.category)
+      case "fixed_version_id" => lookupChange(fixedInVersion, resolver.version)
 
       case "priority_id" => None
 

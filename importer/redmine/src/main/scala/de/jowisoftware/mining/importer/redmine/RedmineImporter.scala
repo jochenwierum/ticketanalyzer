@@ -22,22 +22,52 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
   require(config contains "repositoryname")
 
   private val client = new RedmineClient(config("url"), config("key"))
-  private val resolver = new CachedResolver(client)
+  private val resolver = new CachedResolver
 
   def run() {
-    info("Counting tickets...")
-    countTickets
+    info("Preparing import...")
+    prepareImport
     info("Importing tickets...")
     importTickets
     info("Importing finished.")
     events.finish
   }
 
-  private def countTickets {
+  private def prepareImport {
     var count = 0L
     client.retrivePagedXML("issues.xml", Map("project_id" -> config("project")),
-      node => count += (node \ "issue").length)
+      page => {
+        page \ "issue" foreach { node =>
+          val id = (node \ "id" text).toInt
+          val ticketXML = client.retrieveXML("issues/"+id+".xml", Map(
+              "include" -> "children,attachments,relations,changesets,journals"))
+            fillCaches(ticketXML)
+          }
+        count += (page \ "issue").length
+      })
     events.countedTickets(count)
+  }
+  
+  private def fillCaches(ticketXML: Node) {
+    var project = (ticketXML \ "project" \ "@id" text)
+    ticketXML \\ "author" foreach { n => resolver.cacheUser(n) }
+    ticketXML \\ "assigned_to" foreach { n => resolver.cacheUser(n) }
+    ticketXML \ "status" foreach { n => resolver.cacheStatus(n) }
+    ticketXML \ "tracker" foreach { n => resolver.cacheTracker(project, n \ "@name" text, n \ "@id" intText)}
+    ticketXML \ "category" foreach { n => resolver.cacheCategory(n)}
+    ticketXML \ "fixed_version" foreach { n => resolver.cacheVersion (n)}
+    
+    ticketXML \ "journals" \ "journal" foreach { journal =>
+      (journal \ "@name" text) match {
+        case "tracker_id" => resolver.cacheTracker(project, journal \ "@name" text, journal \ "@id" intText)
+        case "status_id" => resolver.cacheStatus(journal)
+        case "assigned_to_id" => resolver.cacheUser(journal)
+        case "category_id" => resolver.cacheCategory(journal)
+        case "fixed_version_id" => resolver.cacheVersion(journal)
+  
+        case "project_id" => project = journal \ "old_value" text
+      }
+    }
   }
 
   private def importTickets =
@@ -106,11 +136,11 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
       }
     }
 
-    conditionalSet(ticketType, _ \ "tracker" \ "@id", id => resolver.getTracker(project)(id.intText))
-    conditionalSet(status, _ \ "status" \ "@id", id => resolver.getStatus(id.intText))
-    conditionalSet(reporter, _ \ "author" \ "@id", id => resolver.getUser(id.intText))
-    conditionalSet(owner, _ \ "assigned_to" \ "@id", id => resolver.getUser(id.intText))
-    conditionalSet(component, _ \ "category" \ "@id", id => resolver.getCategory(id.intText))
+    conditionalSet(ticketType, _ \ "tracker" \ "@id", id => resolver.tracker(project)(id.intText))
+    conditionalSet(status, _ \ "status" \ "@id", id => resolver.status(id.intText))
+    conditionalSet(reporter, _ \ "author" \ "@id", id => resolver.user(id.intText))
+    conditionalSet(owner, _ \ "assigned_to" \ "@id", id => resolver.user(id.intText))
+    conditionalSet(component, _ \ "category" \ "@id", id => resolver.category(id.intText))
     conditionalSet(summary, _ \ "subject", _.text)
     conditionalSet(description, _ \ "description", _.text)
     conditionalSet(startDate, _ \ "start_date", ts => RedmineImporter.dateParser.parseDateTime(ts text).toDate)
@@ -120,7 +150,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
     conditionalSet(spentTime, _ \ "spent_hours", _.floatText)
     conditionalSet(creationDate, _ \ "created_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
     conditionalSet(updateDate, _ \ "updated_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
-    conditionalSet(fixedInVersion, _ \ "fixed_version" \ "@id", id => resolver.getVersion(id.intText))
+    conditionalSet(fixedInVersion, _ \ "fixed_version" \ "@id", id => resolver.version(id.intText))
 
     ticket(relationships) = ((ticketXML \ "children" \ "issue") map {
       node => TicketRelationship(node \ "@id" intText, TicketRelationship.RelationshipType.parentOf)
@@ -142,7 +172,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
 
       if (text.nonEmpty) {
         val id = (node \ "@id" intText)
-        val author = resolver.getUser(node \ "user" \ "@id" intText)
+        val author = resolver.user(node \ "user" \ "@id" intText)
         val created = RedmineImporter.timeParser.parseDateTime(node \ "created_on" text).toDate
 
         val comment = new TicketCommentData()

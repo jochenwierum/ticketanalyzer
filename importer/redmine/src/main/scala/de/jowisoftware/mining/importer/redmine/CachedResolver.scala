@@ -6,8 +6,9 @@ import scala.xml.Node
 import de.jowisoftware.util.XMLUtils._
 import scala.xml.NodeSeq
 import scala.annotation.tailrec
+import grizzled.slf4j.Logging
 
-class CachedResolver(client: RedmineClient) {
+class CachedResolver extends Logging {
   private var cachedUsers: mutable.Map[Int, String] = mutable.Map()
   private var cachedIssues: mutable.Map[Int, String] = mutable.Map()
   private var cachedProjects: mutable.Map[Int, String] = mutable.Map()
@@ -16,66 +17,48 @@ class CachedResolver(client: RedmineClient) {
   private var cachedCategories: mutable.Map[Int, String] = mutable.Map()
   private var cachedTracker: mutable.Map[String, mutable.Map[Int, String]] = mutable.Map()
 
-  private def collectNode(selector: Node => NodeSeq, converter: Node => (Int, String))(xml: Node) =
-    selector(xml) map converter
+  private def getFromCache(cache: mutable.Map[Int, String], name: String)(id: Int) =
+    cache.getOrElse(id, {
+      warn("Looking up unknown entity "+id+" in Table "+name)
+      "Unkown entity: "+id
+    })
 
-  private def getIdNameTupleFromNodes(node: Node) =
-    ((node \ "id" intText), (node \ "name" text))
+  def user = getFromCache(cachedUsers, "users") _
+  def issue = getFromCache(cachedIssues, "issues") _
+  def project = getFromCache(cachedProjects, "projects") _
+  def status = getFromCache(cachedStatus, "status") _
+  def version = getFromCache(cachedVersions, "version") _
+  def category = getFromCache(cachedCategories, "categories") _
 
-  private def getIdNameTupleFromAttributes(node: Node) =
-    ((node \ "@id" intText), (node \ "@name" text))
-
-  def getStatus(id: Int) =
-    lazyGet(cachedStatus, "issue_statuses.xml",
-      collectNode(_ \ "issue_status", getIdNameTupleFromNodes), id)
-
-  def getTracker(project: String)(id: Int) =
-    ensureFilledSublevelMap(cachedTracker, project, "projects/"+project+".xml",
-      collectNode(_ \ "trackers" \ "tracker", getIdNameTupleFromAttributes), id,
-      Map("include" -> "trackers,issue_categories"))
-
-  def getVersion(id: Int) =
-    lazyGet(cachedVersions, "versions/"+id+".xml",
-      collectNode(identity, getIdNameTupleFromNodes), id)
-
-  def getCategory(id: Int) =
-    lazyGet(cachedCategories, "issue_categories/"+id+".xml",
-      collectNode(identity, getIdNameTupleFromNodes), id)
-
-  def getProject(id: Int) =
-    lazyGet(cachedProjects, "projects.xml",
-      collectNode(_ \ "project", getIdNameTupleFromNodes), id)
-
-  def getIssue(id: Int) =
-    lazyGet(cachedIssues, "issue_statuses.xml",
-      collectNode(_ \ "issue_status", getIdNameTupleFromNodes), id)
-
-  def getUser(id: Int) =
-    lazyGet(cachedUsers, "users.xml", collectNode(_ \ "user", {
-      node => ((node \ "id" intText), (node \ "login" text))
-    }), id)
-
-  def ensureFilledSublevelMap(map: mutable.Map[String, mutable.Map[Int, String]], subMapName: String,
-    file: => String, extractor: Elem => Seq[(Int, String)], key: Int,
-    args: Map[String, String] = Map()) = {
-
-    if (!map.contains(subMapName)) {
-      val subMap = mutable.Map[Int, String]()
-      map += subMapName -> subMap
-    }
-
-    lazyGet(map(subMapName), file, extractor, key, args)
+  def tracker(name: String)(id: Int) = if(cachedTracker contains name) {
+    cachedTracker(name).getOrElse(id, {
+      warn("Looking up unknown entity "+id+" in Table tracker("+name+")")
+      "Unkown entity: "+name+"/"+id
+    })
+  } else {
+    warn("Looking up unknown entity "+name+" in Table tacker")
+    "Unkown entity: "+name+"/"+id
   }
 
-  def lazyGet(map: mutable.Map[Int, String], file: => String,
-    extractor: Elem => Seq[(Int, String)], key: Int,
-    args: Map[String, String] = Map()) = {
-
-    if (!map.contains(key)) {
-      client.retrivePagedXML(file, args, {
-        page => extractor(page) foreach { entry => map += entry }
-      })
+  private def addIfUncached(map: mutable.Map[Int, String])(node: Node) = {
+    val id = (node \ "@id" intText)
+    if (!(map contains id)) {
+      map += id -> (node \ "@name" text)
     }
-    map(key)
+  }
+
+  def cacheUser(n: Node) = addIfUncached(cachedUsers) _
+  def cacheIssue(n: Node) = addIfUncached(cachedIssues) _
+  def cacheProject(n: Node) = addIfUncached(cachedProjects) _
+  def cacheStatus(n: Node) = addIfUncached(cachedStatus) _
+  def cacheVersion(n: Node) = addIfUncached(cachedVersions) _
+  def cacheCategory(n: Node) = addIfUncached(cachedCategories) _
+
+  def cacheTracker(project: String, name: String, id: Int) {
+    if (!(cachedTracker contains project)) {
+      cachedTracker += project -> mutable.Map[Int, String]()
+    }
+
+    cachedTracker(project) += id -> name
   }
 }
