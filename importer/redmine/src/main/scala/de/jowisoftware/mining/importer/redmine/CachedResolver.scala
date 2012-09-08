@@ -10,7 +10,6 @@ import grizzled.slf4j.Logging
 
 class CachedResolver extends Logging {
   private var cachedUsers: mutable.Map[Int, String] = mutable.Map()
-  private var cachedIssues: mutable.Map[Int, String] = mutable.Map()
   private var cachedProjects: mutable.Map[Int, String] = mutable.Map()
   private var cachedStatus: mutable.Map[Int, String] = mutable.Map()
   private var cachedVersions: mutable.Map[Int, String] = mutable.Map()
@@ -24,13 +23,12 @@ class CachedResolver extends Logging {
     })
 
   def user = getFromCache(cachedUsers, "users") _
-  def issue = getFromCache(cachedIssues, "issues") _
   def project = getFromCache(cachedProjects, "projects") _
   def status = getFromCache(cachedStatus, "status") _
   def version = getFromCache(cachedVersions, "version") _
   def category = getFromCache(cachedCategories, "categories") _
 
-  def tracker(name: String)(id: Int) = if(cachedTracker contains name) {
+  def tracker(name: String)(id: Int) = if (cachedTracker contains name) {
     cachedTracker(name).getOrElse(id, {
       warn("Looking up unknown entity "+id+" in Table tracker("+name+")")
       "Unkown entity: "+name+"/"+id
@@ -40,19 +38,18 @@ class CachedResolver extends Logging {
     "Unkown entity: "+name+"/"+id
   }
 
-  private def addIfUncached(map: mutable.Map[Int, String])(node: Node) = {
+  private def addIfUncached(map: mutable.Map[Int, String], node: Node) = {
     val id = (node \ "@id" intText)
     if (!(map contains id)) {
       map += id -> (node \ "@name" text)
     }
   }
 
-  def cacheUser(n: Node) = addIfUncached(cachedUsers) _
-  def cacheIssue(n: Node) = addIfUncached(cachedIssues) _
-  def cacheProject(n: Node) = addIfUncached(cachedProjects) _
-  def cacheStatus(n: Node) = addIfUncached(cachedStatus) _
-  def cacheVersion(n: Node) = addIfUncached(cachedVersions) _
-  def cacheCategory(n: Node) = addIfUncached(cachedCategories) _
+  def cacheUser(n: Node) = addIfUncached(cachedUsers, n)
+  def cacheProject(n: Node) = addIfUncached(cachedProjects, n)
+  def cacheStatus(n: Node) = addIfUncached(cachedStatus, n)
+  def cacheVersion(n: Node) = addIfUncached(cachedVersions, n)
+  def cacheCategory(n: Node) = addIfUncached(cachedCategories, n)
 
   def cacheTracker(project: String, name: String, id: Int) {
     if (!(cachedTracker contains project)) {
@@ -61,4 +58,12 @@ class CachedResolver extends Logging {
 
     cachedTracker(project) += id -> name
   }
+
+  def dump() =
+    "Users: "+cachedUsers.toString+"\n"+
+      "Projects: "+cachedProjects.toString+"\n"+
+      "Status: "+cachedStatus.toString+"\n"+
+      "Versions: "+cachedVersions.toString+"\n"+
+      "Categories: "+cachedCategories.toString+"\n"+
+      "Tracker: "+cachedTracker.toString
 }

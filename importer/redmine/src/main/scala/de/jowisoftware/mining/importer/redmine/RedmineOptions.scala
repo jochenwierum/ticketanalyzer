@@ -4,7 +4,7 @@ import de.jowisoftware.mining.UserOptions
 import scala.swing.Panel
 import scala.swing.GridPanel
 
-class RedmineOptions extends UserOptions("Redmine") {
+class RedmineOptions extends UserOptions("importer.redmine") {
   protected val defaultResult = Map(
     "url" -> "http://example.org/redmine",
     "key" -> "",

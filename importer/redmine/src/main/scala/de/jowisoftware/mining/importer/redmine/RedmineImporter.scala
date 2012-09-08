@@ -27,6 +27,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
   def run() {
     info("Preparing import...")
     prepareImport
+    info("Resolved data: "+resolver.dump)
     info("Importing tickets...")
     importTickets
     info("Importing finished.")
@@ -40,23 +41,24 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
         page \ "issue" foreach { node =>
           val id = (node \ "id" text).toInt
           val ticketXML = client.retrieveXML("issues/"+id+".xml", Map(
-              "include" -> "children,attachments,relations,changesets,journals"))
-            fillCaches(ticketXML)
-          }
+            "include" -> "children,attachments,relations,changesets,journals"))
+          fillCaches(ticketXML)
+        }
         count += (page \ "issue").length
       })
     events.countedTickets(count)
   }
-  
+
   private def fillCaches(ticketXML: Node) {
     var project = (ticketXML \ "project" \ "@id" text)
     ticketXML \\ "author" foreach { n => resolver.cacheUser(n) }
     ticketXML \\ "assigned_to" foreach { n => resolver.cacheUser(n) }
     ticketXML \ "status" foreach { n => resolver.cacheStatus(n) }
-    ticketXML \ "tracker" foreach { n => resolver.cacheTracker(project, n \ "@name" text, n \ "@id" intText)}
-    ticketXML \ "category" foreach { n => resolver.cacheCategory(n)}
-    ticketXML \ "fixed_version" foreach { n => resolver.cacheVersion (n)}
-    
+    ticketXML \ "tracker" foreach { n => resolver.cacheTracker(project, n \ "@name" text, n \ "@id" intText) }
+    ticketXML \ "category" foreach { n => resolver.cacheCategory(n) }
+    ticketXML \ "fixed_version" foreach { n => resolver.cacheVersion(n) }
+    ticketXML \ "project" foreach { n => resolver.cacheProject(n) }
+
     ticketXML \ "journals" \ "journal" foreach { journal =>
       (journal \ "@name" text) match {
         case "tracker_id" => resolver.cacheTracker(project, journal \ "@name" text, journal \ "@id" intText)
@@ -64,8 +66,9 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
         case "assigned_to_id" => resolver.cacheUser(journal)
         case "category_id" => resolver.cacheCategory(journal)
         case "fixed_version_id" => resolver.cacheVersion(journal)
-  
+
         case "project_id" => project = journal \ "old_value" text
+        case _ =>
       }
     }
   }
