@@ -75,8 +75,8 @@ class ScmScannerTest extends FlatSpec with ShouldMatchers with MockHelper {
       val rootNode = dbMock.rootNode
       val collectionCollection = rootNode.commitRepositoryCollection
       val commitCollection = collectionCollection.findOrCreateChild(repositoryName)
-      val commit1 = commitCollection.findCommit(commitId1).get
-      val commit2 = commitCollection.findCommit(commitId2).get
+      val commit1 = commitCollection.findSingleCommit(commitId1).get
+      val commit2 = commitCollection.findSingleCommit(commitId2).get
       when(generator.findRange(commit1, commit2))
         .thenReturn(Set(commit1, commit2))
     }
@@ -128,5 +128,9 @@ class ScmScannerTest extends FlatSpec with ShouldMatchers with MockHelper {
 
   it should "not identify ranges with text as a link" in {
     check("a text with t2text log2:4test in it", Set(), Nil)
+  }
+
+  it should "not identify arrays as link" in {
+    check("myArray[2]", Set(), Nil)
   }
 }

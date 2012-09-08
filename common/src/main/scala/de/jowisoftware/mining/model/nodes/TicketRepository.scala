@@ -24,7 +24,7 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
     }
   }
 
-  def findRecentVersionOf(tId: Int): Option[Ticket] =
+  def findRecentVersionOf(tId: Long): Option[Ticket] =
     findAllVersionsOf(tId).reduceOption {
       (t1, t2) =>
         val v1 = t1.uid().substring(t1.uid().lastIndexOf('-') + 1).toInt
@@ -32,7 +32,7 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
         if (v1 > v2) t1 else t2
     }
 
-  def findAllVersionsOf(tId: Int) =
+  def findAllVersionsOf(tId: Long) =
     Ticket.findAll(readableDb, name()+"-"+tId+"-*")
 
   def tickets =

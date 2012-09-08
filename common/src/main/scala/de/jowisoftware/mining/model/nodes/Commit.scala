@@ -13,7 +13,7 @@ object Commit extends NodeCompanion[Commit] with IndexAccess[Commit] {
     findInIndex(db, "uid", uid, this)
 
   private[model] def findAbbrev(db: ReadOnlyDatabase[RootNode], uid: String) =
-    findInIndex(db, "uid:"+uid+"*", this)
+    findMultipleInIndex(db, "uid:"+uid+"*", this)
 }
 
 class Commit extends MiningNode {

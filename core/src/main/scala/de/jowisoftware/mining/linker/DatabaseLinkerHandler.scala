@@ -35,7 +35,7 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
 
     val (destNodes, linkType) = (link match {
       case ScmLink(ref, linkType, _) =>
-        (commitRepository.findCommit(ref).toSeq, linkType)
+        (commitRepository.findCommits(ref).toSeq, linkType)
       case TicketLink(id, linkType) =>
         (ticketRepository.findAllVersionsOf(id), linkType)
     })

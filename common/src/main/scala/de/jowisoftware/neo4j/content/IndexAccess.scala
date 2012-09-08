@@ -20,35 +20,35 @@ trait IndexAccess[A <: Node] extends Logging {
     db.service.index.forNodes(manifest.erasure.getSimpleName)
 
   protected def findInIndex(db: ReadOnlyDatabase[_ <: Node], indexName: String, value: String, companion: NodeCompanion[A])(implicit manifest: Manifest[A]): Option[A] = {
-    val result = debugIllegalQuery(indexName+", "+value) {
+    val result = debugIllegalQuery(indexName+", "+value, manifest.erasure.getSimpleName) {
       getIndex(db)(manifest).query(indexName, value).getSingle
     }
     Option(result).map(Node.wrapNeoNode(_, db, companion))
   }
 
   protected def findInIndex(db: ReadOnlyDatabase[_ <: Node], query: String, companion: NodeCompanion[A])(implicit manifest: Manifest[A]): Option[A] = {
-    val result = debugIllegalQuery(query) {
+    val result = debugIllegalQuery(query, manifest.erasure.getSimpleName) {
       getIndex(db)(manifest).query(query).getSingle
     }
     Option(result).map(Node.wrapNeoNode(_, db, companion))
   }
 
   protected def findMultipleInIndex(db: ReadOnlyDatabase[_ <: Node], indexName: String, value: String, companion: NodeCompanion[A])(implicit manifest: Manifest[A]) =
-    debugIllegalQuery(indexName+", "+value) {
+    debugIllegalQuery(indexName+", "+value, manifest.erasure.getSimpleName) {
       getIndex(db)(manifest).query(indexName, value).iterator.map { result => Node.wrapNeoNode(result, db, companion) }
     }
 
   protected def findMultipleInIndex(db: ReadOnlyDatabase[_ <: Node], query: String, companion: NodeCompanion[A])(implicit manifest: Manifest[A]) =
-    debugIllegalQuery(query) {
+    debugIllegalQuery(query, manifest.erasure.getSimpleName) {
       getIndex(db)(manifest).query(query).iterator.map { result => Node.wrapNeoNode(result, db, companion) }
     }
 
-  private def debugIllegalQuery[T](arg: String)(code: => T): T =
+  private def debugIllegalQuery[T](arg: String, indexName: String)(code: => T): T =
     try {
       code
     } catch {
       case e: Exception =>
-        error("Could not execute query("+arg+")", e)
+        error("Could not execute query("+arg+") in index"+indexName, e)
         throw new RuntimeException(e)
     }
 }

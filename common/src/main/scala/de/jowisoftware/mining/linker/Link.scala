@@ -8,5 +8,5 @@ case class ScmLink(
   path: Option[String] = None) extends Link
 
 case class TicketLink(
-  id: Int,
+  id: Long,
   linkType: LinkType.Value = LinkType.Mentions) extends Link

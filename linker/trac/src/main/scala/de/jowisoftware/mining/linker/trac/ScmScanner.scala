@@ -7,13 +7,13 @@ import scala.util.matching.Regex.Match
 import de.jowisoftware.mining.model.nodes.Commit
 
 private[trac] object ScmScanner {
-  private val singleRegexes = List("""(?<![\w\d])r(\d+|[0-9a-fA-F]{1,32})(?=\W|$)""".r,
-    """\[(\d+|[0-9a-fA-F]{1,32})(?:(/[^\]]+))?\]""".r,
-    """(?i)changeset:([0-9a-fA-F]{1,32}|\d+)(/[A-Za-z0-9/]+)?""".r)
+  private val singleRegexes = List("""(?<![\w\d])r(d{1,18}|[0-9a-fA-F]{5,32})(?=\W|$)""".r,
+    """(?<![\w\d])\[(d{1,18}|[0-9a-fA-F]{5,32})(?:(/[^\]]+))?\]""".r,
+    """(?<![\w\d])(?i)changeset:([0-9a-fA-F]{5,32}|d{1,18})(/[A-Za-z0-9/]+)?""".r)
 
-  private val rangeRegexes = List(new Regex("""r(\d+:\d+)(?=\W|$)""", "revs"),
-    new Regex("""\[((?:[0-9a-fA-F]{1,32}|\d+):(?:[0-9a-fA-F]{1,32}|\d+))(/[^\]]+)?\]""", "revs", "path"),
-    new Regex("""(?i)log:([^\s]+)?@((?:[0-9a-fA-F]{1,32}|\d+):(?:\d+|[0-9a-fA-F]{1,32}))(?=\W|$)""", "path", "revs"))
+  private val rangeRegexes = List(new Regex("""(?<![\w\d])r(d{1,18}:d{1,18})(?=\W|$)""", "revs"),
+    new Regex("""(?<![\w\d])\[((?:[0-9a-fA-F]{1,32}|d{1,18}):(?:[0-9a-fA-F]{5,32}|d{1,18}))(/[^\]]+)?\]""", "revs", "path"),
+    new Regex("""(?<![\w\d])(?i)log:([^\s]+)?@((?:[0-9a-fA-F]{5,32}|d{1,18}):(?:d{1,18}|[0-9a-fA-F]{5,32}))(?=\W|$)""", "path", "revs"))
 }
 
 private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
@@ -41,7 +41,7 @@ private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
   }
 
   private def processSingleMatch(theMatch: Match, repository: CommitRepository): Option[ScmLink] =
-    repository.findCommit(theMatch.group(1)).map { commit =>
+    repository.findSingleCommit(theMatch.group(1)).map { commit =>
       if (theMatch.groupCount == 2)
         ScmLink(commit.commitId(), path = Option(theMatch.group(2)))
       else
@@ -52,8 +52,8 @@ private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
     val rangeParts = rangeSpec.split(":")
 
     val commitRange = for {
-      start <- repository.findCommit(rangeParts(0))
-      end <- repository.findCommit(rangeParts(1))
+      start <- repository.findSingleCommit(rangeParts(0))
+      end <- repository.findSingleCommit(rangeParts(1))
     } yield {
       rangeGenerator.findRange(start, end) map { commit => ScmLink(commit.commitId(), path = path) } toSeq
     }

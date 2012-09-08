@@ -88,7 +88,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
   private def connectParents(commitData: CommitData, node: Commit, repository: CommitRepository) =
     commitData(parents).foreach { parentId =>
-      repository.findCommit(parentId) match {
+      repository.findSingleCommit(parentId) match {
         case Some(commit) => node.add(commit, ChildOf)
         case None => addMissingLink(repository, parentId, node.id)
       }
