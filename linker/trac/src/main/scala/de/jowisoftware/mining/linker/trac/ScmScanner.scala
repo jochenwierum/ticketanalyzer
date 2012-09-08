@@ -7,13 +7,13 @@ import scala.util.matching.Regex.Match
 import de.jowisoftware.mining.model.nodes.Commit
 
 private[trac] object ScmScanner {
-  private val singleRegexes = List("""(?<![\w\d])r(d{1,18}|[0-9a-fA-F]{5,32})(?=\W|$)""".r,
-    """(?<![\w\d])\[(d{1,18}|[0-9a-fA-F]{5,32})(?:(/[^\]]+))?\]""".r,
-    """(?<![\w\d])(?i)changeset:([0-9a-fA-F]{5,32}|d{1,18})(/[A-Za-z0-9/]+)?""".r)
+  private val singleRegexes = List("""(?<![\w\d])r(\d{1,18}|[0-9a-fA-F]{5,32})(?=\W|$)""".r,
+    """(?<![\w\d])\[(\d{1,18}|[0-9a-fA-F]{5,32})(?:(/[^\]]+))?\]""".r,
+    """(?<![\w\d])(?i)changeset:([0-9a-fA-F]{5,32}|\d{1,18})(/[A-Za-z0-9/]+)?""".r)
 
-  private val rangeRegexes = List(new Regex("""(?<![\w\d])r(d{1,18}:d{1,18})(?=\W|$)""", "revs"),
-    new Regex("""(?<![\w\d])\[((?:[0-9a-fA-F]{1,32}|d{1,18}):(?:[0-9a-fA-F]{5,32}|d{1,18}))(/[^\]]+)?\]""", "revs", "path"),
-    new Regex("""(?<![\w\d])(?i)log:([^\s]+)?@((?:[0-9a-fA-F]{5,32}|d{1,18}):(?:d{1,18}|[0-9a-fA-F]{5,32}))(?=\W|$)""", "path", "revs"))
+  private val rangeRegexes = List(new Regex("""(?<![\w\d])r(\d{1,18}:\d{1,18})(?=\W|$)""", "revs"),
+    new Regex("""(?<![\w\d])\[((?:[0-9a-fA-F]{1,32}|\d{1,18}):(?:[0-9a-fA-F]{5,32}|\d{1,18}))(/[^\]]+)?\]""", "revs", "path"),
+    new Regex("""(?<![\w\d])(?i)log:([^\s]+)?@((?:[0-9a-fA-F]{5,32}|\d{1,18}):(?:\d{1,18}|[0-9a-fA-F]{5,32}))(?=\W|$)""", "path", "revs"))
 }
 
 private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
