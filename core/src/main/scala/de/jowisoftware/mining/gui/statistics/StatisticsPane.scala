@@ -26,21 +26,28 @@ class StatisticsPane(db: Database[RootNode], parent: Frame) extends ScrollPane w
 
   private def asyncUpdate() =
     new Thread("statistics-thread") {
+      setDaemon(true)
+
       override def run() {
-        val start = System.currentTimeMillis
-        val engine = new ExecutionEngine(db.service)
+        try {
+          val start = System.currentTimeMillis
+          val engine = new ExecutionEngine(db.service)
 
-        val tickets = collectTickets(engine)
-        val commits = collectCommits(engine)
-        val globalValues = collectGlobalStats(engine)
+          val tickets = collectTickets(engine)
+          val commits = collectCommits(engine)
+          val globalValues = collectGlobalStats(engine)
 
-        val rows = tickets ++ commits ++ globalValues
+          val rows = tickets ++ commits ++ globalValues
 
-        Swing.onEDT {
-          model.setRowCount(0)
-          rows.foreach(row => model.addRow(Array[Object](row._1, row._2.toString)))
+          Swing.onEDT {
+            model.setRowCount(0)
+            rows.foreach(row => model.addRow(Array[Object](row._1, row._2.toString)))
+          }
+          warn("Updating statistics finished in "+(System.currentTimeMillis - start)+" ms")
+        } catch {
+          case e: Exception =>
+            warn(e.getClass.getName+" while building statistics - assuming the database is gone.")
         }
-        warn("Updating statistics finished in "+(System.currentTimeMillis - start)+" ms")
       }
     }.start()
 
