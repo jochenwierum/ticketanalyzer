@@ -37,6 +37,7 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
     } yield ticket
 
   private def processVersions(baseTicket: Ticket) {
+    // TODO: add choice whether to to ignore owner changes
     // FIXME: only track status changes
     def processVersion(ticket: Ticket, oldStatus: String, depth: Int) {
       val newStatus = status(ticket)
@@ -78,6 +79,15 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
           "n"+level+nice(name)+" [label=\""+name+"\"];"
         }.mkString("\n")
       result append "}\n"
+    }
+
+    for {
+        (map, level) <- workflowTree.zipWithIndex
+        if level > 0
+      } {
+        for (((from, to), count) <- map) {
+          result append "n"+(level-1)+nice(from)+" -> n"+(level)+nice(to)+";\n"
+        }
     }
 
     result append "}\n"
