@@ -1,0 +1,10 @@
+description = "Workflow (tree) analyzer plugin"
+
+dependencies {
+}
+
+eclipse {
+  project {
+    name = 'analyzer-WorkflowTree'
+  }
+}
