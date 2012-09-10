@@ -52,7 +52,8 @@ class Ticket extends MiningNode {
   lazy val progress = intProperty("progress")
   lazy val spentTime = floatProperty("spentTime")
 
-  def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
+  def isRecentVersion= neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
+  def isRootVersion = neighbors(Direction.OUTGOING, Seq(Updates.relationType)).size == 0
 
   def findComment(id: Int) = TicketComment.find(readableDb, createCommentUid(id))
 

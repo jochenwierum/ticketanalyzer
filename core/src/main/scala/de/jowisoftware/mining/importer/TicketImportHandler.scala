@@ -33,7 +33,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     }
 
     debug("Connecting versions of ticket "+ticketVersions.head(id))
-    connectVersions(versionNodes, versionNodes.last)
+    connectVersions(versionNodes, versionNodes.head)
     debug("Connecting references from ticket "+ticketVersions.head(id))
     connectReferences(ticketVersions, versionNodes, repository)
     debug("Catching up missing links to this ticket...")
@@ -143,6 +143,7 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
         rootVersion.add(recent, RootOf)
         connect(head :: tail)
       case recent :: Nil =>
+        rootVersion.add(recent, RootOf)
     }
     connect(ticketVersions)
   }
