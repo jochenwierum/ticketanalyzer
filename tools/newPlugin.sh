@@ -335,7 +335,7 @@ addProjectFiles
 
 
 if [ $executeEclipse -eq 1 ]; then
-	./gradlew eclipse
+	./gradlew eclipse processResources
 fi
 
 if [ $executeBuild -eq 1 ]; then
