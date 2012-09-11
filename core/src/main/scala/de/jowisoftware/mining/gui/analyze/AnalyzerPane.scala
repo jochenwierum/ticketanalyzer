@@ -1,15 +1,15 @@
 package de.jowisoftware.mining.gui.linker
 
-import scala.swing.{BoxPanel, Button, ComboBox, Dialog, Frame, Orientation, ScrollPane, Swing}
+import scala.swing.{ BoxPanel, Button, ComboBox, Dialog, Frame, Orientation, ScrollPane, Swing }
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.event.{ButtonClicked, SelectionChanged}
+import scala.swing.event.{ ButtonClicked, SelectionChanged }
 
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.mining.analyzer.Analyzer
-import de.jowisoftware.mining.gui.{GuiTab, ProgressDialog}
+import de.jowisoftware.mining.gui.{ GuiTab, ProgressDialog }
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.plugins.{Plugin, PluginManager, PluginType}
+import de.jowisoftware.mining.plugins.{ Plugin, PluginManager, PluginType }
 import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
 
@@ -60,9 +60,9 @@ class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent:
         try {
           selectedPlugin.analyze(db, options, parent, dialog)
         } catch {
-        case e: Exception =>
-          error("Caught exception while running analyzer " + selectedPlugin.getClass.getName, e)
-          Dialog.showMessage(that, "Error in analyzer: " + e.getMessage, "Error", Dialog.Message.Error)
+          case e: Exception =>
+            error("Caught exception while running analyzer "+selectedPlugin.getClass.getName, e)
+            Dialog.showMessage(that, "Error in analyzer: "+e.getClass.getName+": "+e.getMessage, "Error", Dialog.Message.Error)
         } finally {
           dialog.hide()
         }
