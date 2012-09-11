@@ -1,32 +1,56 @@
 package de.jowisoftware.mining.analyzers.workflow
 
-import scala.collection.mutable.{Buffer, StringBuilder}
+import scala.collection.mutable.{ Buffer, StringBuilder }
 import scala.swing.Frame
-
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.model.nodes.{RootNode, Status, Ticket}
-import de.jowisoftware.mining.model.relationships.{HasStatus, Updates}
+import de.jowisoftware.mining.model.nodes.{ RootNode, Status, Ticket }
+import de.jowisoftware.mining.model.relationships.{ HasStatus, Updates }
 import de.jowisoftware.neo4j.Database
+import de.jowisoftware.mining.model.relationships.Owns
+import de.jowisoftware.mining.model.nodes.Person
+import de.jowisoftware.mining.external.dot.ImageDialog
+import java.io.File
+import de.jowisoftware.mining.external.dot.DotWrapper
+import scala.annotation.tailrec
+import scala.collection.SortedMap
+import scala.math.Ordering
 
 class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
-  private val workflowTree: Buffer[Map[(String, String), Int]] = Buffer()
+  require(options contains "dot")
+  private val dotFile = new File(options("dot"))
+  require(dotFile.exists())
+
+  require(options contains "dpi")
+  require(options("dpi") matches """^\d+$""")
+  require(options("dpi").toInt > 0)
+
+  private var workflowTree: SortedMap[List[String], Int] =
+    SortedMap.empty[List[String], Int](new Ordering[List[String]]() {
+      def compare(l1: List[String], l2: List[String]) =
+        if (l1.size < l2.size) -1
+        else if (l1.size > l2.size) +1
+        else
+          l1 zip l2 find (x => x._1 != x._2) match {
+            case None => 0
+            case Some((x1, x2)) => x1 compare x2
+          }
+    })
 
   def run() {
     waitDialog.max = getTickets.size
 
     getTickets.foreach { t =>
       waitDialog.tick()
-      processVersions(t)
+      processVersions(t, false)
     }
 
-    val code = generateDotCode
+    val dotWrapper = new DotWrapper(dotFile)
+    val image = dotWrapper.run(generateDotCode)
 
     waitDialog.hide
-
-    println(workflowTree)
-    println(code)
+    val resultDialog = new ImageDialog(image, parent, "Ticket state workflow tree structure")
+    resultDialog.visible = true
   }
 
   private def getTickets =
@@ -36,62 +60,86 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
       if (ticket.isRootVersion)
     } yield ticket
 
-  private def processVersions(baseTicket: Ticket) {
-    // TODO: add choice whether to to ignore owner changes
-    // FIXME: only track status changes
-    def processVersion(ticket: Ticket, oldStatus: String, depth: Int) {
-      val newStatus = status(ticket)
-      addStatus(depth, oldStatus, newStatus)
+  private def processVersions(baseTicket: Ticket, includeOwnerChange: Boolean) {
+    @tailrec
+    def processVersion(ticket: Ticket, oldStatus: List[String], oldOwner: String) {
+      val currentStatus = status(ticket)
+      val newOwner = owner(ticket)
+
+      val ownerChange = (newOwner != oldOwner)
+      val statusChange = (oldStatus == Nil || currentStatus != oldStatus.head)
+
+      val newStatus = if (statusChange || (ownerChange && includeOwnerChange)) {
+        val statusList = currentStatus :: oldStatus
+        addStatus(statusList)
+        statusList
+      } else {
+        oldStatus
+      }
 
       ticket.getFirstNeighbor(Direction.INCOMING, Updates.relationType, Ticket) match {
         case Some(newTicket) =>
-          processVersion(newTicket, newStatus, depth + 1)
+          processVersion(newTicket, newStatus, newOwner)
         case None =>
       }
     }
 
-    processVersion(baseTicket, "", 0)
+    processVersion(baseTicket, Nil, "")
   }
 
   private def status(ticket: Ticket): String =
     ticket.getFirstNeighbor(Direction.OUTGOING, HasStatus.relationType, Status)
-      .map {_.name()} getOrElse "?"
+      .map { _.name() } getOrElse "?"
 
-  private def addStatus(depth: Int, oldStatus: String, status: String) {
-    if (workflowTree.size < depth + 1)
-      workflowTree += Map()
+  private def owner(ticket: Ticket): String =
+    ticket.getFirstNeighbor(Direction.INCOMING, Owns.relationType, Person)
+      .map { _.name() } getOrElse "?"
 
-    val oldValue = workflowTree(depth).getOrElse((oldStatus, status), 0)
-    workflowTree(depth) += (oldStatus, status) -> (oldValue + 1)
-  }
+  private def addStatus(status: List[String]) =
+    workflowTree += status -> (workflowTree.getOrElse(status, 0) + 1)
 
   private def generateDotCode() = {
-    val result = new StringBuilder
-
     def nice(s: String) = s.replaceAll("[^A-Za-z0-9]+", "")
+    def listToName(list: List[String]) = list.map(nice).mkString("_")
 
+    val relDepthCount = calcRelativeCount
+
+    val result = new StringBuilder
     result append "digraph {\n"
+    result append "dpi=" append options("dpi") append ";\n"
     result append "rankdir=TD;\n"
 
-    for ((map, level) <- workflowTree.zipWithIndex) {
-      result append ("subgraph cluster_" + level + "{\n")
-      result append map.keys.map(_._2).toSet.map { name: String =>
-          "n"+level+nice(name)+" [label=\""+name+"\"];"
-        }.mkString("\n")
-      result append "}\n"
-    }
-
-    for {
-        (map, level) <- workflowTree.zipWithIndex
-        if level > 0
-      } {
-        for (((from, to), count) <- map) {
-          result append "n"+(level-1)+nice(from)+" -> n"+(level)+nice(to)+";\n"
-        }
+    for ((nameList, count) <- workflowTree) {
+      result append listToName(nameList) append " [label=\"" append
+        nameList.head append ": " append count append " (" append
+        (100.0 * relDepthCount(nameList)).formatted("%.2f %%") append ")\"];\n"
+      if (nameList.tail != Nil) {
+        val factor = (100.0 * count / workflowTree(nameList.tail)).formatted("%.2f %%")
+        result append listToName(nameList.tail) append " -> " append
+          listToName(nameList) append " [label =\"" append factor append
+          "\"];\n"
+      }
     }
 
     result append "}\n"
 
     result.toString
+  }
+
+  private def calcRelativeCount = {
+    var relDepthCount = Map[List[String], Double](Nil -> 1.0)
+
+    val levelCount = (Map[Int, Int]() /: workflowTree) {
+      case (map, (name, count)) =>
+        val l = name.length
+        map + (l -> (map.getOrElse(l, 0) + count))
+    }
+
+    for ((key, value) <- workflowTree) {
+      relDepthCount += key -> ((value.doubleValue / levelCount(key.length))
+        * relDepthCount(key.tail))
+    }
+
+    relDepthCount
   }
 }

@@ -4,12 +4,14 @@ import de.jowisoftware.mining.UserOptions
 import scala.swing.{ GridPanel, Panel }
 
 class WorkflowTreeOptions extends UserOptions("importer.WorkflowTree") {
-  protected val defaultResult: Map[String, String] = Map()
+  protected val defaultResult: Map[String, String] = Map(
+    "dot" -> "/usr/bin/dot",
+    "dpi" -> "72")
 
-  protected val htmlDescription = """<p><b>Workflow (tree)</b><br>
-    Description of Workflow (tree)</p>"""
+  protected val htmlDescription = """<p><b>Workflow (tree)</b></p>"""
 
   protected def fillPanel(panel: CustomizedGridBagPanel) {
-    // TODO: finish panel
+    panel.add("Dot executable", text("dot"))
+    panel.add("Scale (DPI)", text("dpi"))
   }
 }
