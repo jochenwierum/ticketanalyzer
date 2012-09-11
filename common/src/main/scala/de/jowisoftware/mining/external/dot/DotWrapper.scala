@@ -1,15 +1,15 @@
-package de.jowisoftware.mining.analyzer.workflow
+package de.jowisoftware.mining.external.dot
 
 import java.io.File
 import scala.io.Source
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
-import scala.collection.mutable.Buffer
 import javax.imageio.ImageIO
 import grizzled.slf4j.Logging
+import java.awt.image.BufferedImage
 
 class DotWrapper(dotPath: File) extends Logging {
-  def run(input: String) = {
+  def run(input: String): BufferedImage = {
     val process = startProcess
 
     writeDot(input, process)
@@ -37,7 +37,7 @@ class DotWrapper(dotPath: File) extends Logging {
   private def dumpError(process: Process) {
     val lines = Source.fromInputStream(process.getErrorStream).getLines
     for (line <- lines) {
-      error("dot: " + line)
+      error("dot: "+line)
     }
   }
 }

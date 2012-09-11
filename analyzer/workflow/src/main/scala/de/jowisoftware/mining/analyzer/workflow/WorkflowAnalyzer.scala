@@ -20,17 +20,19 @@ import org.neo4j.cypher.ExecutionResult
 import scala.swing.Dialog
 import de.jowisoftware.mining.analyzer.data.TextMatrix
 import scala.swing.Swing
+import de.jowisoftware.mining.external.dot.DotWrapper
+import de.jowisoftware.mining.external.dot.ImageDialog
 
 class WorkflowAnalyzer(db: Database[RootNode],
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
   require(options contains "visualization")
   require(options contains "dpi")
+  require(options("dpi") matches """^\d+$""")
   require(options("dpi").toInt > 0)
 
   if (options("visualization") == "Graph")
     require(new File(options("dot")).exists)
-
 
   lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.children
     .map(_.id).mkString(", ")
@@ -125,7 +127,7 @@ class WorkflowAnalyzer(db: Database[RootNode],
 
     val graph = new DotWrapper(new File(options("dot"))).run(graphText)
 
-    new ImageDialog(graph, parent)
+    new ImageDialog(graph, parent, "Ticket state workflow structure")
   }
 
   def getEdgeString(from: String, to: String, count: Long, factor: Double) = {
