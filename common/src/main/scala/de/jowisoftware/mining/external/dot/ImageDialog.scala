@@ -11,6 +11,7 @@ import scala.swing.ScrollPane
 import scala.swing.event.ComponentResized
 import scala.swing.event.ComponentResized
 import scala.swing.event.UIElementResized
+import java.awt.Color
 
 class ImageDialog(image: BufferedImage, parent: Frame, frameTitle: String) extends Dialog(parent) {
   class ImageViewer extends Component {
@@ -18,9 +19,12 @@ class ImageDialog(image: BufferedImage, parent: Frame, frameTitle: String) exten
     preferredSize = imageSize
     maximumSize = imageSize
 
+    background = Color.WHITE
+
     override def paintComponent(g: Graphics2D) {
       val winSize = size
-      g.drawImage(image, 0, 0, winSize.width, winSize.height,
+      g.clearRect(0, 0, winSize.width, winSize.height)
+      g.drawImage(image, 0, 0, winSize.width min imageSize.width, winSize.height min imageSize.height,
         0, 0, imageSize.width, imageSize.height, ImageViewer.this.peer)
     }
   }
