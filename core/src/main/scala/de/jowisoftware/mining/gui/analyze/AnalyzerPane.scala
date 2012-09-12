@@ -4,7 +4,6 @@ import scala.swing.{ BoxPanel, Button, ComboBox, Dialog, Frame, Orientation, Scr
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
 import scala.swing.event.{ ButtonClicked, SelectionChanged }
-
 import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.mining.analyzer.Analyzer
 import de.jowisoftware.mining.gui.{ GuiTab, ProgressDialog }
@@ -12,6 +11,8 @@ import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.plugins.{ Plugin, PluginManager, PluginType }
 import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
+import javax.swing.JLabel
+import scala.swing.Label
 
 class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
     extends BorderPanel with GuiTab with Logging { that =>
@@ -41,13 +42,21 @@ class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent:
     pluginManager.getFor(PluginType.Analyzer)
 
   def updateSelection() {
-    val plugin = pluginList.selection.item
-    selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Analyzer]
-    analyzerOptions = selectedPlugin.userOptions
+    try {
+      val plugin = pluginList.selection.item
+      selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Analyzer]
+      analyzerOptions = selectedPlugin.userOptions
 
-    pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
-      contents += analyzerOptions.getPanel
-      contents += Swing.VGlue
+      pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
+        contents += analyzerOptions.getPanel
+        contents += Swing.VGlue
+      }
+      analyzeButton.enabled = true
+    } catch {
+      case e: Exception =>
+        pluginDetails.contents = new Label("<html><strong>"+e.getClass.getName+
+          "</strong>:<br />"+e.getMessage()+"</html>")
+        analyzeButton.enabled = false
     }
     pluginDetails.revalidate()
   }
@@ -62,7 +71,8 @@ class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent:
         } catch {
           case e: Exception =>
             error("Caught exception while running analyzer "+selectedPlugin.getClass.getName, e)
-            Dialog.showMessage(that, "Error in analyzer: "+e.getClass.getName+": "+e.getMessage, "Error", Dialog.Message.Error)
+            Dialog.showMessage(that, "Error in analyzer: "+e.getClass.getName+": "+
+              e.getMessage, "Error", Dialog.Message.Error)
         } finally {
           dialog.hide()
         }

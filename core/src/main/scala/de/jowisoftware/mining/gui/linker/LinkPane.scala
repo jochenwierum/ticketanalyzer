@@ -19,6 +19,7 @@ import scala.swing.ListView
 import scala.swing.SplitPane
 import grizzled.slf4j.Logging
 import scala.swing.Dialog
+import scala.swing.Label
 
 class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
     extends SplitPane(Orientation.Vertical) with GuiTab with Logging { that =>
@@ -110,13 +111,21 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   private def updateSelection() {
-    val plugin = pluginList.selection.item
-    selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Linker]
-    importerOptions = selectedPlugin.userOptions
+    try {
+      val plugin = pluginList.selection.item
+      selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Linker]
+      importerOptions = selectedPlugin.userOptions
 
-    pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
-      contents += importerOptions.getPanel
-      contents += Swing.VGlue
+      pluginDetails.contents = new BoxPanel(Orientation.Vertical) {
+        contents += importerOptions.getPanel
+        contents += Swing.VGlue
+      }
+      linkButton.enabled = true
+    } catch {
+      case e: Exception =>
+        pluginDetails.contents = new Label("<html><strong>"+e.getClass.getName+
+          "</strong>:<br />"+e.getMessage()+"</html>")
+        linkButton.enabled = false
     }
     pluginDetails.revalidate()
   }
@@ -141,7 +150,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
 
   private def doLink() {
     val dialog = new ProgressDialog(parent)
-    new Thread("linker-thread"){
+    new Thread("linker-thread") {
       override def run() {
         val start = System.currentTimeMillis
         try {
@@ -151,8 +160,8 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
           tasks = Nil
         } catch {
           case e: Exception =>
-          error("Caught exception while running linker " + selectedPlugin.getClass.getName, e)
-          Dialog.showMessage(that, "Error in linker: " + e.getMessage, "Error", Dialog.Message.Error)
+            error("Caught exception while running linker "+selectedPlugin.getClass.getName, e)
+            Dialog.showMessage(that, "Error in linker: "+e.getMessage, "Error", Dialog.Message.Error)
         } finally {
           Swing.onEDT {
             updateTaskList()
@@ -171,8 +180,8 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
       getSelectedCommitRepository, options,
       new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
 
-      val progressDialog = dialog
-    })
+        val progressDialog = dialog
+      })
   }
 
   private def updateDBState: Unit = {
