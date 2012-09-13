@@ -7,6 +7,7 @@ class WorkflowTreeOptions extends UserOptions("importer.WorkflowTree") {
   protected val defaultResult: Map[String, String] = Map(
     "dot" -> "/usr/bin/dot",
     "dpi" -> "72",
+    "highlight" -> "true",
     "ownerChange" -> "true",
     "nodeThreshold" -> "0.5",
     "edgeThreshold" -> "5.0")
@@ -18,6 +19,7 @@ class WorkflowTreeOptions extends UserOptions("importer.WorkflowTree") {
     panel.add("Scale (DPI)", text("dpi"))
 
     panel.addSpace
+    panel.add("highlight default path", checkbox("highlight", "Highlight the most used path"))
     panel.add("include owner change", checkbox("ownerChange", "Count owner change as new status"))
     panel.add("threshold for node in per cent", text("nodeThreshold"))
     panel.add("threshold for edge in per cent", text("edgeThreshold"))

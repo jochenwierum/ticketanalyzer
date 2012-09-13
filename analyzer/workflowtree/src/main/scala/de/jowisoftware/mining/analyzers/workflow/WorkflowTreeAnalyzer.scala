@@ -16,21 +16,30 @@ import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
 import de.jowisoftware.neo4j.Database
 
 object WorkflowTreeAnalyzer {
-  private case class Node(name: String, label: String, count: Int, factor: Double,
-      var finalCount: Int, var ignoredCount: Int = 0, var relations: List[Relation] = Nil) {
-    def toStringBuilder(builder: mutable.StringBuilder) =
+  private class Node(val name: String, val label: String, val count: Int, val factor: Double,
+      var finalCount: Int, var ignoredCount: Int = 0) {
+
+    private var relations: List[Relation] = Nil
+
+    def addChild(child: Node, factor: Double) {
+      relations = new Relation(child, factor) :: relations
+    }
+
+    def children = relations
+
+    def toStringBuilder(builder: mutable.StringBuilder, highlight: Boolean) =
       builder append name append
         """ [label="""" append label append """\ntotal: """ append
         count append " (" append perCent(factor) append ")" append
         """\nfinal: """ append perCentWithLabel(finalCount, count) append
         """\nignored: """ append perCentWithLabel(ignoredCount, count) append
-        "\"];\n"
+        "\"" append (if (highlight) ", color = red, fontcolor = red" else "") append "];\n"
   }
 
-  private case class Relation(to: Node, factor: Double) {
-    def toStringBuilder(builder: mutable.StringBuilder, from: String) =
+  private class Relation(val to: Node, val factor: Double) {
+    def toStringBuilder(builder: mutable.StringBuilder, from: String, highlight: Boolean) =
       builder append from append " -> " append to.name append " [label = \"" append
-        perCent(factor)+"\"];\n"
+        perCent(factor)+"\"" append (if (highlight) ", color = red, fontcolor = red" else "") append "];\n"
   }
 
   private def status(ticket: Ticket): String =
@@ -65,6 +74,8 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
 
   private val nodeThreshold = options("nodeThreshold").toFloat / 100
   private val edgeThreshold = options("edgeThreshold").toFloat / 100
+
+  private val highlight = options("highlight").toLowerCase == "true"
 
   private var workflowTree: SortedMap[List[String], Int] =
     SortedMap.empty[List[String], Int](new Ordering[List[String]]() {
@@ -145,6 +156,7 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
     createDotBody(relDepthCount, result)
 
     result append "}\n"
+
     result.toString
   }
 
@@ -156,12 +168,12 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
   }
 
   private def makeTree(relDepthCount: Map[List[String], Double]) = {
-    val rootNode = Node("root", "", 0, 0f, 0)
+    val rootNode = new Node("root", "", 0, 0f, 0)
 
     def findParent(parentNames: List[String]): Option[Node] = parentNames match {
       case Nil => Some(rootNode)
       case head :: tail =>
-        findParent(tail).flatMap { parent => parent.relations.map(_.to).find(_.label == head) }
+        findParent(tail).flatMap { parent => parent.children.map(_.to).find(_.label == head) }
     }
 
     for ((nameList, count) <- workflowTree) {
@@ -172,9 +184,9 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
         case None =>
         case Some(parentNode) =>
           if (nodeFactor >= nodeThreshold && edgeFactor >= edgeThreshold) {
-            val node = Node(listToName(nameList), nameList.head, count, nodeFactor, count)
-            val relation = Relation(node, edgeFactor)
-            parentNode.relations = relation :: parentNode.relations
+            val node = new Node(listToName(nameList), nameList.head, count, nodeFactor, count)
+            val relation = new Relation(node, edgeFactor)
+            parentNode.addChild(node, edgeFactor)
           } else {
             parentNode.ignoredCount += count
           }
@@ -186,17 +198,28 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
   }
 
   private def convertTreeToDot(rootNode: Node, result: StringBuilder) {
-    def dumpNode(node: Node) {
-      node.toStringBuilder(result)
+    def dumpNode(node: Node, wasHighlighted: Boolean) {
+      node.toStringBuilder(result, wasHighlighted)
 
-      node.relations.foreach { relation =>
-        dumpNode(relation.to)
-        relation.toStringBuilder(result, node.name)
+      val highlightedChild = node.children.reduceOption((r1, r2) =>
+        if (r1.factor > r2.factor) r1 else r2).flatMap(r =>
+        if (r.factor < node.finalCount.floatValue() / node.count) None else Some(r))
+
+      node.children.foreach { relation =>
+        val highlightNode = wasHighlighted &&
+          highlightedChild.map(_ == relation).getOrElse(false)
+
+        dumpNode(relation.to, highlightNode)
+        relation.toStringBuilder(result, node.name, highlightNode)
       }
     }
 
-    for (realRootRelation <- rootNode.relations) {
-      dumpNode(realRootRelation.to)
+    val highlightedRootRelation = rootNode.children.reduce((r1, r2) =>
+      if (r1.to.count > r2.to.count) r1 else r2)
+
+    for (realRootRelation <- rootNode.children) {
+      dumpNode(realRootRelation.to,
+        highlight && realRootRelation == highlightedRootRelation)
     }
   }
 
