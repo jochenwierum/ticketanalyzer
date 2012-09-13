@@ -16,9 +16,9 @@ import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
 import de.jowisoftware.neo4j.Database
 
 object WorkflowTreeAnalyzer {
-  private case class Node(label: String, count: Int, factor: Double,
-      var finalCount: Int, var ignoredCount: Int = 0) {
-    def toStringBuilder(builder: mutable.StringBuilder, name: String) =
+  private case class Node(name: String, label: String, count: Int, factor: Double,
+      var finalCount: Int, var ignoredCount: Int = 0, var relations: List[Relation] = Nil) {
+    def toStringBuilder(builder: mutable.StringBuilder) =
       builder append name append
         """ [label="""" append label append """\ntotal: """ append
         count append " (" append perCent(factor) append ")" append
@@ -27,9 +27,9 @@ object WorkflowTreeAnalyzer {
         "\"];\n"
   }
 
-  private case class Relation(from: String, to: String, factor: Double) {
-    def toStringBuilder(builder: mutable.StringBuilder) =
-      builder append from append " -> " append to append " [label = \"" append
+  private case class Relation(to: Node, factor: Double) {
+    def toStringBuilder(builder: mutable.StringBuilder, from: String) =
+      builder append from append " -> " append to.name append " [label = \"" append
         perCent(factor)+"\"];\n"
   }
 
@@ -151,34 +151,53 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
   private def createDotBody(
     relDepthCount: Map[List[String], Double], result: StringBuilder) {
 
-    val nodes = mutable.Map[String, Node]("" -> Node("root", 0, 0, 0))
-    val relations = mutable.Buffer[Relation]()
+    val rootNode = makeTree(relDepthCount)
+    convertTreeToDot(rootNode, result)
+  }
+
+  private def makeTree(relDepthCount: Map[List[String], Double]) = {
+    val rootNode = Node("root", "", 0, 0f, 0)
+
+    def findParent(parentNames: List[String]): Option[Node] = parentNames match {
+      case Nil => Some(rootNode)
+      case head :: tail =>
+        findParent(tail).flatMap { parent => parent.relations.map(_.to).find(_.label == head) }
+    }
 
     for ((nameList, count) <- workflowTree) {
       val nodeFactor = relDepthCount(nameList)
       val edgeFactor = calcEdgeFactor(count, nameList)
 
-      val parentName = listToName(nameList.tail)
-
-      if (nodeFactor >= nodeThreshold && edgeFactor >= edgeThreshold && nodes.contains(parentName)) {
-        nodes += listToName(nameList) -> Node(nameList.head, count, nodeFactor, count)
-
-        if (!nameList.tail.isEmpty) {
-          relations += Relation(parentName, listToName(nameList), edgeFactor)
-          nodes(parentName).finalCount -= count
-        }
-      } else if (!nameList.tail.isEmpty) {
-        nodes.get(parentName) match {
-          case Some(node) =>
-            node.ignoredCount += count
-            node.finalCount -= count
-          case None =>
-        }
+      findParent(nameList.tail) match {
+        case None =>
+        case Some(parentNode) =>
+          if (nodeFactor >= nodeThreshold && edgeFactor >= edgeThreshold) {
+            val node = Node(listToName(nameList), nameList.head, count, nodeFactor, count)
+            val relation = Relation(node, edgeFactor)
+            parentNode.relations = relation :: parentNode.relations
+          } else {
+            parentNode.ignoredCount += count
+          }
+          parentNode.finalCount -= count
       }
     }
 
-    nodes.withFilter(_._1 != "").foreach(t => t._2.toStringBuilder(result, t._1))
-    relations.foreach(_.toStringBuilder(result))
+    rootNode
+  }
+
+  private def convertTreeToDot(rootNode: Node, result: StringBuilder) {
+    def dumpNode(node: Node) {
+      node.toStringBuilder(result)
+
+      node.relations.foreach { relation =>
+        dumpNode(relation.to)
+        relation.toStringBuilder(result, node.name)
+      }
+    }
+
+    for (realRootRelation <- rootNode.relations) {
+      dumpNode(realRootRelation.to)
+    }
   }
 
   private def calcEdgeFactor(count: Int, nameList: List[String]) =
