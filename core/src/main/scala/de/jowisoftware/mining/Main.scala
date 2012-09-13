@@ -30,12 +30,31 @@ object Main extends Logging {
     SLF4JBridgeHandler.removeHandlersForRootLogger()
     SLF4JBridgeHandler.install()
 
-    Swing.onEDT {
-      val db = openDatabase
-      val pluginManager = preparePluginManager
-      checkPlugins(pluginManager)
+    performDBUpdate()
+    Swing.onEDT(startApp)
+  }
 
-      new MainWindow(db, pluginManager).visible = true
+  private def startApp {
+    val db = openDatabase
+
+    val pluginManager = preparePluginManager
+    checkPlugins(pluginManager)
+
+    new MainWindow(db, pluginManager).visible = true
+  }
+
+  private def performDBUpdate() {
+    warn("Cheking whether database upgrade is required")
+
+    val db = openDatabase
+    val hasUpdates = db.rootNode.updateRequired
+    db.shutdown
+
+    if (hasUpdates) {
+      warn("Performing update")
+      UpdateDB.main(Array())
+    } else {
+      warn("Database version is already up to date")
     }
   }
 

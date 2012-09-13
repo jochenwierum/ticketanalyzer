@@ -7,6 +7,7 @@ import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 
 object RootNode extends NodeCompanion[RootNode] {
+  val graphVersion = 1
   def apply = new RootNode
 }
 
@@ -26,10 +27,17 @@ class RootNode extends MiningNode {
     }
   }
 
-  override def initProperties =
+  override def initProperties = {
     state(0)
+    graphVersion(RootNode.graphVersion)
+  }
+
+  def updateRequired = graphVersion() < RootNode.graphVersion
+  def updateFinished = graphVersion(RootNode.graphVersion)
 
   val state = intProperty("state")
+  val graphVersion = intProperty("graphVersion", 0)
+
   lazy val statusCollection = getCollection(StatusRepository)
   lazy val componentCollection = getCollection(ComponentRepository)
   lazy val versionCollection = getCollection(VersionRepository)

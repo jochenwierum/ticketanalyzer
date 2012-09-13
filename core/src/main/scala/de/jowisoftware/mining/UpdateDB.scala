@@ -28,6 +28,12 @@ object UpdateDB {
       GlobalGraphOperations.at(db.service).getAllRelationships,
       r => Relationship.wrapNeoRelationship(r, db))
 
+    println("Updating schema version")
+    db.inTransaction { t =>
+      t.rootNode.updateFinished
+      t.success
+    }
+
     println("Update finished")
     db.shutdown
   }
