@@ -27,13 +27,26 @@ object WorkflowTreeAnalyzer {
 
     def children = relations
 
-    def toStringBuilder(builder: mutable.StringBuilder, highlight: Boolean) =
+    def toStringBuilder(builder: mutable.StringBuilder, highlight: Boolean) {
       builder append name append
         """ [label="""" append label append """\ntotal: """ append
         count append " (" append perCent(factor) append ")" append
         """\nfinal: """ append perCentWithLabel(finalCount, count) append
         """\nignored: """ append perCentWithLabel(ignoredCount, count) append
         "\"" append (if (highlight) ", color = red, fontcolor = red" else "") append "];\n"
+
+      val highlightedChild = relations.reduceOption((r1, r2) =>
+        if (r1.factor > r2.factor) r1 else r2).flatMap(r =>
+        if (r.factor < finalCount.floatValue() / count) None else Some(r))
+
+      relations.foreach { relation =>
+        val highlightNode = highlight &&
+          highlightedChild.map(_ == relation).getOrElse(false)
+
+        relation.to.toStringBuilder(builder, highlightNode)
+        relation.toStringBuilder(builder, name, highlightNode)
+      }
+    }
   }
 
   private class Relation(val to: Node, val factor: Double) {
@@ -198,28 +211,12 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
   }
 
   private def convertTreeToDot(rootNode: Node, result: StringBuilder) {
-    def dumpNode(node: Node, wasHighlighted: Boolean) {
-      node.toStringBuilder(result, wasHighlighted)
-
-      val highlightedChild = node.children.reduceOption((r1, r2) =>
-        if (r1.factor > r2.factor) r1 else r2).flatMap(r =>
-        if (r.factor < node.finalCount.floatValue() / node.count) None else Some(r))
-
-      node.children.foreach { relation =>
-        val highlightNode = wasHighlighted &&
-          highlightedChild.map(_ == relation).getOrElse(false)
-
-        dumpNode(relation.to, highlightNode)
-        relation.toStringBuilder(result, node.name, highlightNode)
-      }
-    }
-
     val highlightedRootRelation = rootNode.children.reduce((r1, r2) =>
       if (r1.to.count > r2.to.count) r1 else r2)
 
     for (realRootRelation <- rootNode.children) {
-      dumpNode(realRootRelation.to,
-        highlight && realRootRelation == highlightedRootRelation)
+      val highlightNode = highlight && realRootRelation == highlightedRootRelation
+      realRootRelation.to.toStringBuilder(result, highlightNode)
     }
   }
 
