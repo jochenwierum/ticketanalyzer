@@ -21,9 +21,15 @@ object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
 }
 
 class Ticket extends MiningNode {
-  val version = 2
+  val version = 3
   def updateFrom(oldVersion: Int) = {
-    if (oldVersion < 2) {
+    if (oldVersion < 3) {
+      if (oldVersion == 2) {
+        for (rootRel <- getFirstRelationship(Direction.BOTH, RootOf)) {
+          rootRel.delete()
+        }
+      }
+
       def findRoot(e: Node): Node =
         e.neighbors(Direction.OUTGOING, Seq(Updates.relationType)).toList match {
           case Nil => e
@@ -52,7 +58,7 @@ class Ticket extends MiningNode {
   lazy val progress = intProperty("progress")
   lazy val spentTime = floatProperty("spentTime")
 
-  def isRecentVersion= neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
+  def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
   def isRootVersion = neighbors(Direction.OUTGOING, Seq(Updates.relationType)).size == 0
 
   def findComment(id: Int) = TicketComment.find(readableDb, createCommentUid(id))

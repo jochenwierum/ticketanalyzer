@@ -71,5 +71,5 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
 
   override def toString() = toString(innerRelationship.getId(), innerRelationship)
 
-  def delete = innerRelationship.delete()
+  def delete() = innerRelationship.delete()
 }
