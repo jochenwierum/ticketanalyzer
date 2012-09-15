@@ -16,45 +16,6 @@ import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
 import de.jowisoftware.neo4j.Database
 
 object WorkflowTreeAnalyzer {
-  private class Node(val name: String, val label: String, val count: Int, val factor: Double,
-      var finalCount: Int, var ignoredCount: Int = 0) {
-
-    private var relations: List[Relation] = Nil
-
-    def addChild(child: Node, factor: Double) {
-      relations = new Relation(child, factor) :: relations
-    }
-
-    def children = relations
-
-    def toStringBuilder(builder: mutable.StringBuilder, highlight: Boolean) {
-      builder append name append
-        """ [label="""" append label append """\ntotal: """ append
-        count append " (" append perCent(factor) append ")" append
-        """\nfinal: """ append perCentWithLabel(finalCount, count) append
-        """\nignored: """ append perCentWithLabel(ignoredCount, count) append
-        "\"" append (if (highlight) ", color = red, fontcolor = red" else "") append "];\n"
-
-      val highlightedChild = relations.reduceOption((r1, r2) =>
-        if (r1.factor > r2.factor) r1 else r2).flatMap(r =>
-        if (r.factor < finalCount.floatValue() / count) None else Some(r))
-
-      relations.foreach { relation =>
-        val highlightNode = highlight &&
-          highlightedChild.map(_ == relation).getOrElse(false)
-
-        relation.to.toStringBuilder(builder, highlightNode)
-        relation.toStringBuilder(builder, name, highlightNode)
-      }
-    }
-  }
-
-  private class Relation(val to: Node, val factor: Double) {
-    def toStringBuilder(builder: mutable.StringBuilder, from: String, highlight: Boolean) =
-      builder append from append " -> " append to.name append " [label = \"" append
-        perCent(factor)+"\"" append (if (highlight) ", color = red, fontcolor = red" else "") append "];\n"
-  }
-
   private def status(ticket: Ticket): String =
     ticket.getFirstNeighbor(Direction.OUTGOING, HasStatus.relationType, Status)
       .map { _.name() } getOrElse "?"
@@ -67,8 +28,6 @@ object WorkflowTreeAnalyzer {
     _.replaceAll("[^A-Za-z0-9]+", "")
   }.mkString("_")
 
-  private def perCentWithLabel(a: Int, b: Int) = a+" ("+perCent(a.floatValue / b)+")"
-  private def perCent(f: Double) = (100.0 * f).formatted("%.2f %%")
 }
 
 class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
@@ -90,17 +49,13 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
 
   private val highlight = options("highlight").toLowerCase == "true"
 
-  private var workflowTree: SortedMap[List[String], Int] =
-    SortedMap.empty[List[String], Int](new Ordering[List[String]]() {
-      def compare(l1: List[String], l2: List[String]) =
-        if (l1.size < l2.size) -1
-        else if (l1.size > l2.size) +1
-        else
-          l1 zip l2 find (x => x._1 != x._2) match {
-            case None => 0
-            case Some((x1, x2)) => x1 compare x2
-          }
-    })
+  private val rootNode = new Node("root", "")
+
+  private def findNode(parentNames: List[String]): Node = parentNames match {
+    case Nil => rootNode
+    case head :: tail =>
+      findNode(tail).children.map(_.to).find(_.label == head).get
+  }
 
   def run() {
     waitDialog.max = getTickets.size
@@ -110,10 +65,10 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
       processVersions(t, options("ownerChange").toLowerCase() == "true")
     }
 
+    updateStats
+
     val dotWrapper = new DotWrapper(dotFile)
-    val image = dotWrapper.run(
-      generateDotCode(options("edgeThreshold").toFloat,
-        options("nodeThreshold").toFloat))
+    val image = dotWrapper.run(generateDotCode)
 
     waitDialog.hide
     val resultDialog = new ImageDialog(image, parent,
@@ -155,62 +110,57 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
     processVersion(baseTicket, Nil, "")
   }
 
-  private def addStatus(status: List[String]) =
-    workflowTree += status -> (workflowTree.getOrElse(status, 0) + 1)
+  private def addStatus(status: List[String]) = {
+    val parent = findNode(status.tail)
+    parent.children.find(_.to.label == status.head) map (_.to) match {
+      case Some(node) =>
+        node.incrementCounts()
+      case None =>
+        val node = new Node(listToName(status), status.head)
+        node.incrementCounts()
+        parent.addChild(node)
+    }
+  }
 
-  private def generateDotCode(nodeThreshold: Float, edgeThreshold: Float) = {
-    val relDepthCount = calcRelativeCount
+  private def updateStats {
+    rootNode.setCounts((0 /: rootNode.children)(_ + _.to.count))
+    rootNode.factor = 1f
 
+    def updateSubtree(node: Node) {
+      for (relation <- node.children; child = relation.to) {
+        val percent = child.count.doubleValue / node.count
+
+        if (percent > edgeThreshold && percent * node.factor > nodeThreshold) {
+          relation.factor = percent
+          child.factor = percent * node.factor
+          node.addNonFinal(child.count)
+
+          updateSubtree(child)
+        } else {
+          node.addNonFinal(child.count)
+          node.addIgnored(child.count)
+          child.hide()
+        }
+      }
+    }
+
+    updateSubtree(rootNode)
+  }
+
+  private def generateDotCode = {
     val result = new mutable.StringBuilder
     result append "digraph {\n"
     result append "dpi=" append options("dpi") append ";\n"
     result append "rankdir=TD;\n"
 
-    createDotBody(relDepthCount, result)
+    convertTreeToDot(result)
 
     result append "}\n"
 
     result.toString
   }
 
-  private def createDotBody(
-    relDepthCount: Map[List[String], Double], result: StringBuilder) {
-
-    val rootNode = makeTree(relDepthCount)
-    convertTreeToDot(rootNode, result)
-  }
-
-  private def makeTree(relDepthCount: Map[List[String], Double]) = {
-    val rootNode = new Node("root", "", 0, 0f, 0)
-
-    def findParent(parentNames: List[String]): Option[Node] = parentNames match {
-      case Nil => Some(rootNode)
-      case head :: tail =>
-        findParent(tail).flatMap { parent => parent.children.map(_.to).find(_.label == head) }
-    }
-
-    for ((nameList, count) <- workflowTree) {
-      val nodeFactor = relDepthCount(nameList)
-      val edgeFactor = calcEdgeFactor(count, nameList)
-
-      findParent(nameList.tail) match {
-        case None =>
-        case Some(parentNode) =>
-          if (nodeFactor >= nodeThreshold && edgeFactor >= edgeThreshold) {
-            val node = new Node(listToName(nameList), nameList.head, count, nodeFactor, count)
-            val relation = new Relation(node, edgeFactor)
-            parentNode.addChild(node, edgeFactor)
-          } else {
-            parentNode.ignoredCount += count
-          }
-          parentNode.finalCount -= count
-      }
-    }
-
-    rootNode
-  }
-
-  private def convertTreeToDot(rootNode: Node, result: StringBuilder) {
+  private def convertTreeToDot(result: StringBuilder) {
     val highlightedRootRelation = rootNode.children.reduce((r1, r2) =>
       if (r1.to.count > r2.to.count) r1 else r2)
 
@@ -218,26 +168,5 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
       val highlightNode = highlight && realRootRelation == highlightedRootRelation
       realRootRelation.to.toStringBuilder(result, highlightNode)
     }
-  }
-
-  private def calcEdgeFactor(count: Int, nameList: List[String]) =
-    if (nameList.tail.isEmpty) 1.0
-    else (count.floatValue / workflowTree(nameList.tail))
-
-  private def calcRelativeCount = {
-    var relDepthCount = Map[List[String], Double](Nil -> 1.0)
-
-    val levelCount = (Map[Int, Int]() /: workflowTree) {
-      case (map, (name, count)) =>
-        val l = name.length
-        map + (l -> (map.getOrElse(l, 0) + count))
-    }
-
-    for ((key, value) <- workflowTree) {
-      relDepthCount += key -> ((value.doubleValue / levelCount(key.length))
-        * relDepthCount(key.tail))
-    }
-
-    relDepthCount
   }
 }
