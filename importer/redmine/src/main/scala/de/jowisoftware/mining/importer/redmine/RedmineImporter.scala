@@ -23,6 +23,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
 
   private val client = new RedmineClient(config("url"), config("key"))
   private val resolver = new CachedResolver
+  private val contentCache = new FileCache
 
   def run() {
     info("Preparing import...")
@@ -36,12 +37,14 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
 
   private def prepareImport {
     var count = 0L
-    client.retrivePagedXML("issues.xml", Map("project_id" -> config("project")),
+    client.retrivePagedXML("issues.xml", Map("project_id" -> config("project"),
+      "status_id" -> "*"),
       page => {
         page \ "issue" foreach { node =>
           val id = (node \ "id" text).toInt
           val ticketXML = client.retrieveXML("issues/"+id+".xml", Map(
             "include" -> "children,attachments,relations,changesets,journals"))
+          contentCache.addChunk(ticketXML)
           fillCaches(ticketXML)
         }
         count += (page \ "issue").length
@@ -61,7 +64,8 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
 
     ticketXML \ "journals" \ "journal" foreach { journal =>
       (journal \ "@name" text) match {
-        case "tracker_id" => resolver.cacheTracker(project, journal \ "@name" text, journal \ "@id" intText)
+        case "tracker_id" => resolver.cacheTracker(project,
+          journal \ "@name" text, journal \ "@id" intText)
         case "status_id" => resolver.cacheStatus(journal)
         case "assigned_to_id" => resolver.cacheUser(journal)
         case "category_id" => resolver.cacheCategory(journal)
@@ -74,14 +78,9 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
   }
 
   private def importTickets =
-    client.retrivePagedXML("issues.xml", Map("project_id" -> config("project")), { page =>
-      page \ "issue" foreach { node =>
-        val id = (node \ "id" text).toInt
-        val ticketXML = client.retrieveXML("issues/"+id+".xml", Map(
-          "include" -> "children,attachments,relations,changesets,journals"))
-        processTicket(ticketXML)
-      }
-    })
+    contentCache.readChunks foreach { ticketXML =>
+      processTicket(ticketXML)
+    }
 
   private def receiveTicket(ticketXML: Node) = {
     val id = (ticketXML \ "id" text).toInt
