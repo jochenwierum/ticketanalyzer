@@ -101,7 +101,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
 
     debug("Creating history")
     val baseTicket = createBaseTicket(ticket, updates)
-    val ticketHistory = createTicketHistory(ticket, updates)
+    val ticketHistory = createTicketHistory(baseTicket, updates)
 
     events.loadedTicket(config("repositoryname"), ticketHistory, comments)
   }
