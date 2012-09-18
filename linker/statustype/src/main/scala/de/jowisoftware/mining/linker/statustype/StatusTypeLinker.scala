@@ -21,14 +21,14 @@ class StatusTypeLinker extends Linker with Logging {
     val statusMap = readStatusProperties
 
     tickets.rootNode.statusCollection.children foreach { status =>
-      events.foundStatusMap(status, statusMap.getOrElse(status.name(), warnIgnore(status)))
+      events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
     }
 
     events.finish
   }
 
   private def warnIgnore(status: Status) = {
-    warn("State '"+status.name()+"' is not mapped! Ignoring it...")
+    warn("State '"+status.name().toLowerCase+"' is not mapped! Ignoring it...")
     StatusType.ignore
   }
 
