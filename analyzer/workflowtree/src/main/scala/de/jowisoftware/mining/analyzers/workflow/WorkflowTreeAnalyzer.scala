@@ -63,8 +63,6 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
 
     getTickets.foreach { t =>
       waitDialog.tick()
-      if (t.ticketId() == 11844)
-        println("Stop!")
       processVersions(t)
     }
 
