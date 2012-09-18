@@ -192,10 +192,16 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
   }
 
   private def createUpdates(ticketXML: Node, comments: Seq[TicketCommentData], project: String) = {
-    ticketXML \ "journals" \ "journal" map { node =>
+    ticketXML \ "journals" \ "journal" flatMap { node =>
       val id = (node \ "@id" intText)
       val hasComment = comments.find(_(TicketCommentDataFields.id) == id).isDefined
-      new ChangeParser(resolver, project).createChangesList(hasComment, node)
+      try {
+        Some(new ChangeParser(resolver, project).createChangesList(hasComment, node))
+      } catch {
+        case e: Exception =>
+          error("Could not parse node fragment, ignoring this update: "+node.formatted, e)
+          None
+      }
     }
   }
 }

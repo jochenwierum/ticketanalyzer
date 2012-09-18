@@ -34,10 +34,10 @@ class ChangeParser(resolver: CachedResolver, private var project: String) extend
       new SimpleChange(date, field, oldValue, newValue, user)
 
     def intChange(field: TicketDataFields.FieldDescription[Int]) =
-      new SimpleChange(date, field, oldValue.toInt, newValue.toInt, user)
+      new SimpleChange(date, field, toInt(oldValue), toInt(newValue), user)
 
     def floatChange(field: TicketDataFields.FieldDescription[Float]) =
-      new SimpleChange(date, field, oldValue.toFloat, newValue.toFloat, user)
+      new SimpleChange(date, field, toFloat(oldValue), toFloat(newValue), user)
 
     def lookupChange(field: TicketDataFields.FieldDescription[String], lookupMethod: Int => String) =
       if (oldValue.isEmpty)
@@ -74,4 +74,11 @@ class ChangeParser(resolver: CachedResolver, private var project: String) extend
   private def createCommentChange(user: String, id: Int, date: java.util.Date) = {
     new ArrayChange(date, comments, None, Some(id), user)
   }
+
+  private def parse[T](x: String, default: T, decode: String => T) = try {
+    if (x.isEmpty()) decode(x) else default
+  } catch { case e: NumberFormatException => default }
+
+  private def toInt(x: String): Int = parse(x, 0, _.toInt)
+  private def toFloat(x: String): Float = parse(x, 0f, _.toFloat)
 }
