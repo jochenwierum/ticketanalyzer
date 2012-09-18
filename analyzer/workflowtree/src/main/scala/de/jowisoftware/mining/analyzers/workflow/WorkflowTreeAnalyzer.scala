@@ -46,6 +46,7 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
 
   private val nodeThreshold = options("nodeThreshold").toFloat / 100
   private val edgeThreshold = options("edgeThreshold").toFloat / 100
+  private val trackOwnerChange = options("ownerChange").toLowerCase() == "true"
 
   private val highlight = options("highlight").toLowerCase == "true"
 
@@ -62,7 +63,9 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
 
     getTickets.foreach { t =>
       waitDialog.tick()
-      processVersions(t, options("ownerChange").toLowerCase() == "true")
+      if (t.ticketId() == 11844)
+        println("Stop!")
+      processVersions(t)
     }
 
     updateStats
@@ -83,7 +86,7 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
       if (ticket.isRootVersion)
     } yield ticket
 
-  private def processVersions(baseTicket: Ticket, includeOwnerChange: Boolean) {
+  private def processVersions(baseTicket: Ticket) {
     @tailrec
     def processVersion(ticket: Ticket, oldStatus: List[String], oldOwner: String) {
       val currentStatus = status(ticket)
@@ -92,7 +95,7 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
       val ownerChange = (newOwner != oldOwner)
       val statusChange = (oldStatus.isEmpty || currentStatus != oldStatus.head)
 
-      val newStatus = if (statusChange || (ownerChange && includeOwnerChange)) {
+      val newStatus = if (statusChange || (ownerChange && trackOwnerChange)) {
         val statusList = currentStatus :: oldStatus
         addStatus(statusList)
         statusList
