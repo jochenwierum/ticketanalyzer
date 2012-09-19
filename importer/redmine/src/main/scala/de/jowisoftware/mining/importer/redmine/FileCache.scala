@@ -11,12 +11,13 @@ class FileCache {
   private val cacheFile = new DataOutputStream(outputStream)
 
   def addChunk(xml: Elem) {
-    val xmlAsString = Utility.toXML(xml,
+    val bytes = Utility.toXML(xml,
       stripComments = false,
       decodeEntities = true,
       preserveWhitespace = false,
-      minimizeTags = false).toString
-    cacheFile.writeUTF(xmlAsString)
+      minimizeTags = false).toString.getBytes("UTF-8")
+    cacheFile.writeInt(bytes.size)
+    cacheFile.write(bytes)
   }
 
   def readChunks(): Stream[Elem] = {
@@ -27,8 +28,10 @@ class FileCache {
 
     def nextElement(): Stream[Elem] =
       try {
-        val text = stream.readUTF()
-        val doc = XML.load(Source.fromString(text))
+        val length = stream.readInt()
+        val bytes = new Array[Byte](length)
+        stream.read(bytes)
+        val doc = XML.load(Source.fromString(new String(bytes, "UTF-8")))
         doc #:: nextElement()
       } catch {
         case e: EOFException =>
