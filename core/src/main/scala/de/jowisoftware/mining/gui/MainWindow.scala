@@ -70,7 +70,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     tabs.selection.index = state + 1
 
     shellPane.enabled = state > 0
-    statisticsPane.enabled = state > 0
+
     shellPane.content.asInstanceOf[ShellPane].newViewState(state)
     statisticsPane.content.asInstanceOf[StatisticsPane].updateStatistics()
   }
