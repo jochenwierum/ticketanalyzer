@@ -2,8 +2,14 @@ package de.jowisoftware.mining.analyzer.data
 
 import scala.swing.Table
 import javax.swing.table.DefaultTableModel
+import scala.swing.ScrollPane
+import javax.swing.table.DefaultTableColumnModel
+import javax.swing.table.TableColumn
+import java.awt.Dimension
+import javax.swing.JTable
+import javax.swing.JViewport
 
-class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) extends Table {
+class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) extends ScrollPane {
   private val normalizedRows = matrix.normalizedRows
   private val maxCols = normalizedRows.map(_.max)
   private val minCols = normalizedRows.map(_.min)
@@ -18,17 +24,43 @@ class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) exten
     }
   }
 
-  private val tableModel = new DefaultTableModel(0, values(0).size + 1) {
+  private val tableModel = new DefaultTableModel(0, values(0).size) {
     override def isCellEditable(x: Int, y: Int) = false
+    override def getColumnName(column: Int) = headers(column)
 
-    private val headers = "" +: matrix.columnTitles.map { "<html><b>"+_+"</b></html>" }
-    this.addRow(headers.toArray[Object])
+    private val headers = matrix.columnTitles
 
-    private val rowHeaders = matrix.rowTitles.map { "<html><b>"+_+"</b></html>" }
     for ((rowData, row) <- values.zipWithIndex) {
-      this.addRow((rowHeaders(row) +: rowData).toArray[Object])
+      this.addRow(rowData.toArray[Object])
     }
   }
 
-  model = tableModel
+  private val rowHeaderColumnModel = new DefaultTableModel(0, 1) {
+    private val rowHeaders = matrix.rowTitles
+    for (i <- 0 until tableModel.getRowCount()) {
+      this.addRow(Array[Object](rowHeaders(i)))
+    }
+  }
+
+  private val table = new Table
+  table.model = tableModel
+  private val rowHeaderTable = new Table
+  rowHeaderTable.model = rowHeaderColumnModel
+
+  table.peer.setSelectionModel(rowHeaderTable.peer.getSelectionModel())
+
+  rowHeaderTable.maximumSize = new Dimension(80, 10000)
+
+  rowHeaderTable.background = table.peer.getTableHeader().getBackground()
+  rowHeaderTable.foreground = table.peer.getTableHeader().getForeground()
+
+  private val viewport = new JViewport()
+  viewport.setView(rowHeaderTable.peer)
+  viewport.setPreferredSize(rowHeaderTable.maximumSize)
+
+  table.autoResizeMode = Table.AutoResizeMode.Off
+  rowHeaderTable.autoResizeMode = Table.AutoResizeMode.Off
+
+  contents = table
+  peer.setRowHeader(viewport)
 }
