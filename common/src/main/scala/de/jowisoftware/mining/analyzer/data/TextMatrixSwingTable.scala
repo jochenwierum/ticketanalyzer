@@ -36,6 +36,8 @@ class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) exten
   }
 
   private val rowHeaderColumnModel = new DefaultTableModel(0, 1) {
+    override def isCellEditable(x: Int, y: Int) = false
+
     private val rowHeaders = matrix.rowTitles
     for (i <- 0 until tableModel.getRowCount()) {
       this.addRow(Array[Object](rowHeaders(i)))
