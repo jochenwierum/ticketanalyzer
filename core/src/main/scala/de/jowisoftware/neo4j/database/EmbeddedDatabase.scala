@@ -1,18 +1,15 @@
 package de.jowisoftware.neo4j.database
 
-import scala.collection.JavaConversions.iterableAsScalaIterable
-import org.neo4j.kernel.EmbeddedGraphDatabase
-import de.jowisoftware.neo4j.content.Node
-import de.jowisoftware.neo4j.content.NodeCompanion
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.neo4j.DBWithTransaction
-import org.neo4j.server.WrappingNeoServerBootstrapper
-import scala.collection.immutable.SortedSet
-import scala.annotation.tailrec
-import org.neo4j.kernel.AbstractGraphDatabase
-import de.jowisoftware.util.FileUtils
-import de.jowisoftware.neo4j.Database
 import java.io.File
+
+import scala.collection.JavaConversions.mutableMapAsJavaMap
+import scala.collection.mutable
+
+import org.neo4j.kernel.{ AbstractGraphDatabase, EmbeddedGraphDatabase }
+
+import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
+import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
+import de.jowisoftware.util.FileUtils
 
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
   private var databaseService: AbstractGraphDatabase = _
@@ -22,7 +19,9 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
   def service = databaseService
 
   protected def init() {
-    databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath)
+    val config = mutable.Map("keep_logical_logs" -> "1 hours")
+    databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath,
+      mutableMapAsJavaMap(config))
 
     // make sure the root note is initialized
     inTransaction { transaction =>
