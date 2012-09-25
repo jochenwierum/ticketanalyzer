@@ -40,13 +40,12 @@ class HistoryGeneratorAnalyzer(db: Database[RootNode], options: Map[String, Stri
   }
 
   private def transformToTable(result: ExecutionResult) =
-    SortedMap.empty[String, List[String]](Ordering.fromLessThan(isLess)) ++
-      (Map[String, List[String]]() /: result) {
-        case (table, newRow) =>
-          val version = newRow("version").asInstanceOf[String]
-          val title = newRow("title").asInstanceOf[String]
-          table + (version -> (title :: table.getOrElse(version, Nil)))
-      }
+    (SortedMap.empty[String, List[String]](Ordering.fromLessThan(isLess)) /: result) {
+      case (table, newRow) =>
+        val version = newRow("version").asInstanceOf[String]
+        val title = newRow("title").asInstanceOf[String]
+        table + (version -> (title :: table.getOrElse(version, Nil)))
+    }
 
   private def isLess(lhs: String, rhs: String): Boolean =
     (HistoryGeneratorAnalyzer.versionMatcher.findFirstIn(lhs),
