@@ -51,10 +51,11 @@ class HistoryGeneratorAnalyzer(db: Database[RootNode], options: Map[String, Stri
     (HistoryGeneratorAnalyzer.versionMatcher.findFirstIn(lhs),
       HistoryGeneratorAnalyzer.versionMatcher.findFirstIn(rhs)) match {
         case (Some(lhsMatch), Some(rhsMatch)) =>
-          val v1 = lhsMatch.split("""\.""") map (_.toInt)
-          val v2 = rhsMatch.split("""\.""") map (_.toInt)
+          val v1 = lhsMatch.split("""\.""").map(_.toInt).toSeq
+          val v2 = rhsMatch.split("""\.""").map(_.toInt).toSeq
 
-          v1 zipAll (v2, 0, 0) forall (pair => pair._1 >= pair._2)
+          if (v1 == v2) false
+          else v1 zipAll (v2, 0, 0) forall (pair => pair._1 >= pair._2)
 
         case (None, x) => false
         case (x, None) => true
