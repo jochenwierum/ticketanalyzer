@@ -1,0 +1,10 @@
+description = "History Generator analyzer plugin"
+
+dependencies {
+}
+
+eclipse {
+  project {
+    name = 'analyzer-HistoryGenerator'
+  }
+}
