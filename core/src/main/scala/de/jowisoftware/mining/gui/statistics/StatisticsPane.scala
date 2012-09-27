@@ -55,13 +55,13 @@ class StatisticsPane(db: Database[RootNode], parent: Frame) extends ScrollPane w
     val result = engine.execute(
       "START root = node(0) "+
         "MATCH root --> ticketrepositories --> tickets --> ticket "+
-        "WHERE ticketrepositories._class =~ /.*TicketRepositoryRepository/ "+
+        "WHERE ticketrepositories._class =~ '.*TicketRepositoryRepository' "+
         "RETURN tickets.name AS name, count(ticket) AS count")
 
     val distinctResult = engine.execute(
       "START root = node(0) "+
         "MATCH root --> ticketrepositories --> tickets --> ticket "+
-        "WHERE ticketrepositories._class =~ /.*TicketRepositoryRepository/ "+
+        "WHERE ticketrepositories._class =~ '.*TicketRepositoryRepository' "+
         "RETURN tickets.name AS name, count(distinct ticket.id) AS count")
 
     result.map { row =>
@@ -75,13 +75,13 @@ class StatisticsPane(db: Database[RootNode], parent: Frame) extends ScrollPane w
     val commitsResult = engine.execute(
       "START root = node(0) "+
         "MATCH root --> commitrepositories --> commits -[:contains]-> commit "+
-        "WHERE commitrepositories._class =~ /.*CommitRepositoryRepository/ "+
+        "WHERE commitrepositories._class =~ '.*CommitRepositoryRepository' "+
         "RETURN commits.name AS name, count(commit) AS count")
 
     val filesResult = engine.execute(
       "START root = node(0) "+
         "MATCH root --> commitrepositories --> commits -[:contains_files]-> () --> file "+
-        "WHERE commitrepositories._class =~ /.*CommitRepositoryRepository/ "+
+        "WHERE commitrepositories._class =~ '.*CommitRepositoryRepository' "+
         "RETURN commits.name AS name, count(file) AS count")
 
     commitsResult.map { row =>
