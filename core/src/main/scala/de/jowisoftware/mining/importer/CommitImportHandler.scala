@@ -65,14 +65,12 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     commit
   }
 
-  private def addFiles(commitData: CommitData, repository: CommitRepository, commit: Commit) {
-    commitData(files).foreach {
-      case (filename, value) =>
-        val file = getFile(repository, filename)
-        val relation = commit.add(file, ChangedFile)
-        relation.editType(value)
+  private def addFiles(commitData: CommitData, repository: CommitRepository, commit: Commit) =
+    for ((filename, value) <- commitData(files)) {
+      val file = getFile(repository, filename)
+      val relation = commit.add(file, ChangedFile)
+      relation.editType(value)
     }
-  }
 
   private def getFile(repository: CommitRepository, name: String): File =
     repository.files.findFile(name) match {
@@ -110,18 +108,15 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     }
 
   def connectMissingCommits(recentCommit: Commit, repository: CommitRepository) {
-    missingCommitLinks.get(repository.name()) match {
-      case None =>
-      case Some(map) =>
-        map.get(recentCommit.commitId()) match {
-          case None =>
-          case Some(list) =>
-            list.foreach { id =>
-              trace("Adding reference from already visited node "+id)
-              transaction.getNode(id, Commit).add(recentCommit, ChildOf)
-            }
-            map.remove(recentCommit.commitId())
-        }
+    for {
+      missingLinksByCommit <- missingCommitLinks.get(repository.name())
+      missingLinks <- missingLinksByCommit.get(recentCommit.commitId())
+    } {
+      missingLinks.foreach { missingLink =>
+        trace("Adding reference from already visited node "+id)
+        transaction.getNode(missingLink, Commit).add(recentCommit, ChildOf)
+      }
+      missingLinksByCommit.remove(recentCommit.commitId())
     }
   }
 

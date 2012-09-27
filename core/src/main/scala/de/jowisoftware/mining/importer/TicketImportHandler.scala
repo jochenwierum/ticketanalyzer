@@ -97,11 +97,9 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
     ticketData(tags).foreach(tag => ticket.add(getTag(tag), HasTag))
     ticketData(sponsors).foreach(sponsor => getPerson(sponsor).add(ticket, Sponsors))
 
-    ticketData(editor) match {
-      case Some(user) =>
-        val relationship = getPerson(user).add(ticket, ChangedTicket)
-        relationship.changes(ticketData.updatedFields.filter(_ != "editor").toArray)
-      case None =>
+    for (user <- ticketData(editor)) {
+      val relationship = getPerson(user).add(ticket, ChangedTicket)
+      relationship.changes(ticketData.updatedFields.filter(_ != "editor").toArray)
     }
 
     ticketData(comments).foreach { commentId =>

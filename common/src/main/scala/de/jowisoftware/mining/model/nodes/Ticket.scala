@@ -44,7 +44,6 @@ class Ticket extends MiningNode {
 
   lazy val uid = stringProperty("uid", "", true)
   lazy val ticketId = intProperty("id")
-  lazy val reporter = stringProperty("reporter")
   lazy val text = stringProperty("text")
   lazy val title = stringProperty("title")
   lazy val updateDate = dateProperty("updateDate")
