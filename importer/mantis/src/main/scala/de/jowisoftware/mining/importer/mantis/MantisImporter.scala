@@ -23,7 +23,18 @@ object MantisImporter {
   private val simpleDateFormat = Map(
     "en" -> DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"),
     "de" -> DateTimeFormat.forPattern("dd.MM.yyyy HH:mm"))
-  def fromSimpleDate(value: String, lang: String) = simpleDateFormat(lang).parseDateTime(value).toDate()
+
+  def fromSimpleDate(value: String, lang: String) = {
+    val date = simpleDateFormat(lang).parseDateTime(value)
+    val year = date.year.get
+
+    if (year < 80)
+      date.plusYears(2000).toDate
+    else if (year < 100)
+      date.plusYears(1900).toDate
+    else
+      date.toDate
+  }
 
   object MantisConstants {
     val public = 10

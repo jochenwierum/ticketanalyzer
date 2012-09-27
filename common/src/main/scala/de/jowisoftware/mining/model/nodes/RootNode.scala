@@ -7,7 +7,7 @@ import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 
 object RootNode extends NodeCompanion[RootNode] {
-  val graphVersion = 1
+  val graphVersion = 2
   def apply = new RootNode
 }
 

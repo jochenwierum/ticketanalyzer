@@ -20,26 +20,12 @@ object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
     findMultipleInIndex(db, "uid", uidQuery, this)
 }
 
-class Ticket extends MiningNode {
-  val version = 3
+class Ticket extends MiningNode with TicketUpdates {
+  val version = 4
   def updateFrom(oldVersion: Int) = {
-    if (oldVersion < 3) {
-      if (oldVersion == 2) {
-        for (rootRel <- getFirstRelationship(Direction.BOTH, RootOf)) {
-          rootRel.delete()
-        }
-      }
-
-      def findRoot(e: Node): Node =
-        e.neighbors(Direction.OUTGOING, Seq(Updates.relationType)).toList match {
-          case Nil => e
-          case x :: tail => findRoot(x)
-        }
-
-      val parent = findRoot(this)
-      if (parent != this)
-        parent.add(this, RootOf)
-    }
+    if (oldVersion < 2) updateToV2()
+    if (oldVersion < 3) updateToV3()
+    if (oldVersion < 4) updateToV4()
   }
 
   lazy val uid = stringProperty("uid", "", true)
