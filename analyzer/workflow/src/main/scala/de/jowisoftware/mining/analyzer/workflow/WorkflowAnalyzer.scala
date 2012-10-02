@@ -135,9 +135,10 @@ class WorkflowAnalyzer(db: Database[RootNode],
     val width = (3 * factor) max 1
     val red = (factor * 255).intValue
 
-    """%s -> %s [weight = %d, label = "%s", penwidth = %f, color = "#%2x0000", fontcolor="#%6$2x0000"];""" formatLocal (
-      Locale.ENGLISH,
-      from, to, weight, count, width, red)
+    """%s -> %s [weight = %d, label = "%s (%s %%)", penwidth = %f, """+
+      """color = "#%2x0000", fontcolor="#%7$2x0000"];""" formatLocal (
+        Locale.ENGLISH,
+        from, to, weight, count, (factor * 100).formatted("%.2f"), width, red)
   }
 
   private def formatResultToDotNodes(result: ExecutionResult): (List[String], Map[String, String]) = {
