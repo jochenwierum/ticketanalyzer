@@ -2,12 +2,14 @@ package de.jowisoftware.mining.gui
 
 import java.awt.Dimension
 
+import scala.swing.{ Dialog, Frame, Label, ProgressBar, Swing }
+import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-import scala.swing.{ Swing, ProgressBar, Label, Frame, Dialog, BorderPanel }
 
+import grizzled.slf4j.Logging
 import javax.swing.WindowConstants
 
-class ProgressDialog(p: Frame) {
+class ProgressDialog(p: Frame) extends Logging {
   private object window extends Dialog(p) {
     title = "Progress"
     peer.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)
@@ -39,12 +41,20 @@ class ProgressDialog(p: Frame) {
     }
   }
 
+  @volatile private var start: Long = _
   private var _max = 1L
   private var _value = 0L
 
-  def show() = window.visible = true
+  def show() = {
+    start = System.currentTimeMillis
+    window.visible = true
+  }
 
   def hide() = {
+    if (start > 0) {
+      info("UI was locked for "+(System.currentTimeMillis - start)+" ms")
+      start = 0
+    }
     window.visible = false
     window.dispose
   }
