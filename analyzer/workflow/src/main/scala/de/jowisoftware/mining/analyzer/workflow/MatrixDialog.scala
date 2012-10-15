@@ -26,7 +26,7 @@ class MatrixDialog(matrix: TextMatrix, parent: Frame) extends Dialog(parent) {
   contents = content
 
   modal = true
-  resizable = false
-  pack()
+  size = new Dimension(640, 480)
+  resizable = true
   centerOnScreen()
 }
