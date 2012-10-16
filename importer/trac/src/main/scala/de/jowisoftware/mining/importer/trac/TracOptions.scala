@@ -6,7 +6,7 @@ import de.jowisoftware.mining.UserOptions
 
 class TracOptions extends UserOptions("importer.trac") {
   protected val defaultResult: Map[String, String] = Map(
-    "url" -> "http://example.org/mytrac/login/xmlrpc",
+    "url" -> "http://example.org/mytrac",
     "username" -> "",
     "password" -> "",
     "repositoryname" -> "default")
