@@ -19,7 +19,8 @@ class KeywordLinkerOptions extends UserOptions("linker.keyword") {
     "filterShort" -> "true",
     "filterAbbrevs" -> "true",
     "filterCamelCase" -> "true",
-    "filterAccept" -> "true")
+    "filterAccept" -> "true",
+    "filterShortMinLength" -> "3")
 
   protected val htmlDescription = """<b>Keyword Linker</b>"""
 
@@ -38,7 +39,8 @@ class KeywordLinkerOptions extends UserOptions("linker.keyword") {
     label.horizontalAlignment = Alignment.Left
     panel.add("Filters", label)
     panel.add("Use universal filter", checkbox("filterUniversal", "Apply all regexes in settings/linker-keyword-universal-*.txt"))
-    panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than 3 letters"))
+    panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than n letters"))
+    panel.add("Maximum length of short words", text("filterShortMinLength"))
     panel.add("Reject numbers", checkbox("filterNum", "Remove words like '2'"))
     panel.add("Reject alphanumerical words", checkbox("filterAlphaNum", "Remove words like 'r4'"))
     panel.add("Accept uppercase abbrevs", checkbox("filterAbbrevs", "Accepts words like 'REST'"))

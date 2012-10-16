@@ -29,6 +29,11 @@ class KeywordLinker(
     options: Map[String, String], events: LinkEvents) extends Logging {
   import KeywordLinker._
 
+  if (isSet("filterShort")) {
+    require(options("filterShortMinLength").matches("""\d+"""))
+    require(options("filterShortMinLength").toInt > 0)
+  }
+
   private def isSet(key: String) = options.getOrElse(key, "false").toLowerCase == "true"
 
   private val lucene = new LuceneKeywordExtractor(options("language"))
@@ -48,7 +53,7 @@ class KeywordLinker(
       addFilter(preStemChain, AppUtil.withSettingsSource("linker-keywords-universal-prestem.txt")(new UniversalRegexFilter(_)), "linker-keywords-universal-prestem.txt")
       addFilter(postStemChain, AppUtil.withSettingsSource("linker-keywords-universal-poststem.txt")(new UniversalRegexFilter(_)), "linker-keywords-universal-poststem.txt")
     }
-    if (isSet("filterShort")) postStemChain.addFilter(new MinLengthFilter(3))
+    if (isSet("filterShort")) postStemChain.addFilter(new MinLengthFilter(options("filterShortMinLength").toInt))
     if (isSet("filterNum")) preStemChain.addFilter(NumericFilter)
     if (isSet("filterAlphaNum")) preStemChain.addFilter(AlphaNumericFilter)
     if (isSet("filterAbbrevs")) preStemChain.addFilter(AbbrevFilter)
