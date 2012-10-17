@@ -130,39 +130,39 @@ class WorkflowAnalyzer(db: Database[RootNode],
     new ImageDialog(graph, parent, "Ticket state workflow structure")
   }
 
-  def getEdgeString(from: String, to: String, count: Long, factor: Double) = {
-    val weight = (factor * 1000).intValue
-    val width = (3 * factor) max 1
-    val red = (factor * 255).intValue
-
-    """%s -> %s [weight = %d, label = "%s (%s %%)", penwidth = %f, """+
-      """color = "#%2x0000", fontcolor="#%7$2x0000"];""" formatLocal (
-        Locale.ENGLISH,
-        from, to, weight, count, (factor * 100).formatted("%.2f"), width, red)
-  }
+  private def getNodesStrings(names: Map[String, String], deadEnds: Map[String, Long]): Iterable[String] =
+    (names.map {
+      case (id, text) =>
+        """%s [label = "%s (final: %d)"];""" format (id, text, deadEnds.getOrElse(text, 0))
+    }) ++ ((deadEnds.keySet -- names.keySet) map {
+      case text =>
+        """%s [label = "%s (final: %d)"];""" format (nodeName(text), text, deadEnds(text))
+    })
 
   private def formatResultToDotNodes(result: ExecutionResult): (List[String], Map[String, String]) = {
-    var lastFrom = ""
-    var lastCount = 0L
     var nodeNames: Map[String, String] = Map()
     var lines: List[String] = Nil
 
-    for (row <- result) {
-      val from = row("from").asInstanceOf[String]
-      val to = row("to").asInstanceOf[String]
-      val count = row("count").asInstanceOf[Long]
+    val resultList = (for (row <- result) yield {
+      (row("from").asInstanceOf[String],
+        row("to").asInstanceOf[String], row("count").asInstanceOf[Long])
+    }).toList.groupBy(_._1)
 
-      if (from != lastFrom) {
-        lastFrom = from
-        lastCount = count
-      }
+    for ((from, targetsWithCount) <- resultList) {
+      val max = targetsWithCount.maxBy(_._3)._3
+      val sum = targetsWithCount.foldLeft(0L)(_ + _._3)
 
       val fromNodeName = nodeName(from)
-      val toNodeName = nodeName(to)
-
       nodeNames += fromNodeName -> from
-      nodeNames += toNodeName -> to
-      lines = getEdgeString(fromNodeName, toNodeName, count, count.doubleValue / lastCount) :: lines
+
+      for ((_, to, count) <- targetsWithCount) {
+        val toNodeName = nodeName(to)
+        nodeNames += toNodeName -> to
+
+        val countDouble = count.doubleValue
+        lines = getEdgeString(fromNodeName, toNodeName,
+          count, countDouble / max, countDouble / sum) :: lines
+      }
     }
 
     (lines, nodeNames)
@@ -172,12 +172,14 @@ class WorkflowAnalyzer(db: Database[RootNode],
     .replaceAll("[^A-Za-z0-9]+", "_")
     .replaceAll("^_+|_+$", "")
 
-  private def getNodesStrings(names: Map[String, String], deadEnds: Map[String, Long]): Iterable[String] =
-    (names.map {
-      case (id, text) =>
-        """%s [label = "%s (final: %d)"];""" format (id, text, deadEnds.getOrElse(text, 0))
-    }) ++ ((deadEnds.keySet -- names.keySet) map {
-      case text =>
-        """%s [label = "%s (final: %d)"];""" format (nodeName(text), text, deadEnds(text))
-    })
+  def getEdgeString(from: String, to: String, count: Long, colorFactor: Double, textFactor: Double) = {
+    val weight = (colorFactor * 1000).intValue
+    val width = (3 * colorFactor) max 1
+    val red = (colorFactor * 255).intValue
+
+    """%s -> %s [weight = %d, label = "%s (%s %%)", penwidth = %f, """+
+      """color = "#%2x0000", fontcolor="#%7$2x0000"];""" formatLocal (
+        Locale.ENGLISH,
+        from, to, weight, count, (textFactor * 100).formatted("%.2f"), width, red)
+  }
 }
