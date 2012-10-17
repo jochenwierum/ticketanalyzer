@@ -197,7 +197,8 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     </methodCall>
 
   def retrieveXML(request: Elem) = {
-    val rpcurl = new URL(config("url"))
+    val baseUrl = (if (config("url") endsWith "/") config("url") else config("url")+"/")
+    val rpcurl = new URL(baseUrl+"login/xmlrpc")
     val data = request.toString()
     val connection = rpcurl.openConnection()
 
