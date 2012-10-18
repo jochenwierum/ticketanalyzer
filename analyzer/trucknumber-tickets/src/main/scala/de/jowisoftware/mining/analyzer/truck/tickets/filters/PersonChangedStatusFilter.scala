@@ -4,7 +4,11 @@ import de.jowisoftware.mining.model.nodes.Person
 import de.jowisoftware.mining.model.nodes.Ticket
 import de.jowisoftware.mining.model.nodes.Keyword
 
-object PersonChangedStatusFilter extends Filter {
+class PersonChangedStatusFilter(count: Int) extends Filter {
+  require(count > 0)
+
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean =
-    ticket.allVersions.find(_.change map (_.changes() contains "status") getOrElse false).isDefined
+    ticket.allVersions.count(_.change map { change =>
+      (change.source == person) && (change.changes() contains "status")
+    } getOrElse false) >= count
 }

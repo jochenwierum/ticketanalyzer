@@ -8,11 +8,13 @@ import de.jowisoftware.mining.model.relationships.Links
 import de.jowisoftware.mining.model.nodes.Commit
 import de.jowisoftware.mining.model.relationships.Owns
 
-object PersonHasComittedFilter extends Filter {
+class PersonHasComittedFilter(count: Int) extends Filter {
+  require(count > 0)
+
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean =
-    ticket.neighbors(Direction.BOTH, Seq(Links.relationType)).exists {
+    ticket.neighbors(Direction.BOTH, Seq(Links.relationType)).count {
       case commit: Commit =>
         commit.getFirstNeighbor(Direction.INCOMING, Owns, Person).get == person
       case _ => false
-    }
+    } >= count
 }

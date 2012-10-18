@@ -15,16 +15,15 @@ object TruckTicketsAnalyzer {
     (1 - (value / (max * factor)) max 0)
 
   type WeightFunc = (Int, Int) => Double
-  val weightAlgorithms = Map[String, WeightFunc] (
-      "linear" -> mkLinearFunc(1),
-      "linear, 90 %" -> mkLinearFunc(.90),
-      "linear, 80 %" -> mkLinearFunc(.80),
-      "linear, 75 %" -> mkLinearFunc(.75),
-      "linear, 50 %" -> mkLinearFunc(.50),
-      "log" -> ((value: Int, max: Int) =>
-        if (value == 0) 1
-        else -math.log(value.doubleValue() / max) / math.log(max))
-      )
+  val weightAlgorithms = Map[String, WeightFunc](
+    "linear" -> mkLinearFunc(1),
+    "linear, 90 %" -> mkLinearFunc(.90),
+    "linear, 80 %" -> mkLinearFunc(.80),
+    "linear, 75 %" -> mkLinearFunc(.75),
+    "linear, 50 %" -> mkLinearFunc(.50),
+    "log" -> ((value: Int, max: Int) =>
+      if (value == 0) 1
+      else -math.log(value.doubleValue() / max) / math.log(max)))
 }
 
 class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
@@ -36,6 +35,17 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
     require(options contains "algorithm")
     require(options contains "members")
     require(options contains "members-action")
+
+    require(options contains "min-commits")
+    require(options contains "min-comments")
+    require(options contains "min-commits2")
+    require(options contains "min-comments2")
+    require(options contains "min-state-changes")
+    require(options("min-commits").matches("""\d+"""))
+    require(options("min-comments").matches("""\d+"""))
+    require(options("min-commits2").matches("""\d+"""))
+    require(options("min-comments2").matches("""\d+"""))
+    require(options("min-state-changes").matches("""\d+"""))
 
     val resultWindow = createCriticalKeywordsWindow
 
@@ -65,13 +75,22 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
     def isSet(name: String) = options(name).toLowerCase() == "true"
 
     val filter = new AndCollectionFilter()
-    if (isSet("filter-change-status")) filter add PersonChangedStatusFilter
+    if (isSet("filter-change-status")) {
+      filter add new PersonChangedStatusFilter(options("min-state-changes").toInt)
+    }
     if (isSet("filter-reporter")) filter add NonReporterFilter
-    if (isSet("filter-comment")) filter add WroteCommentFilter
-    if (isSet("filter-commit")) filter add PersonHasComittedFilter
+    if (isSet("filter-comment")) {
+      filter add new WroteCommentFilter(options("min-comments").toInt)
+    }
+    if (isSet("filter-commit")) {
+      filter add new PersonHasComittedFilter(options("min-commits").toInt)
+    }
     if (isSet("filter-status")) filter add StatusFilter
-    if (isSet("filter-comment-commit"))
-      filter add new OrCollectionFilter(PersonHasComittedFilter, WroteCommentFilter)
+    if (isSet("filter-comment-commit")) {
+      filter add new OrCollectionFilter(
+        new PersonHasComittedFilter((options("min-commits2").toInt)),
+        new WroteCommentFilter((options("min-comments2").toInt)))
+    }
 
     filter
   }
@@ -104,7 +123,7 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
       val tickets = occurrences.map(_("ticket")).toSet
       val persons = occurrences.map(_("person")).toSet
       val ratio = tickets.size * TruckTicketsAnalyzer.weightAlgorithms(
-          options("algorithm"))(persons.size, activePersons.size)
+        options("algorithm"))(persons.size, activePersons.size)
 
       Map("keyword" -> keyword.name(), "ratio" -> ratio, "ticketCount" -> tickets.size,
         "personCount" -> persons.size, "tickets" -> tickets,

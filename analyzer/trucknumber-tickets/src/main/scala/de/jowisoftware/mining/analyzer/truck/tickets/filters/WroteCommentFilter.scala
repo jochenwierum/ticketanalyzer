@@ -8,7 +8,9 @@ import de.jowisoftware.mining.model.relationships.HasStatus
 import de.jowisoftware.mining.model.nodes.Status
 import de.jowisoftware.mining.model.relationships.Updates
 
-object WroteCommentFilter extends Filter {
+class WroteCommentFilter(count: Int) extends Filter {
+  require(count > 0)
+
   def accept(keyword: Keyword, ticket: Ticket, person: Person): Boolean =
-    ticket.allVersions.find(_.comments.find(person == _.author.getOrElse(null)).isDefined).isDefined
+    ticket.allVersions.count(_.comments.find(person == _.author.getOrElse(null)).isDefined) >= count
 }
