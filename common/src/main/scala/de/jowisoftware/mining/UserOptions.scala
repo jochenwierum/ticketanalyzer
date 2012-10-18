@@ -10,7 +10,7 @@ abstract class UserOptions(namespace: String) {
   protected class CustomizedGridBagPanel(htmlDescrition: String) extends GridBagPanel {
     var line = 1
 
-    def add(text: String, component: Component) = {
+    def add(text: String, component: Component, components: Component*) = {
       val constraints = new Constraints
       constraints.gridx = 0
       constraints.weighty = 0
@@ -19,12 +19,16 @@ abstract class UserOptions(namespace: String) {
       constraints.gridy = line
       constraints.weightx = 0.3
       constraints.insets = new Insets(0, 0, 4, 0)
-      layout(label(text)) = constraints
+      layout(caption(text)) = constraints
 
       constraints.gridx = 1
       constraints.weightx = 0.7
       constraints.insets = new Insets(0, 4, 4, 0)
-      layout(component) = constraints
+
+      if (components.size == 0)
+        layout(component) = constraints
+      else
+        layout(wrapComponents(component, components: _*)) = constraints
 
       line = line + 1
     }
@@ -61,6 +65,14 @@ abstract class UserOptions(namespace: String) {
       label.maximumSize = new Dimension(30, 800);
       layout(label) = constraints
     }
+
+    private def wrapComponents(first: Component, otherComponents: Component*) = {
+      val panel = new BoxPanel(Orientation.Horizontal)
+      for (component <- first +: otherComponents) {
+        panel.contents += component
+      }
+      panel
+    }
   }
 
   protected val defaultResult: Map[String, String]
@@ -82,7 +94,7 @@ abstract class UserOptions(namespace: String) {
     panel
   }
 
-  protected def label(text: String) = {
+  protected def caption(text: String) = {
     val label = new Label(text+":")
     label.horizontalAlignment = Alignment.Right
     label
@@ -126,4 +138,8 @@ abstract class UserOptions(namespace: String) {
 
   protected def combobox(name: String, texts: Set[String]): ComboBox[String] =
     combobox(name, texts.toSeq)
+
+  protected def label(text: String) = {
+    new Label(text);
+  }
 }

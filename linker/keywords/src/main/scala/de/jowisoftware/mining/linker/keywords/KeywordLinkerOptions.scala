@@ -34,13 +34,12 @@ class KeywordLinkerOptions extends UserOptions("linker.keyword") {
     panel.add("Parse comments", checkbox("parseComments", "Use words in comments as keywords"))
     panel.addSpace()
 
-    val label = new Label("<html>All checked filters are applied from top to bottom<br />"+
+    val sectionCaption = new Label("<html>All checked filters are applied from top to bottom<br />"+
       "The first match decides what happens with the keyword</html>")
-    label.horizontalAlignment = Alignment.Left
-    panel.add("Filters", label)
+    sectionCaption.horizontalAlignment = Alignment.Left
+    panel.add("Filters", sectionCaption)
     panel.add("Use universal filter", checkbox("filterUniversal", "Apply all regexes in settings/linker-keyword-universal-*.txt"))
-    panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than n letters"))
-    panel.add("Maximum length of short words", text("filterShortMinLength"))
+    panel.add("Reject short words", checkbox("filterShort", "Remove words shorter than"), text("filterShortMinLength"), label("letters"))
     panel.add("Reject numbers", checkbox("filterNum", "Remove words like '2'"))
     panel.add("Reject alphanumerical words", checkbox("filterAlphaNum", "Remove words like 'r4'"))
     panel.add("Accept uppercase abbrevs", checkbox("filterAbbrevs", "Accepts words like 'REST'"))
