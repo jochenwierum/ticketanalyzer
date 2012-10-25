@@ -70,7 +70,6 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     def findNode(name: String) =
       subValues.filter(node => (node \ "name").text == name) \ "value"
 
-    val ticketReporter = getNodeAsString(findNode("reporter"))
     val ticket = TicketData(getNodeAsInt(values(0)))
     ticket(creationDate) = getNodeAsDate(values(1))
     ticket(updateDate) = getNodeAsDate(values(2))
@@ -87,7 +86,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     ticket(owner) = getNodeAsString(findNode("owner"))
     ticket(milestone) = getNodeAsString(findNode("milestone"))
     ticket(version) = getNodeAsString(findNode("version"))
-    ticket(reporter) = ticketReporter
+    ticket(reporter) = getNodeAsString(findNode("reporter"))
     ticket
   }
 

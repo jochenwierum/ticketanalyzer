@@ -108,7 +108,6 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
     ticket(resolution) = subnode("resolution")
     ticket(severity) = subnode("severity")
     ticket(fixedInVersion) = subnode("fixed_in_version")
-    ticket(fixedInVersion) = subnode("fixed_in_version")
     ticket(comments) = allComments.map(_(TicketCommentDataFields.id))
     ticket(votes) = node("sponsorship_total").toInt
     ticket(environment) = (node("platform")+":"+node("os")+":"+node("osBuild"))
