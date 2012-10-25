@@ -57,8 +57,7 @@ class ChangeParser(resolver: CachedResolver, private var project: String) extend
       case "assigned_to_id" => lookupChange(owner, resolver.user)
       case "category_id" => lookupChange(component, resolver.category)
       case "fixed_version_id" => lookupChange(fixedInVersion, resolver.version)
-
-      case "priority_id" => None
+      case "priority_id" => lookupChange(priority, resolver.priority)
 
       case "project_id" =>
         trace("Switching project lookups to subproject "+oldValue)

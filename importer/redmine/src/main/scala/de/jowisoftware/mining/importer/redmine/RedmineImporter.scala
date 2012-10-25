@@ -61,6 +61,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
     ticketXML \ "category" foreach { n => resolver.cacheCategory(n) }
     ticketXML \ "fixed_version" foreach { n => resolver.cacheVersion(n) }
     ticketXML \ "project" foreach { n => resolver.cacheProject(n) }
+    ticketXML \ "priority" foreach { n => resolver.cachePriority(n) }
 
     ticketXML \ "journals" \ "journal" foreach { journal =>
       (journal \ "@name" text) match {
@@ -153,6 +154,7 @@ private[redmine] class RedmineImporter(config: Map[String, String], events: Impo
     conditionalSet(creationDate, _ \ "created_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
     conditionalSet(updateDate, _ \ "updated_on", ts => RedmineImporter.timeParser.parseDateTime(ts.text).toDate)
     conditionalSet(fixedInVersion, _ \ "fixed_version" \ "@id", id => resolver.version(id.intText))
+    conditionalSet(priority, _ \ "priority" \ "@id", id => resolver.priority(id.intText))
 
     ticket(relationships) = ((ticketXML \ "children" \ "issue") map {
       node => TicketRelationship(node \ "@id" intText, TicketRelationship.RelationshipType.parentOf)

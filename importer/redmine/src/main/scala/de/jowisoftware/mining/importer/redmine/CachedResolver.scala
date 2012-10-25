@@ -14,6 +14,7 @@ class CachedResolver extends Logging {
   private var cachedStatus: mutable.Map[Int, String] = mutable.Map()
   private var cachedVersions: mutable.Map[Int, String] = mutable.Map()
   private var cachedCategories: mutable.Map[Int, String] = mutable.Map()
+  private var cachedPriorities: mutable.Map[Int, String] = mutable.Map()
   private var cachedTracker: mutable.Map[String, mutable.Map[Int, String]] = mutable.Map()
 
   private def getFromCache(cache: mutable.Map[Int, String], name: String)(id: Int) =
@@ -27,6 +28,7 @@ class CachedResolver extends Logging {
   def status = getFromCache(cachedStatus, "status") _
   def version = getFromCache(cachedVersions, "version") _
   def category = getFromCache(cachedCategories, "categories") _
+  def priority = getFromCache(cachedPriorities, "priority") _
 
   def tracker(name: String)(id: Int) = if (cachedTracker contains name) {
     cachedTracker(name).getOrElse(id, {
@@ -50,6 +52,7 @@ class CachedResolver extends Logging {
   def cacheStatus(n: Node) = addIfUncached(cachedStatus, n)
   def cacheVersion(n: Node) = addIfUncached(cachedVersions, n)
   def cacheCategory(n: Node) = addIfUncached(cachedCategories, n)
+  def cachePriority(n: Node) = addIfUncached(cachedPriorities, n)
 
   def cacheTracker(project: String, name: String, id: Int) {
     if (!(cachedTracker contains project)) {
