@@ -28,9 +28,6 @@ subprojects {
   }
   
   dependencies {
-    scalaTools 'org.scala-lang:scala-compiler:2.9.2'
-    scalaTools 'org.scala-lang:scala-library:2.9.2'
-
     compile group: "org.scala-lang", name: "scala-library", version: "2.9.2"
     compile group: "org.scala-lang", name: "scala-swing", version: "2.9.2"
     compile group: "org.clapper", name: "grizzled-slf4j_2.9.2", version: "0.6.9"
@@ -176,5 +173,5 @@ task help() << {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.2'
+	gradleVersion = '1.10'
 }
