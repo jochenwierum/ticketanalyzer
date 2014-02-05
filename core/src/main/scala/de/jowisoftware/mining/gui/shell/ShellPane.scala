@@ -52,9 +52,8 @@ class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with Gu
         val start = System.currentTimeMillis
         try {
           val engine = new ExecutionEngine(db.service)
-          val query = engine.prepare(text)
-          info("Executing: "+query.toString)
-          val result = query.execute(Map())
+          info("Executing: "+text)
+          val result = engine.execute(text)
           resultTable.processResult(result)
           warn("Query finished in "+(System.currentTimeMillis - start)+" ms")
         } catch {

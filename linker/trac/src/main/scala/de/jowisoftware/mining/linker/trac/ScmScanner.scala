@@ -55,7 +55,7 @@ private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
       start <- repository.findSingleCommit(rangeParts(0))
       end <- repository.findSingleCommit(rangeParts(1))
     } yield {
-      rangeGenerator.findRange(start, end) map { commit => ScmLink(commit.commitId(), path = path) } toSeq
+      rangeGenerator.findRange(start, end).map(commit => ScmLink(commit.commitId(), path = path)).toSeq
     }
     commitRange getOrElse Seq()
   }

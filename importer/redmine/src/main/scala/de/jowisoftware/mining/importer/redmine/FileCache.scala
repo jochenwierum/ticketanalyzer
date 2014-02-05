@@ -11,11 +11,11 @@ class FileCache {
   private val cacheFile = new DataOutputStream(outputStream)
 
   def addChunk(xml: Elem) {
-    val bytes = Utility.toXML(xml,
+    val bytes = Utility.serialize(xml,
       stripComments = false,
       decodeEntities = true,
       preserveWhitespace = false,
-      minimizeTags = false).toString.getBytes("UTF-8")
+      minimizeTags = MinimizeMode.Always).toString.getBytes("UTF-8")
     cacheFile.writeInt(bytes.size)
     cacheFile.write(bytes)
   }

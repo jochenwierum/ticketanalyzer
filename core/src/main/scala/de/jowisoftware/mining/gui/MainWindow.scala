@@ -28,7 +28,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
   private val shellPane = new TabbedPane.Page("5) Shell", new ShellPane(db, this))
 
   private val tabs = new TabbedPane {
-    tabPlacement(Alignment.Left)
+    tabPlacement = Alignment.Left
 
     pages += deletePane
     pages += importPane

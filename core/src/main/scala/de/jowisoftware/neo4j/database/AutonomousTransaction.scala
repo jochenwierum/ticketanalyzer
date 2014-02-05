@@ -13,11 +13,11 @@ private[neo4j] class AutonomousTransaction[T <: Node](
 
   override def success = {
     super.success
-    tx.finish
+    tx.close
   }
 
   override def failure = {
     super.failure
-    tx.finish
+    tx.close
   }
 }

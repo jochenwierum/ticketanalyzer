@@ -1,5 +1,7 @@
 package de.jowisoftware.neo4j.content
 
+import scala.language.implicitConversions
+
 import org.neo4j.graphdb.{ RelationshipType, Relationship => NeoRelationship }
 import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase, Database, DBWithTransaction }
 import de.jowisoftware.neo4j.content.index.RelationshipIndexCreator

@@ -51,11 +51,11 @@ object UpdateDB {
       if (i % 1000 == 0) {
         println((100.0 * i / count).formatted("%.2f")+" %: "+i+" of "+count+" Objects...")
         transaction.success
-        transaction.finish
+        transaction.close
         transaction = db.service.beginTx
       }
     }
     transaction.success
-    transaction.finish
+    transaction.close
   }
 }

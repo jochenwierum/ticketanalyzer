@@ -1,5 +1,7 @@
 package de.jowisoftware.mining.importer.mantis
 
+import scala.language.implicitConversions
+
 import scala.xml.Node
 import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer._

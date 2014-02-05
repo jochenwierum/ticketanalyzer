@@ -1,5 +1,7 @@
 package de.jowisoftware.util
 
+import scala.language.implicitConversions
+
 import scala.xml.Node
 import scala.xml.PrettyPrinter
 import scala.xml.NodeSeq

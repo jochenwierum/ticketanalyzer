@@ -15,8 +15,9 @@ private[neo4j] class DefaultTransaction[T <: Node](
   def success = tx.success()
   def failure = tx.failure()
 
+  // FIXME: identify root node!
   lazy val rootNode: T =
-    Node.wrapNeoNode(db.service.getReferenceNode(), this, rootCompanion)
+    Node.wrapNeoNode(db.service.getNodeById(0), this, rootCompanion)
 
   def createNode[S <: Node](companion: NodeCompanion[S]): S =
     Node.wrapNeoNode(db.service.createNode(), this, companion)

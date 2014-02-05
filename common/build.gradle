@@ -1,5 +1,7 @@
 description = "The shared API for all plugins"
 
+def neo4jversion = "2.0.1"
+
 configurations {
   provided {
     extendsFrom compile
@@ -8,12 +10,12 @@ configurations {
 
 dependencies {
   if (project.hasProperty("compact") && project.property("compact") == "true") {
-    compile group: "org.neo4j", name: "neo4j", version: "1.8"
+    compile group: "org.neo4j", name: "neo4j", version: neo4jversion
   } else {
-    compile group: "org.neo4j.app", name: "neo4j-server", version: "1.8"
+    compile group: "org.neo4j.app", name: "neo4j-server", version: neo4jversion
   }
 
-  provided group: "org.scalatest", name: "scalatest_2.9.2", version: "1.7.1"
+  provided group: "org.scalatest", name: "scalatest_2.10.0", version: "2.0.M5"
   provided group: "org.mockito", name: "mockito-all", version: "1.9.0"
 }
 

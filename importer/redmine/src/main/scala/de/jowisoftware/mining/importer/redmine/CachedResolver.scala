@@ -41,9 +41,9 @@ class CachedResolver extends Logging {
   }
 
   private def addIfUncached(map: mutable.Map[Int, String], node: Node) = {
-    val id = (node \ "@id" intText)
+    val id = (node \ "@id").intText
     if (!(map contains id)) {
-      map += id -> (node \ "@name" text)
+      map += id -> (node \ "@name").text
     }
   }
 

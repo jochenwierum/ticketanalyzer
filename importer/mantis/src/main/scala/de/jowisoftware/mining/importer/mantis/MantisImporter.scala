@@ -88,8 +88,8 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
   }
 
   private def createTicket(item: Elem, allComments: Seq[TicketCommentData]) = {
-    def subnode(name: String) = item \ name \ "name" text
-    def node(name: String) = item \ name text
+    def subnode(name: String) = (item \ name \ "name").text
+    def node(name: String) = (item \ name).text
 
     val reporterName = subnode("reporter")
 
@@ -148,14 +148,14 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
 
   private def getComments(item: NodeSeq) = (item \ "item").flatMap {
     case commentNode: Elem =>
-      val public = (commentNode \ "view_state" \ "id" text).toInt == MantisConstants.public
+      val public = ((commentNode \ "view_state" \ "id").text).toInt == MantisConstants.public
       if (public) {
         val comment = new TicketCommentData()
         val author = (commentNode \ "reporter" \ "name").text
-        comment(TicketCommentDataFields.id) = (commentNode \ "id" text).toInt
+        comment(TicketCommentDataFields.id) = ((commentNode \ "id").text).toInt
         comment(TicketCommentDataFields.text) = (commentNode \ "text").text
-        comment(TicketCommentDataFields.created) = fromComplexDate(commentNode \ "date_submitted" text)
-        comment(TicketCommentDataFields.modified) = fromComplexDate(commentNode \ "last_modified" text)
+        comment(TicketCommentDataFields.created) = fromComplexDate((commentNode \ "date_submitted").text)
+        comment(TicketCommentDataFields.modified) = fromComplexDate((commentNode \ "last_modified").text)
         comment(TicketCommentDataFields.author) = author
         Some(comment)
       } else {
@@ -166,8 +166,8 @@ class MantisImporter(config: Map[String, String], events: ImportEvents) extends 
 
   private def getRelationships(item: NodeSeq) = (item \ "item").flatMap {
     case relationship: Elem =>
-      val typeString = relationship \ "type" \ "name" text
-      val target = (relationship \ "target_id" text) toInt
+      val typeString = (relationship \ "type" \ "name").text
+      val target = ((relationship \ "target_id").text).toInt
 
       ValueUtils.relationshipStringToRelationshipType(typeString) match {
         case Some(relValue) => Some(new TicketRelationship(target.toInt, relValue))

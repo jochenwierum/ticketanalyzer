@@ -58,8 +58,8 @@ class RedmineClient(redmineUrl: String, apikey: String) extends Logging {
     processor(page)
 
     val isPaged = (page \ "@limit").length > 0
-    val total = if (isPaged) (page \ "@total_count" intText) else 0
-    val newOffset = if (isPaged) ((page \ "@offset" intText) + (page \ "@limit" intText)) else 0
+    val total = if (isPaged) ((page \ "@total_count").intText) else 0
+    val newOffset = if (isPaged) (((page \ "@offset").intText) + ((page \ "@limit").intText)) else 0
 
     if (newOffset < total) {
       readPaged(file, parameterMap, processor, newOffset)

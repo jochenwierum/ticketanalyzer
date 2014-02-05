@@ -96,7 +96,7 @@ class KeywordLinker(
   }
 
   private def processTags(ticket: Ticket) =
-    if (isSet("parseTags")) { cleanWords(ticket.tags map { _.name() } toSet) }
+    if (isSet("parseTags")) { cleanWords(ticket.tags.map(_.name()).toSet) }
     else Set()
 
   private def processTitle(ticket: Ticket) =
@@ -114,7 +114,7 @@ class KeywordLinker(
       Set()
 
   private def createKeywordSet(s: String): Set[String] = {
-    val words = cleanWords(s split splitRegex map cleanChars toSet)
+    val words = cleanWords(s.split(splitRegex).map(cleanChars).toSet)
 
     val (acceptFirst, stemList) = preStemFilter(words)
     val stemmedWords = stemList map stem filterNot (_.isEmpty) map (_.replaceAll("""[\s\t\n\r]+""", "-"))

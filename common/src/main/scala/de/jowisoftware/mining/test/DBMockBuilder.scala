@@ -13,14 +13,14 @@ import org.neo4j.kernel.AbstractGraphDatabase
 import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.index.IndexManager
 import org.neo4j.graphdb.index.IndexHits
-
 import org.mockito.Mockito._
+import org.neo4j.graphdb.GraphDatabaseService
 
 class DBMockBuilder(implicit context: MockContext) {
   private var repositories: List[NodeMockBuilder[_]] = new NodeMockBuilder(CommitRepository) :: Nil
   private var nodeIndex: Map[String, NodeIndexMockBuilder] = Map()
 
-  private val service = context.mock[AbstractGraphDatabase]("service")
+  private val service = context.mock[GraphDatabaseService]("service")
   private val indexManager = context.mock[IndexManager]()
 
   def addCommitRepository(name: String, supportsAbbrev: Boolean) = {

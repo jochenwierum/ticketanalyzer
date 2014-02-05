@@ -61,7 +61,7 @@ class HistoryGeneratorAnalyzer(db: Database[RootNode], options: Map[String, Stri
         case (x, None) => true
       }
 
-  private def transformToString(table: Map[String, List[String]]) =
+  private def transformToString(table: SortedMap[String, List[String]]) =
     table.map(row => "Version: "+row._1+"\n"+row._2.mkString("  * ", "\n  * ", "\n"))
       .mkString("\n")
 }

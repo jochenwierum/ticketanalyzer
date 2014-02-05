@@ -18,6 +18,7 @@ import de.jowisoftware.neo4j.ReadOnlyDatabase
 import de.jowisoftware.neo4j.ReadWriteDatabase
 import de.jowisoftware.neo4j.ReadWriteDatabase
 import de.jowisoftware.neo4j.ReadWriteDatabase
+import org.bouncycastle.asn1.x509.qualified.TypeOfBiometricData
 
 object Node extends ClassCache[NodeCompanion[_ <: Node]] {
   def wrapNeoNode[T <: Node](

@@ -1,18 +1,19 @@
 package de.jowisoftware.neo4j.database
 
 import java.io.File
-
 import scala.collection.JavaConversions.mutableMapAsJavaMap
 import scala.collection.mutable
-
 import org.neo4j.kernel.{ AbstractGraphDatabase, EmbeddedGraphDatabase }
-
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
 import de.jowisoftware.util.FileUtils
+import org.neo4j.graphdb.GraphDatabaseService
+import org.neo4j.graphdb.factory.GraphDatabaseFactory
+import org.neo4j.helpers.Settings.DefaultSetting
+import org.neo4j.helpers.Settings
 
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
-  private var databaseService: AbstractGraphDatabase = _
+  private var databaseService: GraphDatabaseService = _
   init()
   addShutdownHook()
 
@@ -20,8 +21,9 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
 
   protected def init() {
     val config = mutable.Map("keep_logical_logs" -> "1 hours")
-    databaseService = new EmbeddedGraphDatabase(filepath.getAbsolutePath,
-      mutableMapAsJavaMap(config))
+    databaseService = (new GraphDatabaseFactory()
+      .newEmbeddedDatabaseBuilder(filepath.getAbsolutePath)
+      .newGraphDatabase());
 
     // make sure the root note is initialized
     inTransaction { transaction =>
@@ -37,7 +39,7 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     try {
       body(wrapper)
     } finally {
-      tx.finish()
+      tx.close()
     }
   }
 
@@ -68,8 +70,9 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     })
   }
 
+  // fixme: identify root node!
   def rootNode: T =
-    Node.wrapNeoNode(service.getReferenceNode, this, rootCompanion)
+    Node.wrapNeoNode(service.getNodeById(0), this, rootCompanion)
 
   def getUnknownNode(id: Long): Node =
     Node.wrapNeoNode(service.getNodeById(id), this).get

@@ -1,9 +1,13 @@
 package de.jowisoftware.mining.test
 
+import scala.language.implicitConversions
+
 import org.mockito.Mockito
 import org.mockito.stubbing.OngoingStubbing
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
+
+import scala.reflect.runtime.universe._
 
 class MockContext private[test] {
   class ThenReturnSingle[T](inner: OngoingStubbing[T]) {
@@ -18,12 +22,13 @@ class MockContext private[test] {
     def answer(invocation: InvocationOnMock): T = block(invocation)
   }
 
-  def mock[A <: AnyRef](name: String = "")(implicit manifest: Manifest[A]): A = {
+  def mock[A <: AnyRef: TypeTag](name: String = "")(implicit manifest: Manifest[A]): A = {
+    val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     val obj = if (name == "")
-      Mockito.mock(manifest.erasure.asInstanceOf[Class[A]], manifest.erasure.getSimpleName)
+      Mockito.mock(erased.asInstanceOf[Class[A]], erased.getSimpleName)
     else {
       val cleanName = name.replaceAll("""[^A-Za-z0-9_$]""", """\$""")
-      Mockito.mock(manifest.erasure.asInstanceOf[Class[A]], cleanName)
+      Mockito.mock(erased.asInstanceOf[Class[A]], cleanName)
     }
 
     obj

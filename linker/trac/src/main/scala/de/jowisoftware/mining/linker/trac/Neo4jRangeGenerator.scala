@@ -23,7 +23,7 @@ class Neo4jRangeGenerator(db: ReadOnlyDatabase[RootNode]) extends RangeGenerator
 
     var nodes: Set[NeoNode] = Set()
 
-    Traverser()
+    Traverser(db.service)
       .depthFirst
       .relationships(ChildOf.relationType, Direction.OUTGOING)
       .evaluator {

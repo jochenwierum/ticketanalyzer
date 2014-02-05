@@ -1,6 +1,6 @@
 package de.jowisoftware.mining.test
 
-import org.scalatest.TestFailedException
+import org.scalatest.exceptions.TestFailedException
 
 trait MockHelper {
   private def rewriteExceptions[A](block: => A): A =

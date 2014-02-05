@@ -1,5 +1,7 @@
 package de.jowisoftware.mining.importer.trac
 
+import scala.language.implicitConversions
+
 import java.util.Date
 
 import de.jowisoftware.mining.importer._

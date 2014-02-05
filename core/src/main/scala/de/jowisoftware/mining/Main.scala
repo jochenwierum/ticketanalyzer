@@ -6,7 +6,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler
 
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.plugins.{ PluginManager, PluginScanner, PluginType }
-import de.jowisoftware.neo4j.database.{ EmbeddedDatabase, EmbeddedDatabaseWithConsole }
+import de.jowisoftware.neo4j.database.{ EmbeddedDatabase }
 import de.jowisoftware.util.AppUtil
 import grizzled.slf4j.Logging
 import gui.MainWindow
@@ -17,7 +17,7 @@ object Main extends Logging {
     Class.forName("org.neo4j.server.WrappingNeoServerBootstrapper")
     false
   } catch {
-    case _ => true
+    case _: Exception => true
   }
 
   def main(args: Array[String]) {
@@ -78,10 +78,10 @@ object Main extends Logging {
 
     info("Using database at "+dbPath)
     try {
-      if (compactMode)
-        new EmbeddedDatabase(dbPath, RootNode)
-      else
-        new EmbeddedDatabaseWithConsole(dbPath, RootNode)
+      //if (compactMode)
+      new EmbeddedDatabase(dbPath, RootNode)
+      //else
+      //  new EmbeddedDatabaseWithConsole(dbPath, RootNode)
     } catch {
       case e: IllegalStateException =>
         Dialog.showMessage(null, "The database is locked - is another instance of this program running?",

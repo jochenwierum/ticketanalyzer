@@ -6,7 +6,7 @@ import de.jowisoftware.neo4j.content.Relationship
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model._
 
-protected trait HasChildWithName[A <: HasName] extends MiningNode {
+trait HasChildWithName[A <: HasName] extends MiningNode {
   protected def findOrCreateChild(name: String,
     relationship: RelationshipCompanion[_ <: Relationship], creator: NodeCompanion[A]): A = {
 
@@ -27,7 +27,7 @@ protected trait HasChildWithName[A <: HasName] extends MiningNode {
   }
 
   protected def children(relationship: RelationshipCompanion[_ <: Relationship], nodeType: NodeCompanion[A]): Iterable[A] =
-    neighbors(Direction.OUTGOING, List(relationship.relationType)).map (_.asInstanceOf[A])
+    neighbors(Direction.OUTGOING, List(relationship.relationType)).map(_.asInstanceOf[A])
 
   def findOrCreateChild(name: String): A
   def children: Iterable[A]

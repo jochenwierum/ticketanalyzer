@@ -8,8 +8,6 @@ import java.awt.Graphics2D
 import scala.swing.Frame
 import javax.swing.JScrollPane
 import scala.swing.ScrollPane
-import scala.swing.event.ComponentResized
-import scala.swing.event.ComponentResized
 import scala.swing.event.UIElementResized
 import java.awt.Color
 

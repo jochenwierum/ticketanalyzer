@@ -1,9 +1,13 @@
 package de.jowisoftware.mining.importer
 
+import scala.reflect.ClassTag
+
+import scala.reflect.runtime.universe._
+
 abstract class FieldListData {
-  class FieldDescription[A] private[importer] (val name: String, val default: A)(implicit manifest: Manifest[A]) {
-    val valueClass = manifest.erasure
-    override def toString = name+"["+valueClass.getSimpleName+"] = ("+default.toString+")"
+  class FieldDescription[A: TypeTag] private[importer] (val name: String, val default: A) {
+    val valueClass = typeOf[A]
+    override def toString = name+"["+valueClass.toString()+"] = ("+default.toString+")"
   }
 
   protected def field[T](name: String, value: T)(implicit manifest: Manifest[T]) = {

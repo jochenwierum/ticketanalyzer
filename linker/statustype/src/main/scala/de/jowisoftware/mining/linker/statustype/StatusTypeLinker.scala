@@ -39,7 +39,7 @@ class StatusTypeLinker extends Linker with Logging {
 
     properties.propertyNames.map { name =>
       (name, findStatusByName(properties.getString(name)))
-    } toMap
+    }.toMap
   }
 
   private def findStatusByName(name: String): StatusType.Value =
