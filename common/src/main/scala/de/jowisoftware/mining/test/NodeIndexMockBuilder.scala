@@ -4,11 +4,20 @@ import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.Node
 import org.neo4j.graphdb.index.IndexHits
 import scala.collection.JavaConversions.asJavaIterator
-
 import org.mockito.Mockito._
+import org.neo4j.graphdb.ResourceIterator
 
 class NodeIndexMockBuilder private[test] (name: String)(implicit context: MockContext) {
   private[test] val index = context.mock[Index[Node]]("index-"+name)
+
+  private class IteratorWrapper[A](it: Iterator[A]) extends ResourceIterator[A] {
+    private val inner = asJavaIterator(it)
+
+    def close: Unit = {}
+    def next = inner.next()
+    def hasNext = inner.hasNext()
+    def remove = inner.remove()
+  }
 
   private def prepareExpectation(name: String, result: Node, block: => IndexHits[Node]) {
     val hits = context.mock[IndexHits[Node]](name)
@@ -20,9 +29,9 @@ class NodeIndexMockBuilder private[test] (name: String)(implicit context: MockCo
     val method = methods.find(_.getParameterTypes.length == 1).get
 
     if (result == null) {
-      method.invoke(tmp, asJavaIterator(Iterator()))
+      method.invoke(tmp, new IteratorWrapper(Iterator()))
     } else {
-      method.invoke(tmp, asJavaIterator(Iterator(result)))
+      method.invoke(tmp, new IteratorWrapper(Iterator(result)))
     }
   }
 

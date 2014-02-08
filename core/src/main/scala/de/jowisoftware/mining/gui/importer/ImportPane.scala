@@ -21,6 +21,7 @@ import de.jowisoftware.mining.gui.GuiTab
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandlerWithFeedback
 
 class ImportPane(
     db: Database[RootNode],
@@ -114,12 +115,10 @@ class ImportPane(
       override def run = {
         val start = System.currentTimeMillis
         try {
-          val importer = new AsyncDatabaseImportHandler(
+          AsyncDatabaseImportHandlerWithFeedback.run(
             db,
-            tasks.map { t => (t.importer, t.data) }.toArray: _*) with ConsoleProgressReporter with ImporterEventGui {
-            var dialog = progress
-          }
-          importer.run()
+            progress,
+            tasks.map { t => (t.importer, t.data) }.toArray: _*)
 
           warn("Import process took "+(System.currentTimeMillis - start)+" ms")
           updateDBState

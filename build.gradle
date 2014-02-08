@@ -4,6 +4,15 @@ apply plugin: 'scala'
 apply plugin: 'application'
 
 import org.gradle.plugins.ide.eclipse.model.SourceFolder 
+import java.util.regex.Pattern
+
+ext {
+	scala_version = "2.11.0-M5"
+	scala_xml_version = "2.11.0-M4"
+	scalatest_version = "2.0.M7"
+	neo4j_version = "2.0.0-M06"
+	mockito_version = "1.9.0"
+}
 
 allprojects {
   apply plugin: 'eclipse'
@@ -28,16 +37,16 @@ subprojects {
   }
   
   dependencies {
-    compile group: "org.scala-lang", name: "scala-library", version: "2.10.0"
-    compile group: "org.scala-lang", name: "scala-swing", version: "2.10.0"
-    compile group: "org.scala-lang", name: "scala-reflect", version: "2.10.0"
+    compile group: "org.scala-lang", name: "scala-library", version: scala_version
+    compile group: "org.scala-lang", name: "scala-swing", version: scala_version
+    compile group: "org.scala-lang", name: "scala-reflect", version: scala_version
+    compile group: "org.scala-lang", name: "scala-xml", version: scala_xml_version
     compile group: "org.clapper", name: "grizzled-slf4j_2.10", version: "1.0.1"
     compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.6"
     compile group: "ch.qos.logback", name: "logback-access", version: "1.0.6"
-    compile group: 'com.typesafe.akka', name: 'akka', version: '2.1.4'
     
-    testCompile group: "org.scalatest", name: "scalatest_2.10.0", version: "2.0.M5"
-    testCompile group: "org.mockito", name: "mockito-all", version: "1.9.0"
+    testCompile group: "org.scalatest", name: "scalatest_" + scala_version, version: scalatest_version
+    testCompile group: "org.mockito", name: "mockito-all", version: mockito_version
     
 
     if (project.name != 'common') {
@@ -54,7 +63,6 @@ subprojects {
           reporter(type: 'stdout', config: "D")
           //reporter(type: 'stdout', config: "DF")
       }
-
       if (oldLevel == null)
         logging.setLevel(LogLevel.QUIET)
       else
@@ -72,10 +80,7 @@ subprojects {
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
-            entry.path.contains('scala-library-2.10.3.jar') ||
-            entry.path.contains('scala-library-2.11.0-M3.jar') ||
-            entry.path.contains('scala-swing-2.10.3.jar') ||
-            entry.path.contains('scala-reflect-2.10.3.jar') ||
+            entry.path.matches(Pattern.compile('scala-(library|reflect|actors)-[.\\d](-M[\\d]+)?.jar')) ||
             entry.path.endsWith('.pom') ||
             (entry instanceof SourceFolder && entry.path.startsWith("src/main/resources"))
           })

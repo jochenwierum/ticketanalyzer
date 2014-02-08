@@ -1,9 +1,9 @@
 package de.jowisoftware.mining.linker.keywords.filters
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 
-abstract class AbstractFilterTest extends FlatSpec with ShouldMatchers {
+abstract class AbstractFilterTest extends FlatSpec with Matchers {
   protected def newFilter: Filter
 
   protected def check(input: String, expected: FilterResult.Value) {

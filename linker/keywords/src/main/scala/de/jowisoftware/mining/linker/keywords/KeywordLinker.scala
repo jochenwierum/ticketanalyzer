@@ -13,7 +13,6 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.core.util.StatusPrinter
 import org.slf4j.LoggerFactory
 import de.jowisoftware.mining.linker.keywords.filters.UniversalRegexFilter
-import scala.io.UTF8Codec
 import scala.io.Codec
 import de.jowisoftware.util.AppUtil
 import de.jowisoftware.mining.linker.keywords.filters.Filter

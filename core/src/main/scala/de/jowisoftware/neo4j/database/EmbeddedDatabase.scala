@@ -11,6 +11,8 @@ import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
 import org.neo4j.helpers.Settings.DefaultSetting
 import org.neo4j.helpers.Settings
+import org.neo4j.kernel.configuration.Config
+import org.neo4j.graphdb.factory.GraphDatabaseSettings
 
 class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T]) extends Database[T] {
   private var databaseService: GraphDatabaseService = _
@@ -20,9 +22,10 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
   def service = databaseService
 
   protected def init() {
-    val config = mutable.Map("keep_logical_logs" -> "1 hours")
     databaseService = (new GraphDatabaseFactory()
       .newEmbeddedDatabaseBuilder(filepath.getAbsolutePath)
+      .setConfig(GraphDatabaseSettings.keep_logical_logs, "100M size")
+      .setConfig(GraphDatabaseSettings.allow_store_upgrade, "true")
       .newGraphDatabase());
 
     // make sure the root note is initialized
@@ -70,7 +73,7 @@ class EmbeddedDatabase[T <: Node](filepath: File, rootCompanion: NodeCompanion[T
     })
   }
 
-  // fixme: identify root node!
+  // FIXME: identify root node!
   def rootNode: T =
     Node.wrapNeoNode(service.getNodeById(0), this, rootCompanion)
 

@@ -1,7 +1,5 @@
 description = "The core components: plugin manager and gui"
 
-def neo4jversion = "2.0.1"
-
 configurations {
   provided {
     extendsFrom compile
@@ -11,11 +9,12 @@ configurations {
 dependencies {
   compile group: "org.slf4j", name: "jul-to-slf4j", version: "1.6.5"
   compile group: "org.fusesource.jansi", name: "jansi", version: "1.8"
+    compile group: 'com.typesafe.akka', name: 'akka-actor_' + scala_version, version: '2.2.1'
   
-  provided group: "org.neo4j.app", name: "neo4j-server", version: neo4jversion
+  provided group: "org.neo4j.app", name: "neo4j-server", version: neo4j_version
   if (!(project.hasProperty("compact") && project.property("compact") == "true")) {
     compile group: "com.sun.jersey", name: "jersey-core", version: "1.9"
-    compile group: "org.neo4j.app", name: "neo4j-server", version: neo4jversion, classifier: "static-web"
+    compile group: "org.neo4j.app", name: "neo4j-server", version: neo4j_version, classifier: "static-web"
   }
 }
 

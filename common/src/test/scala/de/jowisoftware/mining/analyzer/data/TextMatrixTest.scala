@@ -1,9 +1,9 @@
 package de.jowisoftware.mining.analyzer.data
 
 import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class TextMatrixTest extends FlatSpec with ShouldMatchers {
+class TextMatrixTest extends FlatSpec with Matchers {
   """A TextMatrix""" should "return the column names in the initial order" in {
     val matrix = new TextMatrix(Seq("a", "c", "b"), Seq())
     (matrix.columnTitles) should equal(Array("a", "c", "b"))

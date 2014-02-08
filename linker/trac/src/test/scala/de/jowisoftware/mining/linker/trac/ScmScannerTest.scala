@@ -9,13 +9,13 @@ import de.jowisoftware.mining.model.nodes.Commit
 import org.mockito.Mockito._
 import org.neo4j.graphdb.Node
 import de.jowisoftware.mining.test.MockContext
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 object ScmScannerTest {
   val repositoryName = "git"
 }
 
-class ScmScannerTest extends FlatSpec with ShouldMatchers with MockHelper {
+class ScmScannerTest extends FlatSpec with Matchers with MockHelper {
   import ScmScannerTest._
 
   private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode], generator: RangeGenerator) {

@@ -1,12 +1,12 @@
 package de.jowisoftware.mining.linker.keywords.filters
 
 import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import de.jowisoftware.mining.test.MockHelper
 
 import org.mockito.Mockito._
 
-class FilterChainTest extends FlatSpec with ShouldMatchers with MockHelper {
+class FilterChainTest extends FlatSpec with Matchers with MockHelper {
   "A filter Chain" should "return 'undecide' by default" in {
     val chain = new FilterChain()
 

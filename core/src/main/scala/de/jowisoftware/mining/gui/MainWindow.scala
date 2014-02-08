@@ -13,6 +13,7 @@ import scala.swing.SplitPane
 import de.jowisoftware.mining.gui.linker.LinkPane
 import de.jowisoftware.mining.gui.linker.AnalyzerPane
 import de.jowisoftware.mining.gui.shell.StatisticsPane
+import de.jowisoftware.mining.AkkaHelper
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -58,7 +59,7 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     super.dispose
 
     db.shutdown
-    scala.actors.Scheduler.shutdown()
+    AkkaHelper.system.shutdown()
     System.exit(0)
   }
 
