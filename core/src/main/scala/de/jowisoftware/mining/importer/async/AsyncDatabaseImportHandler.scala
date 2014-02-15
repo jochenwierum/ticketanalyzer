@@ -15,7 +15,7 @@ private[async] case class LoadedCommit(repository: String, commit: CommitData) e
 private[async] case class SetupCommits(supportsAbbrev: Boolean) extends ImportEvent
 
 private[async] case object Finish extends ImportEvent
-private[async] case class Run(db: Database[RootNode],
+private[async] case class Run(db: Database,
   importer: (Importer, Map[String, String])*) extends ImportEvent
 
 class AsyncDatabaseImportHandler extends Actor with ImportEvents with Logging {
@@ -34,7 +34,7 @@ class AsyncDatabaseImportHandler extends Actor with ImportEvents with Logging {
     reportProgress(ticketsDone, ticketsCount, commitsDone, commitsCount)
   }
 
-  def run(db: Database[RootNode],
+  def run(db: Database,
     importer: (Importer, Map[String, String])*): Unit = {
     toFinish = importer.size
     dbImporter = new DatabaseImportHandler(db)

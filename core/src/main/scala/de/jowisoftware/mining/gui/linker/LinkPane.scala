@@ -20,8 +20,13 @@ import scala.swing.SplitPane
 import grizzled.slf4j.Logging
 import scala.swing.Dialog
 import scala.swing.Label
+import de.jowisoftware.mining.model.nodes.CommitRepository
+import org.neo4j.graphdb.ResourceIterable
+import de.jowisoftware.util.ScalaUtil._
+import scala.collection.JavaConversions._
+import de.jowisoftware.mining.model.nodes.TicketRepository
 
-class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
+class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     extends SplitPane(Orientation.Vertical) with GuiTab with Logging { that =>
 
   private class Task(val importer: Linker, val data: Map[String, String], val name: String) {
@@ -87,21 +92,18 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
     pluginManager.getFor(PluginType.Linker)
 
   private def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
-    val result = namesOfChildren(transaction.rootNode.commitRepositoryCollection)
+    val result = collectNames(transaction.collections.findAll(CommitRepository))
     transaction.success
     result
   }.toSeq)
 
   private def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
-    val result = namesOfChildren(transaction.rootNode.ticketRepositoryCollection)
+    val result = collectNames(transaction.collections.findAll(TicketRepository))
     transaction.success
     result
   }.toSeq)
 
-  private def namesOfChildren(repository: MiningNode) = {
-    val nodes = repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType))
-    nodes.map { node => node.asInstanceOf[HasName].name() }
-  }
+  private def collectNames(result: Iterator[_ <: HasName]) = result.map(_.name())
 
   private def updateComboBoxes() {
     scmList = makeSCMList
@@ -176,7 +178,7 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
 
   private def runTask(task: Task, dialog: ProgressDialog): Unit = {
     val options = task.data
-    task.importer.link(getSelectedTicketRepository,
+    task.importer.link(db, getSelectedTicketRepository,
       getSelectedCommitRepository, options,
       new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
 
@@ -185,19 +187,20 @@ class LinkPane(db: Database[RootNode], pluginManager: PluginManager, parent: Fra
   }
 
   private def updateDBState: Unit = {
-    if (db.rootNode.state() < 2) {
-      db.inTransaction { transaction =>
-        transaction.rootNode.state(2)
+    db.inTransaction { transaction =>
+      val rootNode = transaction.rootNode(RootNode)
+      if (rootNode.state() < 2) {
+        rootNode.state(2)
         transaction.success()
       }
     }
   }
 
   private def getSelectedTicketRepository =
-    db.rootNode.ticketRepositoryCollection.findOrCreateChild(ticketList.selection.item)
+    db.inTransaction(_.collections.find(TicketRepository, ticketList.selection.item)).get
 
   private def getSelectedCommitRepository =
-    db.rootNode.commitRepositoryCollection.findOrCreateChild(scmList.selection.item)
+    db.inTransaction(_.collections.find(CommitRepository, ticketList.selection.item)).get
 
   def align = dividerLocation = .75
 }

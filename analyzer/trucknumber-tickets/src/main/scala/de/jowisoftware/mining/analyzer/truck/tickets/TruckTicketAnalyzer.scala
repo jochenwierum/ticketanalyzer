@@ -1,14 +1,14 @@
 package de.jowisoftware.mining.analyzer.truck.tickets
 
 import scala.swing._
-
-import org.neo4j.graphdb.Direction
-
+import org.neo4j.cypher.ExecutionEngine
+import org.neo4j.graphdb.{ Direction, Node => NeoNode }
 import de.jowisoftware.mining.analyzer.truck.tickets.filters._
 import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.model.nodes._
 import de.jowisoftware.mining.model.relationships.{ Links, Owns }
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
+import de.jowisoftware.neo4j.content.Node
 
 object TruckTicketsAnalyzer {
   private def mkLinearFunc(factor: Double)(value: Int, max: Int): Double =
@@ -26,7 +26,7 @@ object TruckTicketsAnalyzer {
       else -math.log(value.doubleValue() / max) / math.log(max)))
 }
 
-class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
+class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {
 
   def run() {
@@ -57,11 +57,12 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
 
   private def createCriticalKeywordsWindow: Dialog =
     db.inTransaction { transaction =>
+      val engine = new ExecutionEngine(transaction.service)
       val limit = options("limit").toInt
-      val activePersons = getActivePersons(transaction)
+      val activePersons = getActivePersons(engine)
       val filters = createFilters(options)
 
-      val groupedRows = findOccurrences(transaction, activePersons, filters.accept)
+      val groupedRows = findOccurrences(engine, activePersons, filters.accept, transaction)
       val result = formatResult(groupedRows, limit)
 
       if (options("output") == "raw")
@@ -95,9 +96,11 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
     filter
   }
 
-  private def getActivePersons(transaction: DBWithTransaction[RootNode]): Set[String] = {
+  private def getActivePersons(engine: ExecutionEngine): Set[String] = {
     val members = options("members").trim.split("""\s*,\s*""")
-    val namesView = transaction.rootNode.personCollection.children.view.map(_.name()).filterNot(_ == "")
+    val namesView = engine.execute("START n = node:person('*:*') RETURN n.name")
+      .map(_.getOrElse("name", "").asInstanceOf[String])
+      .filterNot(_ == "")
 
     val filteredView = if (options("members-action") == "included")
       namesView.filter(members.contains(_))
@@ -107,15 +110,17 @@ class TruckTicketsAnalyzer(db: Database[RootNode], options: Map[String, String],
     filteredView.toSet
   }
 
-  private def findOccurrences(transaction: DBWithTransaction[RootNode],
+  private def findOccurrences(engine: ExecutionEngine,
     activePersons: Set[String],
-    accept: (Keyword, Ticket, Person) => Boolean): Seq[Map[String, Any]] = {
+    accept: (Keyword, Ticket, Person) => Boolean,
+    db: DBWithTransaction): Seq[Map[String, Any]] = {
 
     waitDialog.status = "Counting keywords"
-    waitDialog.max = transaction.rootNode.keywordCollection.children.size
+    waitDialog.max = engine.execute("START n = node:keyword('*:*') RETURN count(*)").next()("count").asInstanceOf[Long]
     waitDialog.status = "Searching keyword occurrences"
 
-    (transaction.rootNode.keywordCollection.children.map { keyword =>
+    (engine.execute("START n = node:keyword('*:*') RETURN n").map { result =>
+      val keyword = Node.wrapNeoNode(result("n").asInstanceOf[NeoNode], db, Keyword)
       waitDialog.tick()
 
       val occurrences = findKeywordOccurrences(activePersons, accept, keyword)

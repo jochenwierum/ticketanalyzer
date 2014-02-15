@@ -67,21 +67,9 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
 
   private def addFiles(commitData: CommitData, repository: CommitRepository, commit: Commit) =
     for ((filename, value) <- commitData(files)) {
-      val file = getFile(repository, filename)
+      val file = repository.obtainFile(filename)
       val relation = commit.add(file, ChangedFile)
       relation.editType(value)
-    }
-
-  private def getFile(repository: CommitRepository, name: String): File =
-    repository.files.findFile(name) match {
-      case Some(file) => file
-      case None =>
-        trace("Creating entry for file "+name)
-        val file = repository.files.createFile()
-        file.name(name)
-        file.uid(repository.name()+"-"+name)
-        repository.files.add(file, Contains)
-        file
     }
 
   private def connectParents(commitData: CommitData, node: Commit, repository: CommitRepository) =

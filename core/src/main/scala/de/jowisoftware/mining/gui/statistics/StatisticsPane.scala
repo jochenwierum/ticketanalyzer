@@ -11,7 +11,7 @@ import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
 import javax.swing.table.DefaultTableModel
 
-class StatisticsPane(db: Database[RootNode], parent: Frame) extends ScrollPane with GuiTab with Logging {
+class StatisticsPane(db: Database, parent: Frame) extends ScrollPane with GuiTab with Logging {
   private val model = new DefaultTableModel(Array[Object]("Node type", "Count"), 0) {
     override def isCellEditable(row: Int, column: Int) = false
   }

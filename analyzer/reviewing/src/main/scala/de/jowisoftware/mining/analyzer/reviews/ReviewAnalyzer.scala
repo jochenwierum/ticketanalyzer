@@ -13,17 +13,34 @@ import scala.swing.Swing
 import de.jowisoftware.util.HTMLUtil
 import de.jowisoftware.mining.analyzer.data.TextMatrix
 
+object ReviewAnalyzer {
+  private val personQuery = "START p = node:person('*:*') RETURN p.name"
+  private val query = """
+        START repositoriy = node:repository('*:*')
+        MATCH
+          repository --> ticket1 -[:has_status]-> state1,
+          ticket1 <-[:updates]- ticket2 -[:has_status]-> state2,
+          ticket1 <-[:owns]- person1,
+          ticket2 <-[:owns]- person2
+        WHERE state1.logicalType = {type1} AND state2.logicalType = {type2}
+        RETURN person1.name AS from, person2.name AS to, count(distinct ticket1.id) as count
+        """
+
+}
+
 class ReviewAnalyzer extends Analyzer {
   def userOptions = new ReviewOptions
 
-  def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame,
+  def analyze(db: Database, options: Map[String, String], parent: Frame,
     waitDialog: ProgressDialog) {
-    val result = collectData(db)
+    val executionEngine = new ExecutionEngine(db.service)
+
+    val result = collectData(executionEngine)
     val nonDevs = options("nonDevs").trim.split("""\s*,\s*""")
     val ignored = options("ignore").trim.split("""\s*,\s*""")
     val other = "(other)"
 
-    val names = db.rootNode.personCollection.children.map(_.name()).toSet -- nonDevs -- ignored
+    val names = findPersons(executionEngine) -- nonDevs -- ignored
     val sortedNames = names.toSeq.sorted
     val matrix = new TextMatrix(sortedNames :+ other, sortedNames :+ other)
 
@@ -46,20 +63,13 @@ class ReviewAnalyzer extends Analyzer {
     }
   }
 
-  private def collectData(db: Database[RootNode]): ExecutionResult = {
-    val query = """
-        START repositories=node(%d)
-        MATCH
-          repositories --> () --> ticket1 -[:has_status]-> state1,
-          ticket1 <-[:updates]- ticket2 -[:has_status]-> state2,
-          ticket1 <-[:owns]- person1,
-          ticket2 <-[:owns]- person2
-        WHERE state1.logicalType = %d AND state2.logicalType = %d
-        RETURN person1.name AS from, person2.name AS to, count(distinct ticket1.id) as count
-        """ format (db.rootNode.ticketRepositoryCollection.id,
-      StatusType.assigned.id, StatusType.inReview.id)
+  private def findPersons(executionEngine: ExecutionEngine): Set[String] = {
+    executionEngine.execute(ReviewAnalyzer.personQuery).map(_.getOrElse("name", "").asInstanceOf[String]).toSet
+  }
 
-    val engine = new ExecutionEngine(db.service)
-    engine.execute(query)
+  private def collectData(engine: ExecutionEngine): ExecutionResult = {
+    engine.execute(ReviewAnalyzer.query, Map(
+      "type1" -> StatusType.assigned.id,
+      "type2" -> StatusType.inReview.id))
   }
 }

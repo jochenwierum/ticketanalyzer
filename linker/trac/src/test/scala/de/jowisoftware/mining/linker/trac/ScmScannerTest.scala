@@ -10,6 +10,7 @@ import org.mockito.Mockito._
 import org.neo4j.graphdb.Node
 import de.jowisoftware.mining.test.MockContext
 import org.scalatest.Matchers
+import de.jowisoftware.mining.model.nodes.CommitRepository
 
 object ScmScannerTest {
   val repositoryName = "git"
@@ -18,11 +19,11 @@ object ScmScannerTest {
 class ScmScannerTest extends FlatSpec with Matchers with MockHelper {
   import ScmScannerTest._
 
-  private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction[RootNode], generator: RangeGenerator) {
+  private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction, generator: RangeGenerator) {
     info("testing: '"+text+"'")
 
     val scanner = new ScmScanner(generator)
-    val repository = database.rootNode.commitRepositoryCollection.findOrCreateChild(repositoryName)
+    val repository = database.collections.findOrCreate(CommitRepository, repositoryName)
     val result = scanner.scan(text, repository)
 
     (result) should equal(expected)
@@ -35,7 +36,8 @@ class ScmScannerTest extends FlatSpec with Matchers with MockHelper {
       val index = builder.addNodeIndex("Commit")
 
       expected.foreach { link =>
-        index.add("uid", repositoryName+"-"+link.ref, repository.addCommit(link.ref))
+        val commit = repository.addCommit(link.ref)
+        index.add("uid", repositoryName+"-"+link.ref, commit)
       }
 
       val database = builder.finishMock
@@ -67,14 +69,14 @@ class ScmScannerTest extends FlatSpec with Matchers with MockHelper {
     }
   }
 
-  private def setupRangeMock(ranges: List[(String, String)], context: MockContext, dbMock: DBWithTransaction[RootNode]): RangeGenerator = {
+  private def setupRangeMock(ranges: List[(String, String)], context: MockContext, dbMock: DBWithTransaction): RangeGenerator = {
     val generator = context.mock[RangeGenerator]()
     for {
       (commitId1, commitId2) <- ranges
     } {
-      val rootNode = dbMock.rootNode
-      val collectionCollection = rootNode.commitRepositoryCollection
-      val commitCollection = collectionCollection.findOrCreateChild(repositoryName)
+
+      val collections = dbMock.collections
+      val commitCollection = collections.findOrCreate(CommitRepository, repositoryName)
       val commit1 = commitCollection.findSingleCommit(commitId1).get
       val commit2 = commitCollection.findSingleCommit(commitId2).get
       when(generator.findRange(commit1, commit2))

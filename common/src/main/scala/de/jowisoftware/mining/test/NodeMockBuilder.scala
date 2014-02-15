@@ -1,21 +1,22 @@
 package de.jowisoftware.mining.test
 
-import org.mockito.Mockito._
-import org.neo4j.graphdb.Node
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.model.nodes.helper.MiningNode
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.content.NodeCompanion
-import scala.collection.JavaConversions._
-import org.mockito.stubbing.OngoingStubbing
+import scala.reflect.runtime.universe
+
+import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
+import org.neo4j.graphdb.Node
+
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
 import de.jowisoftware.neo4j.ReadWriteDatabase
+import de.jowisoftware.neo4j.content.NodeCompanion
+
+import scala.collection.JavaConversions._
 
 object NodeMockBuilder {
   private var nextId = 1
 }
 
-class NodeMockBuilder[A <: MiningNode] private[test] (companion: NodeCompanion[A], name: String = "")(implicit context: MockContext) {
+class NodeMockBuilder[A <: MiningNode] private[test] (val companion: NodeCompanion[A], name: String = "")(implicit context: MockContext) {
   import NodeMockBuilder._
   import context._
 
@@ -37,12 +38,12 @@ class NodeMockBuilder[A <: MiningNode] private[test] (companion: NodeCompanion[A
   when(mockedNode.getId).thenReturn(nextId)
   nextId += 1
 
-  when(mockedNode.getPropertyKeys).thenAnswer { _: InvocationOnMock => properties }
+  when(mockedNode.getPropertyKeys).thenAnswer { _: InvocationOnMock => asJavaIterable(properties) }
 
-  final private[test] def finishMock(db: ReadWriteDatabase[RootNode]): A = {
+  final private[test] def finishMock(db: ReadWriteDatabase): A = {
     if (!wrapperIsPrepared) {
       wrapperIsPrepared = true
-      wrapper.initWith(mockedNode, db)
+      wrapper.initWith(mockedNode, db, companion)
     }
     wrapper
   }

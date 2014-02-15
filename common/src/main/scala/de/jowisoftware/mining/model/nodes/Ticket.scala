@@ -13,10 +13,10 @@ import de.jowisoftware.mining.model.relationships.HasStatus
 object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
   def apply = new Ticket
 
-  def find(db: ReadOnlyDatabase[RootNode], uid: String) =
+  def find(db: ReadOnlyDatabase, uid: String) =
     findInIndex(db, "uid", uid, this)
 
-  def findAll(db: ReadOnlyDatabase[RootNode], uidQuery: String) =
+  def findAll(db: ReadOnlyDatabase, uidQuery: String) =
     findMultipleInIndex(db, "uid", uidQuery, this)
 }
 

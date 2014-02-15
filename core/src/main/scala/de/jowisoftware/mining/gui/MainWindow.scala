@@ -19,7 +19,7 @@ object MainWindow {
   case object DatabaseUpdated extends Event
 }
 
-class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends Frame {
+class MainWindow(db: Database, pluginManager: PluginManager) extends Frame {
   import MainWindow._
   private val deletePane = new TabbedPane.Page("0) Delete", new DeletePane(db, this))
   private val importPane = new TabbedPane.Page("1) Import", new ImportPane(db, pluginManager, this))
@@ -55,16 +55,8 @@ class MainWindow(db: Database[RootNode], pluginManager: PluginManager) extends F
     case DatabaseUpdated => updateView()
   }
 
-  override def dispose() = {
-    super.dispose
-
-    db.shutdown
-    AkkaHelper.system.shutdown()
-    System.exit(0)
-  }
-
   def updateView() {
-    val state = db.rootNode.state()
+    val state = db.inTransaction(_.rootNode(RootNode)).state()
 
     linkPane.enabled = state > 0
     analyzePane.enabled = state > 1

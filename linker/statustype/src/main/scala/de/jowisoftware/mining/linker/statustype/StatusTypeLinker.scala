@@ -13,16 +13,17 @@ import grizzled.slf4j.Logging
 import de.jowisoftware.mining.model.nodes.Status
 import de.jowisoftware.util.AppUtil
 import de.jowisoftware.util.AppUtil
+import de.jowisoftware.neo4j.Database
 
 class StatusTypeLinker extends Linker with Logging {
   def userOptions() = new StatusTypeOptions
 
-  def link(tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
+  def link(db: Database, tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
     val statusMap = readStatusProperties
 
-    tickets.rootNode.statusCollection.children foreach { status =>
+    db.inTransaction(_.collections.findAll(Status) foreach { status =>
       events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
-    }
+    })
 
     events.finish
   }

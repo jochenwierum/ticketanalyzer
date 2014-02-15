@@ -6,10 +6,9 @@ import de.jowisoftware.neo4j.content.Node
 import de.jowisoftware.neo4j.content.NodeCompanion
 import org.neo4j.graphdb.{ Transaction => NeoTransaction }
 
-private[neo4j] class AutonomousTransaction[T <: Node](
-    db: Database[T],
-    tx: NeoTransaction,
-    rootCompanion: NodeCompanion[T]) extends DefaultTransaction[T](db, tx, rootCompanion) {
+private[neo4j] class AutonomousTransaction(
+    db: Database,
+    tx: NeoTransaction) extends DefaultTransaction(db, tx) {
 
   override def success = {
     super.success

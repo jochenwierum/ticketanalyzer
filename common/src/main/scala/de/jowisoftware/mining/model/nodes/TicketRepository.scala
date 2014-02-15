@@ -5,9 +5,12 @@ import org.neo4j.graphdb.Direction
 import de.jowisoftware.neo4j.content.NodeCompanion
 import helper._
 import com.sun.corba.se.spi.ior.Writeable
+import de.jowisoftware.neo4j.content.IndexedNodeCompanion
+import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
-object TicketRepository extends NodeCompanion[TicketRepository] {
+object TicketRepository extends IndexedNodeCompanion[TicketRepository] {
   def apply = new TicketRepository
+  val indexInfo = IndexedNodeInfo("ticketRepository")
 }
 
 class TicketRepository extends MiningNode with HasName with EmptyNode {

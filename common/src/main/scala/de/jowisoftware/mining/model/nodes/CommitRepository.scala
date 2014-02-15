@@ -1,16 +1,34 @@
 package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.{ ContainsFiles, Contains }
-import de.jowisoftware.neo4j.content.NodeCompanion
-import helper.{ MiningNode, HasName, EmptyNode }
+import de.jowisoftware.mining.model.relationships.{ Contains, ContainsFile }
+import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, IndexedNodeInfo, NodeCompanion }
 import grizzled.slf4j.Logging
+import helper.{ EmptyNode, HasName, MiningNode }
+import scala.collection.JavaConversions._
+import de.jowisoftware.neo4j.content.Node
 
-object CommitRepository extends NodeCompanion[CommitRepository] {
+object CommitRepository extends IndexedNodeCompanion[CommitRepository] {
   def apply = new CommitRepository
+  val indexInfo = IndexedNodeInfo("commitRepository")
 }
 
-class CommitRepository extends MiningNode with HasName with EmptyNode with Logging {
+class CommitRepository extends MiningNode with HasName with Logging {
+  val version = 2
+
+  def updateFrom(version: Int) = {
+    if (version < 2) {
+      val toDeleteRel = content.getRelationships(Direction.OUTGOING, ContainsFile).iterator().next()
+      val toDeleteNode = toDeleteRel.getEndNode()
+      toDeleteRel.getEndNode().getRelationships(Direction.OUTGOING) foreach { rel =>
+        add(Node.wrapNeoNode(rel.getEndNode(), writableDb, File), ContainsFile)
+        rel.delete()
+      }
+      toDeleteNode.delete()
+      toDeleteRel.delete()
+    }
+  }
+
   def obtainCommit(id: String): Commit = {
     val uid = name()+"-"+id
     Commit.find(readableDb, uid) match {
@@ -21,6 +39,18 @@ class CommitRepository extends MiningNode with HasName with EmptyNode with Loggi
         commit.uid(uid)
         this.add(commit, Contains)
         commit
+    }
+  }
+
+  def obtainFile(fileName: String): File = {
+    File.find(readableDb, name(), fileName) match {
+      case Some(file) => file
+      case None =>
+        val file = writableDb.createNode(File)
+        file.name(fileName)
+        file.uid(File.uid(name(), fileName))
+        this.add(file, ContainsFile)
+        file
     }
   }
 
@@ -53,7 +83,7 @@ class CommitRepository extends MiningNode with HasName with EmptyNode with Loggi
       commit = potentialCommit.asInstanceOf[Commit]
     } yield commit
 
-  lazy val files = getOrCreate(Direction.OUTGOING, ContainsFiles, FileRepository)
+  lazy val files = getOrCreate(Direction.OUTGOING, ContainsFile, File)
 
   lazy val supportsAbbrev = booleanProperty("supportsAbbrev", false)
 }

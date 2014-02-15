@@ -13,7 +13,7 @@ object HistoryGeneratorAnalyzer {
   private val versionMatcher = """(\d+\.\d+(?:\.\d+)*)""".r
 }
 
-class HistoryGeneratorAnalyzer(db: Database[RootNode], options: Map[String, String],
+class HistoryGeneratorAnalyzer(db: Database, options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {
 
   def run() {
@@ -28,12 +28,12 @@ class HistoryGeneratorAnalyzer(db: Database[RootNode], options: Map[String, Stri
   }
 
   private def getResults: ExecutionResult = {
-    val query = """START versions=node(%d)
+    val query = """START version=node:version('*:*')
       MATCH
-        versions-[:contains]->version<-[:targets]-ticket<-[x?:updates]-newer
+        version<-[:targets]-ticket<-[x?:updates]-newer
       WHERE newer IS NULL AND version.name <> ""
       RETURN version.name AS version, ticket.title AS title
-      ORDER BY ticket.updateDate ASC""" format (db.rootNode.versionCollection.id)
+      ORDER BY ticket.updateDate ASC"""
 
     val engine = new ExecutionEngine(db.service)
     engine.execute(query)

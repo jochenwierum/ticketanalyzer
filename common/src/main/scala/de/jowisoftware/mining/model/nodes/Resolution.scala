@@ -4,8 +4,9 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object Resolution extends NodeCompanion[Resolution] {
+object Resolution extends IndexedNodeCompanion[Resolution] {
   def apply = new Resolution
+  val indexInfo = IndexedNodeInfo("resolution", "name")
 }
 
 class Resolution extends MiningNode with EmptyNode with HasName

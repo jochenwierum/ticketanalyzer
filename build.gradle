@@ -7,11 +7,12 @@ import org.gradle.plugins.ide.eclipse.model.SourceFolder
 import java.util.regex.Pattern
 
 ext {
-	scala_version = "2.11.0-M5"
-	scala_xml_version = "2.11.0-M4"
-	scalatest_version = "2.0.M7"
-	neo4j_version = "2.0.0-M06"
-	mockito_version = "1.9.0"
+  scala_version = "2.10.3"
+  scala_xml_version = "2.10.3"
+  scalatest_version = "2.0.M7"
+  neo4j_version = "2.0.1"
+  mockito_version = "1.9.0"
+  scala_version_short = "2.10"
 }
 
 allprojects {
@@ -40,12 +41,13 @@ subprojects {
     compile group: "org.scala-lang", name: "scala-library", version: scala_version
     compile group: "org.scala-lang", name: "scala-swing", version: scala_version
     compile group: "org.scala-lang", name: "scala-reflect", version: scala_version
-    compile group: "org.scala-lang", name: "scala-xml", version: scala_xml_version
+    //compile group: "org.scala-lang", name: "scala-xml", version: scala_xml_version
+    //compile group: "org.scala-lang.modules", name: "scala-parser-combinators_2.11.0-M4", version: "1.0-RC1"
     compile group: "org.clapper", name: "grizzled-slf4j_2.10", version: "1.0.1"
     compile group: "ch.qos.logback", name: "logback-classic", version: "1.0.6"
     compile group: "ch.qos.logback", name: "logback-access", version: "1.0.6"
     
-    testCompile group: "org.scalatest", name: "scalatest_" + scala_version, version: scalatest_version
+    testCompile group: "org.scalatest", name: "scalatest_" + scala_version_short, version: scalatest_version
     testCompile group: "org.mockito", name: "mockito-all", version: mockito_version
     
 
@@ -93,14 +95,23 @@ subprojects {
 
 task copyDistFiles() {
   subprojects.each { dependsOn("${it.path}:build") }
+  File dist = new File("$buildDir/dist")
+ 
+  def allFiles = subprojects.collectNested {
+    it.configurations.runtime.filter {!it.name.endsWith(".pom")}.getFiles() +
+      it.configurations.archives.allArtifacts.files.getFiles()
+  }
+ 
+  inputs.files allFiles
+  outputs.dir dist
 }
 
 copyDistFiles << {
   File dist = mkdir("$buildDir/dist")
-  
+
   copy {
-  fileMode = 0644
-  dirMode = 0755
+    fileMode = 0644
+    dirMode = 0755
     into mkdir(new File(dist, "lib"))
     subprojects.each {
       from it.configurations.runtime.filter {!it.name.endsWith(".pom")}
@@ -108,10 +119,10 @@ copyDistFiles << {
     from project(':common').configurations.archives.allArtifacts.files
     from project(':core').configurations.archives.allArtifacts.files
   }
-  
+
   copy {
-  fileMode = 0644
-  dirMode = 0755
+    fileMode = 0644
+    dirMode = 0755
     into mkdir(new File(dist, "plugins/importer"))
     project(':importer').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -119,8 +130,8 @@ copyDistFiles << {
   }
   
   copy {
-  fileMode = 0644
-  dirMode = 0755
+    fileMode = 0644
+    dirMode = 0755
     into mkdir(new File(dist, "plugins/linker"))
     project(':linker').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -128,8 +139,8 @@ copyDistFiles << {
   }
 
   copy {
-  fileMode = 0644
-  dirMode = 0755
+    fileMode = 0644
+    dirMode = 0755
     into mkdir(new File(dist, "plugins/analyzer"))
     project(':analyzer').subprojects.each {
       from it.configurations.archives.allArtifacts.files
@@ -137,8 +148,8 @@ copyDistFiles << {
   }
 
   copy {
-  fileMode = 0644
-  dirMode = 0755
+    fileMode = 0644
+    dirMode = 0755
     into mkdir(new File(dist, "settings"))
     subprojects.each {
       File settingsDir = it.file("src/main/settings")
@@ -153,9 +164,14 @@ task writeStartScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.appl
   File dist = new File("$buildDir/dist")
   applicationName = "ticketanalyzer"
   classpath = fileTree(dir: new File(dist, 'lib'), include: '*.jar')
-  mainClassName = "de.jowisoftware.mining.Main"
-  outputDir = mkdir(new File(dist, "bin"))
-  
+
+  inputs.files classpath
+  outputs.dir dist
+
+  doLast {
+    mainClassName = "de.jowisoftware.mining.Main"
+    outputDir = mkdir(new File(dist, "bin"))
+  }
 }
 
 task dist(dependsOn: [copyDistFiles, writeStartScripts])
@@ -181,6 +197,11 @@ task help() << {
   println("   artifacts which run without the neo4j web interface")
 }
 
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.useAnt = false
+}
+
+
 task wrapper(type: Wrapper) {
-	gradleVersion = '1.10'
+  gradleVersion = '1.10'
 }

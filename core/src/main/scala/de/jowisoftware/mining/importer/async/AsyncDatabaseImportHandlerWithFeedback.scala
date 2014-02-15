@@ -9,12 +9,12 @@ import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.AkkaHelper
 
-private case class RunWithUI(db: Database[RootNode],
+private case class RunWithUI(db: Database,
   dialog: ProgressDialog,
   importer: (Importer, Map[String, String])*) extends ImportEvent
 
 object AsyncDatabaseImportHandlerWithFeedback {
-  def run(db: Database[RootNode],
+  def run(db: Database,
     dialog: ProgressDialog,
     importer: (Importer, Map[String, String])*) {
 

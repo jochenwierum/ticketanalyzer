@@ -9,7 +9,7 @@ import scala.swing.Frame
 import de.jowisoftware.mining.model.nodes.RootNode
 
 class WorkflowAnalyzerFacade extends Analyzer {
-  def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) =
+  def analyze(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) =
     new WorkflowAnalyzer(db, options, parent, waitDialog).run()
 
   def userOptions() = new WorkflowUserOptions

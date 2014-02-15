@@ -3,9 +3,9 @@ package de.jowisoftware.mining.linker.trac
 import org.scalatest.FunSpec
 import de.jowisoftware.mining.linker.TicketLink
 import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class TicketScannerTest extends FlatSpec with ShouldMatchers {
+class TicketScannerTest extends FlatSpec with Matchers {
   private def check(text: String, expected: Set[TicketLink]) {
     info("testing: '"+text+"'")
     val scanner = new TicketScanner()

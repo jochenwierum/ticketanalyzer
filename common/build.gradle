@@ -13,7 +13,7 @@ dependencies {
     compile group: "org.neo4j.app", name: "neo4j-server", version: neo4j_version
   }
 
-  provided group: "org.scalatest", name: "scalatest_" + scala_version, version: scalatest_version
+  provided group: "org.scalatest", name: "scalatest_" + scala_version_short, version: scalatest_version
   provided group: "org.mockito", name: "mockito-all", version: mockito_version
 }
 

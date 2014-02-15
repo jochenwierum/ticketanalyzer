@@ -4,8 +4,9 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object Version extends NodeCompanion[Version] {
+object Version extends IndexedNodeCompanion[Version] {
   def apply = new Version
+  val indexInfo = IndexedNodeInfo("version")
 }
 
 class Version extends MiningNode with HasName with EmptyNode

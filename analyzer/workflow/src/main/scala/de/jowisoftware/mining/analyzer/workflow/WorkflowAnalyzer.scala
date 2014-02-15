@@ -23,7 +23,7 @@ import scala.swing.Swing
 import de.jowisoftware.mining.external.dot.DotWrapper
 import de.jowisoftware.mining.external.dot.ImageDialog
 
-class WorkflowAnalyzer(db: Database[RootNode],
+class WorkflowAnalyzer(db: Database,
     options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
 
   require(options contains "visualization")
@@ -34,12 +34,10 @@ class WorkflowAnalyzer(db: Database[RootNode],
   if (options("visualization") == "Graph")
     require(new File(options("dot")).exists)
 
-  lazy val repositoryNodes = db.rootNode.ticketRepositoryCollection.children
-    .map(_.id).mkString(", ")
-
   def run() {
-    val result = findStateChanges
-    val deadEnds = createDeadEndMap(findDeadEnds)
+    val engine = new ExecutionEngine(db.service)
+    val result = findStateChanges(engine)
+    val deadEnds = createDeadEndMap(findDeadEnds(engine))
 
     val resultWindow: Dialog = options("visualization") match {
       case "Graph" => createDotWindow(result, deadEnds, parent)
@@ -52,32 +50,30 @@ class WorkflowAnalyzer(db: Database[RootNode],
     }
   }
 
-  private def findStateChanges: ExecutionResult = {
+  private def findStateChanges(engine: ExecutionEngine): ExecutionResult = {
     val query = """
-      START repository=node(%s) // ticket collection
+      START repository=node:repository('*:*') // ticket collection
       MATCH repository --> ticket1 -[:has_status]-> status1,
         status2 <-[:has_status]- ticket2 -[:updates]-> ticket1,
         ticket1 <-[:owns]- owner1, ticket2 <-[:owns]- owner2
       WHERE status1 <> status2 OR owner1 <> owner2
       RETURN status1.name AS from, status2.name AS to, count(*) AS count
       ORDER BY from, count DESC;
-      """ format (repositoryNodes)
+      """
 
-    val engine = new ExecutionEngine(db.service)
     engine.execute(query)
   }
 
-  private def findDeadEnds: ExecutionResult = {
+  private def findDeadEnds(engine: ExecutionEngine): ExecutionResult = {
     val query = """
-      START repository=node(%s) // ticket collection
+      START repository=node:repository('*:*') // ticket collection
       MATCH
         repository --> ticket1 -[:has_status]-> status,
         ticket2 -[r?:updates]-> ticket1
       WHERE ticket2 IS NULL
       RETURN status.name AS name, count(*) AS count;
-    """ format (repositoryNodes)
+    """
 
-    val engine = new ExecutionEngine(db.service)
     engine.execute(query)
   }
 

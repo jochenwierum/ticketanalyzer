@@ -13,11 +13,11 @@ trait Properties[A <: PropertyContainer] {
   protected[neo4j] def content: PropertyContainer
   private[neo4j] val indexCreator: IndexCreator
 
-  private[neo4j] var innerDB: ReadOnlyDatabase[_ <: Node] = _
+  private[neo4j] var innerDB: ReadOnlyDatabase = _
 
-  protected def readableDb: ReadOnlyDatabase[_ <: Node] = innerDB
-  protected def writableDb: ReadWriteDatabase[_ <: Node] = innerDB match {
-    case e: ReadWriteDatabase[_] => e
+  protected def readableDb: ReadOnlyDatabase = innerDB
+  protected def writableDb: ReadWriteDatabase = innerDB match {
+    case e: ReadWriteDatabase => e
     case _ => sys.error("A writeable database requires a transaction")
   }
 

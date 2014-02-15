@@ -12,11 +12,19 @@ import org.neo4j.jmx.Kernel
 import org.neo4j.graphdb.Direction
 import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
 import de.jowisoftware.neo4j.content.Relationship
+import sun.awt.EmbeddedFrame
+import org.neo4j.graphdb.DynamicLabel
+import org.neo4j.helpers.TimeUtil
+import java.util.concurrent.TimeUnit
 
 object UpdateDB {
   def main(args: Array[String]) {
     val dbPath = AppUtil.projectFile(AppUtil.appSettings.getString("db"))
-    val db = new EmbeddedDatabase(dbPath, RootNode)
+    val db = new EmbeddedDatabase(dbPath)
+
+    if (db.inTransaction(_.rootNode(RootNode).graphVersion()) < 4) {
+      updateIndizes(db);
+    }
 
     println("Updating nodes...")
     performUpgrade[NeoNode](db,
@@ -30,7 +38,7 @@ object UpdateDB {
 
     println("Updating schema version")
     db.inTransaction { t =>
-      t.rootNode.updateFinished
+      t.rootNode(RootNode).updateFinished
       t.success
     }
 
@@ -38,7 +46,7 @@ object UpdateDB {
     db.shutdown
   }
 
-  private def performUpgrade[A](db: EmbeddedDatabase[RootNode],
+  private def performUpgrade[A](db: EmbeddedDatabase,
     collector: => Iterable[A], updateAction: A => Unit): Unit = {
 
     val count = collector.size
@@ -57,5 +65,12 @@ object UpdateDB {
     }
     transaction.success
     transaction.close
+  }
+
+  def updateIndizes(embeddedDb: EmbeddedDatabase) {
+    embeddedDb.inTransaction { db =>
+      val index = db.service.schema.indexFor(DynamicLabel.label("function")).on("_function").create()
+      db.service.schema().awaitIndexOnline(index, 4, TimeUnit.HOURS)
+    }
   }
 }

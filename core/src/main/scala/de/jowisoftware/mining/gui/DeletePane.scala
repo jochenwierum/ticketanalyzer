@@ -7,7 +7,7 @@ import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.Database
 
-class DeletePane(val db: Database[RootNode], parent: Frame)
+class DeletePane(val db: Database, parent: Frame)
     extends BoxPanel(Orientation.Vertical) with GuiTab {
 
   val label = new Label("""<html><p>

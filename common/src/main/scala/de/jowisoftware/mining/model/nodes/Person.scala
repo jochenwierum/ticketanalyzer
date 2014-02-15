@@ -4,8 +4,9 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object Person extends NodeCompanion[Person] {
+object Person extends IndexedNodeCompanion[Person] {
   def apply = new Person
+  val indexInfo = IndexedNodeInfo("person")
 }
 
 class Person extends MiningNode with HasName with EmptyNode

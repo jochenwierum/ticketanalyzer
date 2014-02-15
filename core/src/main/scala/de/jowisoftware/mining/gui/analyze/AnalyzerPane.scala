@@ -14,7 +14,7 @@ import grizzled.slf4j.Logging
 import javax.swing.JLabel
 import scala.swing.Label
 
-class AnalyzerPane(db: Database[RootNode], pluginManager: PluginManager, parent: Frame)
+class AnalyzerPane(db: Database, pluginManager: PluginManager, parent: Frame)
     extends BorderPanel with GuiTab with Logging { that =>
   private val pluginList = new ComboBox(makePluginList)
   private val analyzeButton = new Button("Analyze")

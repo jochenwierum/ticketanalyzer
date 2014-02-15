@@ -1,19 +1,20 @@
 package de.jowisoftware.mining.analyzers.workflow
 
 import java.io.File
-
 import scala.annotation.tailrec
 import scala.collection.SortedMap
 import scala.collection.mutable
 import scala.swing.Frame
-
 import org.neo4j.graphdb.Direction
-
 import de.jowisoftware.mining.external.dot.{ DotWrapper, ImageDialog }
 import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.model.nodes.{ Person, RootNode, Status, Ticket }
 import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
 import de.jowisoftware.neo4j.Database
+import org.neo4j.cypher.ExecutionEngine
+import org.neo4j.graphdb.{ Node => NeoNode }
+import de.jowisoftware.neo4j.content.{ Node => CNode }
+import de.jowisoftware.mining.model.nodes.TicketRepository
 
 object WorkflowTreeAnalyzer {
   private def status(ticket: Ticket): String =
@@ -30,7 +31,7 @@ object WorkflowTreeAnalyzer {
 
 }
 
-class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
+class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
   import WorkflowTreeAnalyzer._
 
   require(options contains "dot")
@@ -77,12 +78,16 @@ class WorkflowTreeAnalyzer(db: Database[RootNode], options: Map[String, String],
     resultDialog.visible = true
   }
 
-  private def getTickets =
+  private def getTickets = {
+    val executionEngine = new ExecutionEngine(db.service)
+
     for {
-      repository <- db.rootNode.ticketRepositoryCollection.children
+      repositoryMap <- executionEngine.execute("START n = node:ticketRepository('*:*') RETURN n")
+      repository = CNode.wrapNeoNode(repositoryMap("n").asInstanceOf[NeoNode], db, TicketRepository)
       ticket <- repository.tickets
       if (ticket.isRootVersion)
     } yield ticket
+  }
 
   private def processVersions(baseTicket: Ticket) {
     @tailrec

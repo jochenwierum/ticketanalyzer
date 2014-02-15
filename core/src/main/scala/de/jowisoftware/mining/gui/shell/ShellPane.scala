@@ -17,7 +17,7 @@ import scala.swing.Frame
 import de.jowisoftware.neo4j.Database
 import de.jowisoftware.mining.model.nodes.RootNode
 
-class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with GuiTab with Logging {
+class ShellPane(db: Database, parent: Frame) extends SplitPane with GuiTab with Logging {
   private val textInput = new TextArea
   private val startButton = new Button(">>")
   private val link = new Link(new URI("http://localhost:7474"), "open neo4j console in browser")
@@ -85,23 +85,23 @@ class ShellPane(db: Database[RootNode], parent: Frame) extends SplitPane with Gu
   private var lastState = Integer.MAX_VALUE
   def newViewState(state: Int) =
     if (state < lastState) db.inTransaction { transaction =>
-      val rootNode = transaction.rootNode
+      val rootNode = transaction.rootNode(RootNode)
       val text = """START root=node(%d)
       |MATCH root-[:contains]->collection
       |RETURN root, collection
       |LIMIT 20;
       |
-      |// Important node ids:
+      |// Important indizes:
       |// %s"""
 
-      val nodes = ("Root: "+rootNode.id) ::
-        ("Commits: "+rootNode.commitRepositoryCollection.id) ::
-        ("Tickets: "+rootNode.ticketRepositoryCollection.id) ::
-        rootNode.commitRepositoryCollection.children.map(col => "Commits in "+col.name+": "+col.id).toList :::
-        rootNode.ticketRepositoryCollection.children.map(col => "Tickets in "+col.name+": "+col.id).toList :::
-        ("Persons: "+rootNode.personCollection.id) ::
-        ("Status: "+rootNode.statusCollection.id) ::
-        ("Keywords: "+rootNode.keywordCollection.id) ::
+      val nodes = ("RootNode: nodes:function(name=rootNode)") ::
+        ("Commits: nodes:commitRepository(name=repositoryName)") ::
+        ("Tickets: nodes:ticketRepository(name=repositoryName)") ::
+        //rootNode.commitRepositoryCollection.children.map(col => "Commits in "+col.name+": "+col.id).toList :::
+        //rootNode.ticketRepositoryCollection.children.map(col => "Tickets in "+col.name+": "+col.id).toList :::
+        ("Persons: nodes:person(name=personName)") ::
+        ("Status: nodes:status(name=statusName)") ::
+        ("Keywords: nodes:keywords(name=keyword)") ::
         Nil
 
       lastState = state

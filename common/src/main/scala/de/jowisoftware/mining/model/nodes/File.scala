@@ -7,8 +7,11 @@ import helper._
 object File extends NodeCompanion[File] with IndexAccess[File] {
   def apply = new File
 
-  private[model] def find(db: ReadOnlyDatabase[RootNode], repository: String, name: String) =
-    findInIndex(db, "uid", repository+"-"+name, this)
+  private[model] def find(db: ReadOnlyDatabase, repository: String, name: String): Option[File] =
+    findInIndex(db, "uid", uid(repository, name), this)
+
+  def uid(repository: String, name: String): String =
+    repository+"-"+name
 }
 
 class File extends MiningNode with HasName {

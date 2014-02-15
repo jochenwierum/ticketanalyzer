@@ -5,9 +5,10 @@ import de.jowisoftware.mining.linker.{ Linker, LinkEvents }
 import de.jowisoftware.mining.model.nodes.{ TicketRepository, CommitRepository, Commit, Ticket }
 import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.UserOptions
+import de.jowisoftware.neo4j.Database
 
 class TracStyleLinker extends Linker {
-  def link(tickets: TicketRepository, commits: CommitRepository,
+  def link(db: Database, tickets: TicketRepository, commits: CommitRepository,
     options: Map[String, String], events: LinkEvents) {
 
     val ticketsCount = tickets.neighbors(Direction.OUTGOING, Seq(Contains.relationType)).size

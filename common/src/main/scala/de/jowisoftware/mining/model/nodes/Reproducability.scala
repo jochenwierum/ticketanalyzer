@@ -4,8 +4,9 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object Reproducability extends NodeCompanion[Reproducability] {
+object Reproducability extends IndexedNodeCompanion[Reproducability] {
   def apply = new Reproducability
+  val indexInfo = IndexedNodeInfo("reproducability")
 }
 
 class Reproducability extends MiningNode with EmptyNode with HasName

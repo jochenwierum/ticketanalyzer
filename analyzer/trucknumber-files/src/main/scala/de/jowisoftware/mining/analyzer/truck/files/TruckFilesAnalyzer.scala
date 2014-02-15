@@ -17,7 +17,7 @@ import scala.swing.Dialog
 class TruckFilesAnalyzer extends Analyzer {
   def userOptions() = new TruckFilesAnalyzerOptions()
 
-  def analyze(db: Database[RootNode], options: Map[String, String],
+  def analyze(db: Database, options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {
 
     val resultWindow = createCiriticalFilesWindow(db, options, parent)
@@ -28,16 +28,13 @@ class TruckFilesAnalyzer extends Analyzer {
     }
   }
 
-  private def createCiriticalFilesWindow(db: Database[RootNode],
+  private def createCiriticalFilesWindow(db: Database,
     options: Map[String, String], parent: Frame): Dialog =
     db.inTransaction { transaction =>
-      val nodes = db.rootNode.commitRepositoryCollection.neighbors(
-        Direction.OUTGOING, Seq(Contains.relationType))
-        .map(_.asInstanceOf[CommitRepository].files.id)
-        .mkString(", ")
+      val engine = new ExecutionEngine(db.service)
 
-      val query = """START n=node(%s) // commit collection -> file collection
-      MATCH n-->file<-[:changed_file]-commit<-[:owns]-person
+      val query = """START n=node:commitRepository('*:*') // commit collection -> file collection
+      MATCH n-[:contains_file]->file<-[:changed_file]-commit<-[:owns]-person
       %s
       RETURN
         file.name as file,
@@ -46,15 +43,14 @@ class TruckFilesAnalyzer extends Analyzer {
         count(distinct person.name) as personCount,
         collect(distinct person.name) as persons
       ORDER BY ratio DESC
-      LIMIT %d;""" format (nodes, ignoreToWhereClauses(options("inactive")),
-        options("limit").toInt)
+      LIMIT {limit};""" format (ignoreToWhereClauses(options("inactive")))
 
-      val result = new ExecutionEngine(db.service).execute(query)
+      val result = engine.execute(query, Map("limit" -> options("limit").toInt))
 
       if (options("output") == "raw")
         new ResultWindow(parent, result)
       else
-        new KeywordResultWindow(parent, result, getActivePersons(transaction,
+        new KeywordResultWindow(parent, result, getActivePersons(engine,
           options("inactive").split("""\s*,\s*""")).toSet, "File")
     }
 
@@ -63,11 +59,9 @@ class TruckFilesAnalyzer extends Analyzer {
     else
       ignore.split("""\s*,\s*""").map("person.name <> \""+_+"\"").mkString(" AND ", " AND ", ""))
 
-  private def getActivePersons(transaction: DBWithTransaction[RootNode], ignoredList: Array[String]): Seq[String] = {
-    val activePersons = transaction.rootNode.personCollection.children
-      .map(_.name())
+  private def getActivePersons(engine: ExecutionEngine, ignoredList: Array[String]): Seq[String] =
+    engine.execute("START n = node:person('*:*') RETURN n.name")
+      .map(_.getOrElse("name", "").asInstanceOf[String])
       .filterNot(name => name == "" || ignoredList.contains(name))
       .toSeq
-    activePersons
-  }
 }

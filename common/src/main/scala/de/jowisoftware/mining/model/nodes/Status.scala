@@ -4,8 +4,9 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object Status extends NodeCompanion[Status] {
+object Status extends IndexedNodeCompanion[Status] {
   def apply = new Status
+  val indexInfo = IndexedNodeInfo("status")
 }
 
 class Status extends MiningNode with HasName {

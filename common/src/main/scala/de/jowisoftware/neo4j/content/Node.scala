@@ -1,39 +1,27 @@
 package de.jowisoftware.neo4j.content
 
-import org.neo4j.graphdb.{
-  Node => NeoNode,
-  Relationship => NeoRelationship,
-  Direction,
-  RelationshipType
-}
-import org.neo4j.graphdb.Traverser.Order
-import scala.collection.JavaConversions._
-import properties.Versionable
-import de.jowisoftware.neo4j.DBWithTransaction
+import scala.collection.JavaConversions.iterableAsScalaIterable
+import org.neo4j.graphdb.{ Direction, Node => NeoNode, Relationship => NeoRelationship, RelationshipType }
+import de.jowisoftware.neo4j.ReadOnlyDatabase
 import de.jowisoftware.neo4j.content.index.NodeIndexCreator
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.ReadWriteDatabase
-import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.ReadWriteDatabase
-import de.jowisoftware.neo4j.ReadWriteDatabase
-import de.jowisoftware.neo4j.ReadWriteDatabase
-import org.bouncycastle.asn1.x509.qualified.TypeOfBiometricData
+import properties.Versionable
+import grizzled.slf4j.Logging
 
 object Node extends ClassCache[NodeCompanion[_ <: Node]] {
   def wrapNeoNode[T <: Node](
     neoNode: NeoNode,
-    db: ReadOnlyDatabase[_ <: Node], companion: NodeCompanion[T]): T = {
+    db: ReadOnlyDatabase, companion: NodeCompanion[T]): T = {
     val node = companion()
-    node initWith (neoNode, db)
+    node initWith (neoNode, db, companion)
     node
   }
 
-  def wrapNeoNode(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]): Option[Node] = {
+  def wrapNeoNode(node: NeoNode, db: ReadOnlyDatabase): Option[Node] = {
     try {
       val className = node.getProperty("_class").asInstanceOf[String]
-      val obj = getCompanion(className).apply()
-      obj initWith (node, db)
+      val companion = getCompanion(className)
+      val obj = companion.apply()
+      obj initWith (node, db, companion)
       Some(obj)
     } catch {
       case e: Exception => None
@@ -41,7 +29,7 @@ object Node extends ClassCache[NodeCompanion[_ <: Node]] {
   }
 }
 
-trait Node extends Versionable with Properties[NeoNode] {
+trait Node extends Versionable with Properties[NeoNode] with Logging {
   private[neo4j] var innerNode: NeoNode = _
 
   private[neo4j] val indexCreator = NodeIndexCreator
@@ -54,10 +42,18 @@ trait Node extends Versionable with Properties[NeoNode] {
     * This method is called on initialisation. There is normally no need to
     * call this method manually. It is only public to inject mocks.
     */
-  final def initWith(node: NeoNode, db: ReadOnlyDatabase[_ <: Node]) = {
+  final def initWith(node: NeoNode, db: ReadOnlyDatabase, companion: NodeCompanion[_ <: Node]) = {
     this.innerNode = node
     this.innerDB = db
     sanityCheck(node)
+
+    if (companion.isInstanceOf[IndexedNodeCompanion[_]]) {
+      val indexInfo = companion.asInstanceOf[IndexedNodeCompanion[_]].indexInfo
+      if (!node.hasLabel(indexInfo.label)) {
+        node.addLabel(indexInfo.label)
+      }
+    }
+
     this
   }
 

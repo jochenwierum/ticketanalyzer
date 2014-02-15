@@ -16,13 +16,13 @@ object Relationship extends ClassCache[RelationshipCompanion[_ <: Relationship]]
 
   def wrapNeoRelationship[T <: Relationship](
     neoNode: NeoRelationship,
-    db: ReadOnlyDatabase[_ <: Node], companion: RelationshipCompanion[T]): T = {
+    db: ReadOnlyDatabase, companion: RelationshipCompanion[T]): T = {
     val node = companion()
     node initWith (neoNode, db)
     node
   }
 
-  def wrapNeoRelationship(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]): Option[Relationship] = {
+  def wrapNeoRelationship(relationship: NeoRelationship, db: ReadOnlyDatabase): Option[Relationship] = {
     try {
       val className = relationship.getProperty("_class").asInstanceOf[String]
       val obj = getCompanion(className).apply()
@@ -64,7 +64,7 @@ trait Relationship extends Versionable with Properties[NeoRelationship] {
 
   protected final def getIndex = readableDb.service.index.forRelationships(getClass().getName)
 
-  def initWith(relationship: NeoRelationship, db: ReadOnlyDatabase[_ <: Node]) = {
+  def initWith(relationship: NeoRelationship, db: ReadOnlyDatabase) = {
     sanityCheck(relationship)
     this.innerRelationship = relationship
     this.innerDB = db

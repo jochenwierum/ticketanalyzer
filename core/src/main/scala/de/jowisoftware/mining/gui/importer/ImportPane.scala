@@ -1,30 +1,28 @@
 package de.jowisoftware.mining.gui.importer
 
-import scala.swing.{ ScrollPane, SplitPane, ListView, BorderPanel, Button, ComboBox, GridPanel, Frame, Orientation }
-import scala.swing.event.{ ButtonClicked, SelectionChanged }
-import scala.swing.ScrollPane.BarPolicy
+import scala.swing.{ BorderPanel, Button, ComboBox, Frame, GridPanel, ListView, Orientation, ScrollPane, SplitPane }
 import scala.swing.BorderPanel.Position
-import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.{ ProgressDialog }
-import de.jowisoftware.mining.importer.async.{ AsyncDatabaseImportHandler, ConsoleProgressReporter }
-import de.jowisoftware.mining.importer.Importer
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.plugins.{ Plugin, PluginType, PluginManager }
-import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
 import scala.swing.BoxPanel
-import javax.swing.BoxLayout
-import javax.swing.Box
 import scala.swing.Swing
-import grizzled.slf4j.Logging
+import scala.swing.event.{ ButtonClicked, SelectionChanged }
+import org.neo4j.graphdb.ResourceIterator
+import de.jowisoftware.mining.UserOptions
 import de.jowisoftware.mining.gui.GuiTab
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
+import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.importer.Importer
 import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandlerWithFeedback
+import de.jowisoftware.mining.model.nodes.{ CommitRepository, RootNode, TicketRepository }
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.plugins.{ Plugin, PluginManager, PluginType }
+import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
+import de.jowisoftware.util.ScalaUtil._
+import grizzled.slf4j.Logging
+import de.jowisoftware.neo4j.content.Node
+import org.neo4j.graphdb.ResourceIterable
 
 class ImportPane(
-    db: Database[RootNode],
+    db: Database,
     pluginManager: PluginManager,
     parent: Frame) extends SplitPane(Orientation.Vertical) with GuiTab with Logging { self =>
 
@@ -136,13 +134,12 @@ class ImportPane(
   }
 
   private def updateDBState() = {
-    db.inTransaction { transaction: DBWithTransaction[RootNode] =>
-      def hasContent(repository: MiningNode) =
-        repository.neighbors(Direction.OUTGOING, Seq(Contains.relationType)).size > 0
+    db.inTransaction { transaction: DBWithTransaction =>
+      def hasContent(it: Iterator[_ <: Node]): Boolean = it.hasNext
 
-      val root = transaction.rootNode
-      val hasCommits = hasContent(root.commitRepositoryCollection)
-      val hasTickets = hasContent(root.ticketRepositoryCollection)
+      val root = transaction.rootNode(RootNode)
+      val hasCommits = hasContent(transaction.collections.findAll(CommitRepository))
+      val hasTickets = hasContent(transaction.collections.findAll(TicketRepository))
       if (hasCommits && hasTickets && root.state() < 1) {
         root.state(1)
       }

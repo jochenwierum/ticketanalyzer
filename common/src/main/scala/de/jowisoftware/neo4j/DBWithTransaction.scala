@@ -4,11 +4,12 @@ import content.{ Node, NodeCompanion }
 import org.neo4j.kernel.AbstractGraphDatabase
 import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
+import de.jowisoftware.neo4j.content.NodeCompanion
 
 /**
   * A transaction which allows access to the database.
   */
-trait DBWithTransaction[T <: Node] extends ReadWriteDatabase[T] {
+trait DBWithTransaction extends ReadWriteDatabase {
   /**
     * Mark this transaction as successful.
     * After calling this method, no other methods of this object must be called.
@@ -20,4 +21,6 @@ trait DBWithTransaction[T <: Node] extends ReadWriteDatabase[T] {
     * After calling this method, no other methods of this object must be called.
     */
   def failure()
+
+  def rootNode[A <: Node](companion: NodeCompanion[A]): A
 }

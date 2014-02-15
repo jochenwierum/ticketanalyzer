@@ -8,7 +8,7 @@ import de.jowisoftware.neo4j.Database
 import de.jowisoftware.mining.model.relationships.Links
 import grizzled.slf4j.Logging
 
-class DatabaseLinkerHandler(protected val db: Database[RootNode],
+class DatabaseLinkerHandler(protected val db: Database,
   ticketRepositoryName: String, commitRepositoryName: String)
     extends LinkEvents with AutoTransactions with Logging {
   val transactionThreshould = 50
@@ -20,7 +20,7 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
 
   def foundKeywords(source: MiningNode, keywords: Set[String]) {
     for (keyword <- keywords) {
-      val keywordNode = root.keywordCollection.findOrCreateChild(keyword)
+      val keywordNode = find(Keyword, keyword)
       keywordNode.add(source, Links).linkType("keyword")
     }
     safePointReached
@@ -57,7 +57,7 @@ class DatabaseLinkerHandler(protected val db: Database[RootNode],
   }
 
   def ticketRepository: TicketRepository =
-    root.ticketRepositoryCollection.findOrCreateChild(ticketRepositoryName)
+    transaction.collections.findOrCreate(TicketRepository, ticketRepositoryName)
   def commitRepository: CommitRepository =
-    root.commitRepositoryCollection.findOrCreateChild(commitRepositoryName)
+    transaction.collections.findOrCreate(CommitRepository, commitRepositoryName)
 }

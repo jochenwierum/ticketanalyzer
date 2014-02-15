@@ -1,23 +1,17 @@
 package de.jowisoftware.mining.test
 
-import org.neo4j.graphdb.Node
-import de.jowisoftware.mining.model.nodes.{ RootNode, CommitRepository }
-import de.jowisoftware.mining.model.nodes.helper.MiningNode
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.content.NodeCompanion
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.model.nodes.CommitRepositoryRepository
-import scala.collection.JavaConversions._
-import org.neo4j.kernel.AbstractGraphDatabase
-import org.neo4j.graphdb.index.Index
-import org.neo4j.graphdb.index.IndexManager
-import org.neo4j.graphdb.index.IndexHits
-import org.mockito.Mockito._
+import scala.reflect.runtime.universe
+
+import org.mockito.Mockito.when
 import org.neo4j.graphdb.GraphDatabaseService
+import org.neo4j.graphdb.index.IndexManager
+
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.neo4j.{DBWithTransaction, DatabaseCollection}
+import de.jowisoftware.neo4j.content.IndexedNodeCompanion
 
 class DBMockBuilder(implicit context: MockContext) {
-  private var repositories: List[NodeMockBuilder[_]] = new NodeMockBuilder(CommitRepository) :: Nil
+  private var repositories: List[(IndexedNodeMockBuilder[_ <: MiningNode], String)] = /*new NodeMockBuilder(CommitRepository) ::*/ Nil
   private var nodeIndex: Map[String, NodeIndexMockBuilder] = Map()
 
   private val service = context.mock[GraphDatabaseService]("service")
@@ -25,18 +19,18 @@ class DBMockBuilder(implicit context: MockContext) {
 
   def addCommitRepository(name: String, supportsAbbrev: Boolean) = {
     val builder = new CommitRepositoryMockBuilder(supportsAbbrev)
-    builder.addReadOnlyAttribute("name", name)
-    repositories = builder :: repositories
+    builder.setName(name)
+    repositories = (builder, name) :: repositories
     builder
   }
 
   def finishMock = {
-    val dbMock = context.mock[DBWithTransaction[RootNode]]("dbWithTransaction")
+    val dbMock = context.mock[DBWithTransaction]("dbWithTransaction")
 
     val service = createService
-    val rootNode = createRootNode(dbMock)
-    when(dbMock.rootNode).thenReturn(rootNode)
+    val collections = createCollectionsNode(dbMock)
     when(dbMock.service).thenReturn(service)
+    when(dbMock.collections).thenReturn(collections)
 
     dbMock
   }
@@ -52,29 +46,13 @@ class DBMockBuilder(implicit context: MockContext) {
     index
   }
 
-  private def createRootNode(mockObject: DBWithTransaction[RootNode]) = {
-    val builder = new NodeMockBuilder(RootNode, "rootNode")
-
-    addRepositoryNodes(builder.mockedNode, mockObject)
-    builder.finishMock(mockObject)
-  }
-
-  private def addRepositoryNodes(rootNodeMock: Node, db: DBWithTransaction[RootNode]) = {
-    val repositoryCollection = new NodeMockBuilder(CommitRepositoryRepository)
-
-    val relationshipsToRepositories = repositories.map(repository =>
-      new RelationMockBuilder(repositoryCollection.mockedNode, repository.mockedNode, "repositoryRelation").finishMock)
-
-    when(repositoryCollection.mockedNode.getRelationships(Direction.OUTGOING, Contains.relationType))
-      .thenReturn(relationshipsToRepositories)
-
-    val repositoryCollectionRelation = new RelationMockBuilder(rootNodeMock,
-      repositoryCollection.mockedNode, "repositoryCollectionRelation")
-
-    val relationshipsToCommits = repositoryCollectionRelation.finishMockIterable
-    when(rootNodeMock.getRelationships(Contains.relationType, Direction.OUTGOING))
-      .thenReturn(relationshipsToCommits)
-
-    repositoryCollection.finishMock(db)
+  private def createCollectionsNode(mockObject: DBWithTransaction) = {
+    val collections = context.mock[DatabaseCollection]("collections")
+    for ((collectionBuilder, name) <- repositories) {
+      val mock = collectionBuilder.finishMock(mockObject)
+      val companion = collectionBuilder.companion.asInstanceOf[IndexedNodeCompanion[MiningNode]]
+      when(collections.findOrCreate(companion, name)).thenReturn(mock)
+    }
+    collections
   }
 }

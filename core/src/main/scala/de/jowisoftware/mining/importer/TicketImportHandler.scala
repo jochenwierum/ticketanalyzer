@@ -179,16 +179,16 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
       newMap
   }
 
-  private def getMilestone(name: String) = root.milestoneCollection.findOrCreateChild(name)
-  private def getVersion(name: String) = root.versionCollection.findOrCreateChild(name)
-  private def getType(name: String) = root.typeCollection.findOrCreateChild(name)
-  private def getTag(name: String) = root.tagCollection.findOrCreateChild(name)
-  private def getComponent(name: String) = root.componentCollection.findOrCreateChild(name)
-  private def getStatus(name: String) = root.statusCollection.findOrCreateChild(name)
-  private def getResolution(name: String) = root.resolutionCollection.findOrCreateChild(name)
-  private def getPriority(name: String) = root.priorityCollection.findOrCreateChild(name)
-  private def getSeverity(name: String) = root.severityCollection.findOrCreateChild(name)
-  private def getReproducability(name: String) = root.reproducabilityCollection.findOrCreateChild(name)
+  private def getMilestone(name: String) = transaction().collections.findOrCreate(Milestone, name)
+  private def getVersion(name: String) = transaction().collections.findOrCreate(Version, name)
+  private def getType(name: String) = transaction().collections.findOrCreate(Type, name)
+  private def getTag(name: String) = transaction().collections.findOrCreate(Tag, name)
+  private def getComponent(name: String) =  transaction().collections.findOrCreate(Component, name)
+  private def getStatus(name: String) = transaction().collections.findOrCreate(Status, name)
+  private def getResolution(name: String) = transaction().collections.findOrCreate(Resolution, name)
+  private def getPriority(name: String) = transaction().collections.findOrCreate(Priority, name)
+  private def getSeverity(name: String) = transaction().collections.findOrCreate(Severity, name)
+  private def getReproducability(name: String) = transaction().collections.findOrCreate(Reproducability, name)
 
   private def findTicket(repository: TicketRepository, id: Int) =
     repository.findRecentVersionOf(id)

@@ -8,13 +8,8 @@ trait MockHelper {
       block
     } catch {
       case e: AssertionError =>
-        val skip = e.getStackTrace.indexWhere { frame =>
-          frame.getMethodName == "invoke" &&
-            frame.getClassName == "org.easymock.internal.ObjectMethodsFilter"
-        } + 2
-
         val result = new TestFailedException(Option(e.getMessage),
-          Option(e.getCause), skip)
+          Option(e.getCause), 0)
         result.setStackTrace(e.getStackTrace)
         throw result.severedAtStackDepth
     }

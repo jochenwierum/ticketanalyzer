@@ -16,12 +16,12 @@ object IndexAccess {
 trait IndexAccess[A <: Node] extends Logging {
   import IndexAccess._
 
-  private def getIndex(db: ReadOnlyDatabase[_ <: Node])(implicit tag: TypeTag[A]): Index[NeoNode] = {
+  private def getIndex(db: ReadOnlyDatabase)(implicit tag: TypeTag[A]): Index[NeoNode] = {
     val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     db.service.index.forNodes(erased.getSimpleName)
   }
 
-  protected def findInIndex(db: ReadOnlyDatabase[_ <: Node], indexName: String, value: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]): Option[A] = {
+  protected def findInIndex(db: ReadOnlyDatabase, indexName: String, value: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]): Option[A] = {
     val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     val result = debugIllegalQuery(indexName+", "+value, erased.getSimpleName) {
       getIndex(db).query(indexName, value).getSingle
@@ -29,7 +29,7 @@ trait IndexAccess[A <: Node] extends Logging {
     Option(result).map(Node.wrapNeoNode(_, db, companion))
   }
 
-  protected def findInIndex(db: ReadOnlyDatabase[_ <: Node], query: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]): Option[A] = {
+  protected def findInIndex(db: ReadOnlyDatabase, query: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]): Option[A] = {
     val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     val result = debugIllegalQuery(query, erased.getSimpleName) {
       getIndex(db).query(query).getSingle
@@ -37,14 +37,14 @@ trait IndexAccess[A <: Node] extends Logging {
     Option(result).map(Node.wrapNeoNode(_, db, companion))
   }
 
-  protected def findMultipleInIndex(db: ReadOnlyDatabase[_ <: Node], indexName: String, value: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]) = {
+  protected def findMultipleInIndex(db: ReadOnlyDatabase, indexName: String, value: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]) = {
     val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     debugIllegalQuery(indexName+", "+value, erased.getSimpleName) {
       getIndex(db).query(indexName, value).iterator.map { result => Node.wrapNeoNode(result, db, companion) }
     }
   }
 
-  protected def findMultipleInIndex(db: ReadOnlyDatabase[_ <: Node], query: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]) = {
+  protected def findMultipleInIndex(db: ReadOnlyDatabase, query: String, companion: NodeCompanion[A])(implicit tag: TypeTag[A]) = {
     val erased = runtimeMirror(getClass.getClassLoader).runtimeClass(typeOf[A])
     debugIllegalQuery(query, erased.getSimpleName) {
       getIndex(db).query(query).iterator.map { result => Node.wrapNeoNode(result, db, companion) }
@@ -56,7 +56,7 @@ trait IndexAccess[A <: Node] extends Logging {
       code
     } catch {
       case e: Exception =>
-        error("Could not execute query("+arg+") in index"+indexName, e)
+        error("Could not execute query("+arg+") in index "+indexName, e)
         throw new RuntimeException(e)
     }
 }

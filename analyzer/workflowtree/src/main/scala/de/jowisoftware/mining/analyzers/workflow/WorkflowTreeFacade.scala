@@ -10,6 +10,6 @@ import de.jowisoftware.neo4j.Database
 class WorkflowTreeFacade extends Analyzer {
   def userOptions = new WorkflowTreeOptions
 
-  def analyze(db: Database[RootNode], options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) =
+  def analyze(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) =
     new WorkflowTreeAnalyzer(db, options, parent, waitDialog).run()
 }
