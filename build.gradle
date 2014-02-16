@@ -15,6 +15,7 @@ ext {
   scala_version_short = "2.10"
 }
 
+
 allprojects {
   apply plugin: 'eclipse'
 
@@ -23,6 +24,7 @@ allprojects {
       delete '.project', '.settings', '.classpath'
     }
   }
+
 }
 
 subprojects {
@@ -59,12 +61,14 @@ subprojects {
   test << {
       def oldLevel = logging.getLevel()
       logging.setLevel(LogLevel.INFO) 
-    def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
+      def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
+
       ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: cp)
       ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
           reporter(type: 'stdout', config: "D")
           //reporter(type: 'stdout', config: "DF")
       }
+
       if (oldLevel == null)
         logging.setLevel(LogLevel.QUIET)
       else
@@ -91,92 +95,53 @@ subprojects {
       containers += ["org.scala-ide.sdt.launching.SCALA_CONTAINER"]
     }
   }
-}
 
-task copyDistFiles() {
-  subprojects.each { dependsOn("${it.path}:build") }
-  File dist = new File("$buildDir/dist")
+  if (subprojects.isEmpty()) {
+    task copyDistFiles() {
+      dependsOn("build")
+      File dist = new File(project.getRootProject().buildDir, "dist")
  
-  def allFiles = subprojects.collectNested {
-    it.configurations.runtime.filter {!it.name.endsWith(".pom")}.getFiles() +
-      it.configurations.archives.allArtifacts.files.getFiles()
-  }
- 
-  inputs.files allFiles
-  outputs.dir dist
-}
+      outputs.dir dist
+	  inputs.files { configurations.runtime.filter {!it.name.endsWith(".pom")} }
 
-copyDistFiles << {
-  File dist = mkdir("$buildDir/dist")
-
-  copy {
-    fileMode = 0644
-    dirMode = 0755
-    into mkdir(new File(dist, "lib"))
-    subprojects.each {
-      from it.configurations.runtime.filter {!it.name.endsWith(".pom")}
-    }
-    from project(':common').configurations.archives.allArtifacts.files
-    from project(':core').configurations.archives.allArtifacts.files
-  }
-
-  copy {
-    fileMode = 0644
-    dirMode = 0755
-    into mkdir(new File(dist, "plugins/importer"))
-    project(':importer').subprojects.each {
-      from it.configurations.archives.allArtifacts.files
-    }
-  }
-  
-  copy {
-    fileMode = 0644
-    dirMode = 0755
-    into mkdir(new File(dist, "plugins/linker"))
-    project(':linker').subprojects.each {
-      from it.configurations.archives.allArtifacts.files
-    }
-  }
-
-  copy {
-    fileMode = 0644
-    dirMode = 0755
-    into mkdir(new File(dist, "plugins/analyzer"))
-    project(':analyzer').subprojects.each {
-      from it.configurations.archives.allArtifacts.files
-    }
-  }
-
-  copy {
-    fileMode = 0644
-    dirMode = 0755
-    into mkdir(new File(dist, "settings"))
-    subprojects.each {
-      File settingsDir = it.file("src/main/settings")
-      if (settingsDir.isDirectory()) {
-        from settingsDir
+      doLast {
+        copy {
+          fileMode = 0644
+          dirMode = 0755
+          into mkdir(new File(dist, "lib"))
+          from configurations.runtime.filter {!it.name.endsWith(".pom")}
+        }
+    
+        copy {
+          fileMode = 0644
+          dirMode = 0755
+          into mkdir(new File(dist, "settings"))
+          File settingsDir = file("src/main/settings")
+          if (settingsDir.isDirectory()) {
+            from settingsDir
+		  }
+        }
       }
     }
   }
 }
 
-task writeStartScripts(dependsOn: copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
-  File dist = new File("$buildDir/dist")
+def leafs = subprojects.findAll{it.subprojects.isEmpty()}
+
+task dist(dependsOn: leafs.copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
+  File out = new File("$buildDir/dist")
+  def cp = fileTree(dir: new File(out, 'lib'), include: '*.jar')
+
+  inputs.files cp
+  outputs.dir out
+
+  mainClassName = "de.jowisoftware.mining.Main"
+  outputDir = mkdir(new File(out, "bin"))
   applicationName = "ticketanalyzer"
-  classpath = fileTree(dir: new File(dist, 'lib'), include: '*.jar')
-
-  inputs.files classpath
-  outputs.dir dist
-
-  doLast {
-    mainClassName = "de.jowisoftware.mining.Main"
-    outputDir = mkdir(new File(dist, "bin"))
-  }
+  classpath = cp
 }
 
-task dist(dependsOn: [copyDistFiles, writeStartScripts])
-
-task start(dependsOn: copyDistFiles) << {
+task start(dependsOn: leafs.copyDistFiles) << {
   javaexec{
     main = "de.jowisoftware.mining.Main"
     classpath = project(':core').sourceSets.test.runtimeClasspath

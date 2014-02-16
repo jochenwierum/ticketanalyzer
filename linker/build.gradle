@@ -1,0 +1,12 @@
+subprojects {
+  copyDistFiles << {
+    File dist = mkdir(new File(project.getRootProject().buildDir, "dist"))
+
+    copy {
+      fileMode = 0644
+      dirMode = 0755
+      into mkdir(new File(dist, "plugins/linker"))
+      from project.configurations.archives.allArtifacts.files
+    }
+  }
+}
