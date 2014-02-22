@@ -2,6 +2,7 @@ defaultTasks 'help'
 
 apply plugin: 'scala'
 apply plugin: 'application'
+apply plugin: 'build-dashboard'
 
 import org.gradle.plugins.ide.eclipse.model.SourceFolder 
 import java.util.regex.Pattern
@@ -9,7 +10,7 @@ import java.util.regex.Pattern
 ext {
   scala_version = "2.10.3"
   scala_xml_version = "2.10.3"
-  scalatest_version = "2.0.M7"
+  scalatest_version = "2.0"
   neo4j_version = "2.0.1"
   mockito_version = "1.9.0"
   scala_version_short = "2.10"
@@ -25,6 +26,13 @@ allprojects {
     }
   }
 
+  tasks.withType(ScalaCompile) {
+    //scalaCompileOptions.useAnt = false
+    configure(scalaCompileOptions.forkOptions) {
+      memoryMaximumSize = '1g'
+      jvmArgs = ['-XX:MaxPermSize=512m']
+    }
+  }
 }
 
 subprojects {
@@ -51,6 +59,7 @@ subprojects {
     
     testCompile group: "org.scalatest", name: "scalatest_" + scala_version_short, version: scalatest_version
     testCompile group: "org.mockito", name: "mockito-all", version: mockito_version
+    testCompile group: "junit", name: "junit", version: "4.11"
     
 
     if (project.name != 'common') {
@@ -58,21 +67,14 @@ subprojects {
     }
   }
 
-  test << {
-      def oldLevel = logging.getLevel()
-      logging.setLevel(LogLevel.INFO) 
-      def cp = classpath.filter{file -> !file.name.endsWith(".pom")}.asPath
-
-      ant.taskdef(name: 'scalatest', classname: 'org.scalatest.tools.ScalaTestAntTask', classpath: cp)
-      ant.scalatest(runpath: testClassesDir, haltonfailure: 'true', fork: 'false') {
-          reporter(type: 'stdout', config: "D")
-          //reporter(type: 'stdout', config: "DF")
-      }
-
-      if (oldLevel == null)
-        logging.setLevel(LogLevel.QUIET)
-      else
-        logging.setLevel(oldLevel)
+  test {
+    testLogging {
+      stackTraceFilters "truncate"
+      events "passed", "skipped", "failed", "standardOut", "standardError"
+      displayGranularity 3
+      minGranularity 3
+      maxGranularity 3
+    }
   }
 
   tasks.eclipse.dependsOn(cleanEclipse)
@@ -80,11 +82,11 @@ subprojects {
     classpath {
       file {
         whenMerged { cp ->
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
-          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
+//          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
+//          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
+//          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
+//          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
+//          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.matches(Pattern.compile('scala-(library|reflect|actors)-[.\\d](-M[\\d]+)?.jar')) ||
             entry.path.endsWith('.pom') ||
@@ -102,7 +104,7 @@ subprojects {
       File dist = new File(project.getRootProject().buildDir, "dist")
  
       outputs.dir dist
-	  inputs.files { configurations.runtime.filter {!it.name.endsWith(".pom")} }
+      inputs.files { configurations.runtime.filter {!it.name.endsWith(".pom")} }
 
       doLast {
         copy {
@@ -119,7 +121,7 @@ subprojects {
           File settingsDir = file("src/main/settings")
           if (settingsDir.isDirectory()) {
             from settingsDir
-		  }
+          }
         }
       }
     }
@@ -162,11 +164,14 @@ task help() << {
   println("   artifacts which run without the neo4j web interface")
 }
 
-tasks.withType(ScalaCompile) {
-    scalaCompileOptions.useAnt = false
-}
-
-
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.10'
+  gradleVersion = '1.11'
+
+  def jvmOpts = "-Xmx512m"
+  inputs.property("jvmOpts", jvmOpts)
+  doLast {
+    def optsEnvVar = "DEFAULT_JVM_OPTS"
+    scriptFile.write scriptFile.text.replace("$optsEnvVar=\"\"", "$optsEnvVar=\"$jvmOpts\"")
+    batchScript.write batchScript.text.replace("set $optsEnvVar=", "set $optsEnvVar=$jvmOpts")
+  }
 }

@@ -15,6 +15,7 @@ dependencies {
 
   provided group: "org.scalatest", name: "scalatest_" + scala_version_short, version: scalatest_version
   provided group: "org.mockito", name: "mockito-all", version: mockito_version
+  provided group: "junit", name: "junit", version: "4.11"
 }
 
 copyDistFiles << {

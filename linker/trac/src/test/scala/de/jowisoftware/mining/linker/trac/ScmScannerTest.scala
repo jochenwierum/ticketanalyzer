@@ -11,12 +11,13 @@ import org.neo4j.graphdb.Node
 import de.jowisoftware.mining.test.MockContext
 import org.scalatest.Matchers
 import de.jowisoftware.mining.model.nodes.CommitRepository
+import de.jowisoftware.mining.test.MiningTest
 
 object ScmScannerTest {
   val repositoryName = "git"
 }
 
-class ScmScannerTest extends FlatSpec with Matchers with MockHelper {
+class ScmScannerTest extends MiningTest {
   import ScmScannerTest._
 
   private def realCheck(text: String, expected: Set[ScmLink], database: DBWithTransaction, generator: RangeGenerator) {

@@ -2,8 +2,9 @@ package de.jowisoftware.mining.analyzer.data
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import de.jowisoftware.mining.test.MiningTest
 
-class TextMatrixTest extends FlatSpec with Matchers {
+class TextMatrixTest extends MiningTest {
   """A TextMatrix""" should "return the column names in the initial order" in {
     val matrix = new TextMatrix(Seq("a", "c", "b"), Seq())
     (matrix.columnTitles) should equal(Array("a", "c", "b"))

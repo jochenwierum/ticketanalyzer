@@ -4,8 +4,12 @@ import org.scalatest.FunSpec
 import de.jowisoftware.mining.linker.TicketLink
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.test.MiningTest
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
-class TicketScannerTest extends FlatSpec with Matchers {
+class TicketScannerTest extends MiningTest {
   private def check(text: String, expected: Set[TicketLink]) {
     info("testing: '"+text+"'")
     val scanner = new TicketScanner()
