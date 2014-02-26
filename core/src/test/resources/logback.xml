@@ -17,12 +17,16 @@
         </encoder>
     </appender>
     
-    <appender name="BEAGLE" class="ch.qos.logback.classic.net.SocketAppender">
-      <remoteHost>127.0.0.1</remoteHost>
-      <port>4321</port>
-      <reconnectionDelay>10000</reconnectionDelay>
-      <includeCallerData>true</includeCallerData>
-    </appender>
+    <if condition='isDefined("ECLIPSE")'>
+      <then>
+        <appender name="BEAGLE" class="ch.qos.logback.classic.net.SocketAppender">
+          <remoteHost>127.0.0.1</remoteHost>
+          <port>4321</port>
+          <reconnectionDelay>10000</reconnectionDelay>
+          <includeCallerData>true</includeCallerData>
+        </appender>
+      </then>
+    </if>
 
     <logger name="de.jowisoftware" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT" />

@@ -25,7 +25,7 @@
 
   <!-- 
   	org.neo4j.server.logging.Logger logs either to a log file, or to stdout if the log level
-  	is ignored by the logger. Better log all in the same format then mix logs and stdout,
+  	is ignored by the logger. Better log all in the same format than mix logs and stdout,
   	so we use "DBEUG" here.
    -->
   <logger name="org.neo4j.server" level="DEBUG" />
