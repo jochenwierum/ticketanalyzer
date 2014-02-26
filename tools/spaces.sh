@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-cd "$(dirname "$(readlink -f $0)")"/..
+cd "$(dirname "$(cd "$(dirname "spaces.sh")" && pwd)/)")"
 
 GIT=0
 if [ "$1" == "--git" ]; then
