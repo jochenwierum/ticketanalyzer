@@ -13,6 +13,7 @@ import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.model.nodes.CommitRepository
 import scala.swing.Dialog
+import de.jowisoftware.mining.model.nodes.Person
 
 class TruckFilesAnalyzer extends Analyzer {
   def userOptions() = new TruckFilesAnalyzerOptions()
@@ -31,37 +32,31 @@ class TruckFilesAnalyzer extends Analyzer {
   private def createCiriticalFilesWindow(db: Database,
     options: Map[String, String], parent: Frame): Dialog =
     db.inTransaction { transaction =>
-      val engine = new ExecutionEngine(db.service)
-
-      val query = """START n=node:commitRepository('*:*') // commit collection -> file collection
-      MATCH n-[:contains_file]->file<-[:changed_file]-commit<-[:owns]-person
-      %s
+      val query = s"""
+      MATCH ${CommitRepository.cypherForAll("n")}-[:contains_files]->file<-[:changed_file]-commit<-[:owns]-person
+      WHERE NOT (person.name in ({ignored}))
       RETURN
         file.name as file,
-        count(distinct commit.id) / count(distinct person.name) as ratio,
+        1.0 * count(distinct commit.id) / count(distinct person.name) as ratio,
         count(commit.id) as commitCount,
         count(distinct person.name) as personCount,
         collect(distinct person.name) as persons
       ORDER BY ratio DESC
-      LIMIT {limit};""" format (ignoreToWhereClauses(options("inactive")))
+      LIMIT {limit};"""
 
-      val result = engine.execute(query, Map("limit" -> options("limit").toInt))
+      val result = transaction.cypher(query,
+        Map("limit" -> options("limit").toInt, "ignored" -> options("inactive").split("""\s*,\s*""").toArray))
 
       if (options("output") == "raw")
         new ResultWindow(parent, result)
       else
-        new KeywordResultWindow(parent, result, getActivePersons(engine,
+        new KeywordResultWindow(parent, result, getActivePersons(transaction,
           options("inactive").split("""\s*,\s*""")).toSet, "File")
     }
 
-  private def ignoreToWhereClauses(ignore: String): String =
-    """WHERE person.name <> "" """+(if (ignore.trim.isEmpty) ""
-    else
-      ignore.split("""\s*,\s*""").map("person.name <> \""+_+"\"").mkString(" AND ", " AND ", ""))
-
-  private def getActivePersons(engine: ExecutionEngine, ignoredList: Array[String]): Seq[String] =
-    engine.execute("START n = node:person('*:*') RETURN n.name")
+  private def getActivePersons(transaction: DBWithTransaction, ignoredList: Array[String]): Seq[String] =
+    transaction.cypher(s"""MATCH ${Person.cypherForAll("n")} WHERE NOT n.name IN ({ignored}) RETURN n.name""",
+      Map("ignored" -> ignoredList.toArray[String]))
       .map(_.getOrElse("name", "").asInstanceOf[String])
-      .filterNot(name => name == "" || ignoredList.contains(name))
       .toSeq
 }

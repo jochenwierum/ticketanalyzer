@@ -12,35 +12,35 @@ import org.neo4j.cypher.ExecutionResult
 import scala.swing.Swing
 import de.jowisoftware.util.HTMLUtil
 import de.jowisoftware.mining.analyzer.data.TextMatrix
+import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.mining.model.nodes.TicketRepository
+import de.jowisoftware.mining.model.nodes.Person
 
 object ReviewAnalyzer {
-  private val personQuery = "START p = node:person('*:*') RETURN p.name"
-  private val query = """
-        START repositoriy = node:repository('*:*')
+  private val personQuery = s"MATCH ${Person.cypherForAll("p")} RETURN p.name AS name"
+  private val query = s"""
         MATCH
-          repository --> ticket1 -[:has_status]-> state1,
+          ${TicketRepository.cypherForAll("repository")} --> ticket1 -[:has_status]-> state1,
           ticket1 <-[:updates]- ticket2 -[:has_status]-> state2,
           ticket1 <-[:owns]- person1,
           ticket2 <-[:owns]- person2
         WHERE state1.logicalType = {type1} AND state2.logicalType = {type2}
         RETURN person1.name AS from, person2.name AS to, count(distinct ticket1.id) as count
         """
-
 }
 
 class ReviewAnalyzer extends Analyzer {
   def userOptions = new ReviewOptions
 
   def analyze(db: Database, options: Map[String, String], parent: Frame,
-    waitDialog: ProgressDialog) {
-    val executionEngine = new ExecutionEngine(db.service)
+    waitDialog: ProgressDialog): Unit = db.inTransaction { transaction =>
 
-    val result = collectData(executionEngine)
+    val result = collectData(transaction)
     val nonDevs = options("nonDevs").trim.split("""\s*,\s*""")
     val ignored = options("ignore").trim.split("""\s*,\s*""")
     val other = "(other)"
 
-    val names = findPersons(executionEngine) -- nonDevs -- ignored
+    val names = findPersons(transaction) -- nonDevs -- ignored
     val sortedNames = names.toSeq.sorted
     val matrix = new TextMatrix(sortedNames :+ other, sortedNames :+ other)
 
@@ -63,12 +63,12 @@ class ReviewAnalyzer extends Analyzer {
     }
   }
 
-  private def findPersons(executionEngine: ExecutionEngine): Set[String] = {
-    executionEngine.execute(ReviewAnalyzer.personQuery).map(_.getOrElse("name", "").asInstanceOf[String]).toSet
+  private def findPersons(transaction: DBWithTransaction): Set[String] = {
+    transaction.cypher(ReviewAnalyzer.personQuery).map(_.getOrElse("name", "").asInstanceOf[String]).toSet
   }
 
-  private def collectData(engine: ExecutionEngine): ExecutionResult = {
-    engine.execute(ReviewAnalyzer.query, Map(
+  private def collectData(transaction: DBWithTransaction): ExecutionResult = {
+    transaction.cypher(ReviewAnalyzer.query, Map(
       "type1" -> StatusType.assigned.id,
       "type2" -> StatusType.inReview.id))
   }

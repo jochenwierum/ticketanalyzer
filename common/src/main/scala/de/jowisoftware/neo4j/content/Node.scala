@@ -7,7 +7,7 @@ import de.jowisoftware.neo4j.content.index.NodeIndexCreator
 import properties.Versionable
 import grizzled.slf4j.Logging
 
-object Node extends ClassCache[NodeCompanion[_ <: Node]] {
+object Node extends ClassCache[NodeCompanion[_ <: Node]] with Logging {
   def wrapNeoNode[T <: Node](
     neoNode: NeoNode,
     db: ReadOnlyDatabase, companion: NodeCompanion[T]): T = {
@@ -24,7 +24,9 @@ object Node extends ClassCache[NodeCompanion[_ <: Node]] {
       obj initWith (node, db, companion)
       Some(obj)
     } catch {
-      case e: Exception => None
+      case e: Exception =>
+        error(s"Could not wrap node ${node.getId()}", e)
+        None
     }
   }
 }
@@ -39,7 +41,7 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
 
   /**
     * Initialize a Node with a backing Neo4j Node object.
-    * This method is called on initialisation. There is normally no need to
+    * This method is called on initialization. There is normally no need to
     * call this method manually. It is only public to inject mocks.
     */
   final def initWith(node: NeoNode, db: ReadOnlyDatabase, companion: NodeCompanion[_ <: Node]) = {

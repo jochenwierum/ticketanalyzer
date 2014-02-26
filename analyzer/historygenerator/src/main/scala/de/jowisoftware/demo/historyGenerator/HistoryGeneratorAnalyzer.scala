@@ -8,6 +8,8 @@ import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.cypher.ExecutionResult
 import scala.collection.SortedMap
 import scala.swing.Swing
+import de.jowisoftware.mining.model.nodes.Version
+import de.jowisoftware.neo4j.DBWithTransaction
 
 object HistoryGeneratorAnalyzer {
   private val versionMatcher = """(\d+\.\d+(?:\.\d+)*)""".r
@@ -17,8 +19,10 @@ class HistoryGeneratorAnalyzer(db: Database, options: Map[String, String],
     parent: Frame, waitDialog: ProgressDialog) {
 
   def run() {
-    val executionResult = getResults
-    val tableMap = transformToTable(executionResult)
+    val tableMap = db.inTransaction { t =>
+      val executionResult = getResults(t)
+      transformToTable(executionResult)
+    }
     val table = transformToString(tableMap)
 
     Swing.onEDT {
@@ -27,16 +31,14 @@ class HistoryGeneratorAnalyzer(db: Database, options: Map[String, String],
     }
   }
 
-  private def getResults: ExecutionResult = {
-    val query = """START version=node:version('*:*')
-      MATCH
-        version<-[:targets]-ticket<-[x?:updates]-newer
-      WHERE newer IS NULL AND version.name <> ""
+  private def getResults(transaction: DBWithTransaction): ExecutionResult = {
+    val query = s"""
+      MATCH ${Version.cypherForAll("version")}<-[:targets]-ticket
+      WHERE NOT (ticket) <-[:updates]- () AND version.name <> ""
       RETURN version.name AS version, ticket.title AS title
       ORDER BY ticket.updateDate ASC"""
 
-    val engine = new ExecutionEngine(db.service)
-    engine.execute(query)
+    transaction.cypher(query)
   }
 
   private def transformToTable(result: ExecutionResult) =

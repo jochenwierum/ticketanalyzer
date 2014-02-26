@@ -18,7 +18,7 @@ dependencies {
   provided group: "org.neo4j.app", name: "neo4j-server", version: neo4jserver_version
 
   if (!(project.hasProperty("compact") && project.property("compact") == "true")) {
-    //compile group: "com.sun.jersey", name: "jersey-core", version: "1.9"
+    compile group: "com.sun.jersey", name: "jersey-core", version: "1.9"
     compile group: "org.neo4j.app", name: "neo4j-server", version: neo4jserver_version, classifier: "static-web"
   }
 }

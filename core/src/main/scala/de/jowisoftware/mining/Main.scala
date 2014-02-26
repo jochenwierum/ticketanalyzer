@@ -34,34 +34,44 @@ object Main extends Logging {
   }
 
   private def startApp {
-    val db = openDatabase
 
-    val pluginManager = preparePluginManager
-    checkPlugins(pluginManager)
-
-    val status = try {
-      new MainWindow(db, pluginManager).visible = true
-      0
+    val db = try {
+      openDatabase(false)
     } catch {
       case e: Exception =>
         error("Failed to initialize the application", e)
-        1
-    } finally {
-      try {
-        db.shutdown
-        AkkaHelper.system.shutdown()
-      } catch {
-        case _: Exception =>
-      }
+        quit(null, 1)
     }
 
+    try {
+      val pluginManager = preparePluginManager
+      checkPlugins(pluginManager)
+
+      new MainWindow(db, pluginManager).visible = true
+      debug("Main window closed, terminating application")
+    } catch {
+      case e: Exception =>
+        error("Failed to initialize the application", e)
+        quit(db, 1)
+    }
+  }
+
+  def quit(db: Database, status: Int): Nothing = {
+    try {
+      if (db != null)
+        db.shutdown
+      AkkaHelper.system.shutdown()
+    } catch {
+      case _: Exception =>
+    }
     System.exit(status)
+    throw new Exception()
   }
 
   private def performDBUpdate() {
     warn("Cheking whether database upgrade is required")
 
-    val db = openDatabase
+    val db = openDatabase(true)
     val hasUpdates = try {
       db.inTransaction { _.rootNode(RootNode).updateRequired }
     } finally {
@@ -91,12 +101,12 @@ object Main extends Logging {
     }
   }
 
-  private def openDatabase: Database = {
+  private def openDatabase(forceCompact: Boolean): Database = {
     val dbPath = AppUtil.projectFile(AppUtil.appSettings.getString("db"))
 
     info("Using database at "+dbPath)
     try {
-      if (compactMode)
+      if (compactMode || forceCompact)
         new EmbeddedDatabase(dbPath)
       else
         new EmbeddedDatabaseWithConsole(dbPath)

@@ -6,7 +6,7 @@ import helper._
 
 object Milestone extends IndexedNodeCompanion[Milestone] {
   def apply = new Milestone
-  val indexInfo = IndexedNodeInfo("Milestone")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.milestone)
 }
 
 class Milestone extends MiningNode with HasName with EmptyNode

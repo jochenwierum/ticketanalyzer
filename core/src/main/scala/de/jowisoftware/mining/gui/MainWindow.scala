@@ -14,6 +14,7 @@ import de.jowisoftware.mining.gui.linker.LinkPane
 import de.jowisoftware.mining.gui.linker.AnalyzerPane
 import de.jowisoftware.mining.gui.shell.StatisticsPane
 import de.jowisoftware.mining.AkkaHelper
+import de.jowisoftware.mining.Main
 
 object MainWindow {
   case object DatabaseUpdated extends Event
@@ -55,8 +56,8 @@ class MainWindow(db: Database, pluginManager: PluginManager) extends Frame {
     case DatabaseUpdated => updateView()
   }
 
-  def updateView() {
-    val state = db.inTransaction(_.rootNode(RootNode)).state()
+  def updateView(): Unit = {
+    val state = db.inTransaction(_.rootNode(RootNode).state())
 
     linkPane.enabled = state > 0
     analyzePane.enabled = state > 1
@@ -66,5 +67,10 @@ class MainWindow(db: Database, pluginManager: PluginManager) extends Frame {
 
     shellPane.content.asInstanceOf[ShellPane].newViewState(state)
     statisticsPane.content.asInstanceOf[StatisticsPane].updateStatistics()
+  }
+
+  override def dispose(): Unit = {
+    super.dispose()
+    Main.quit(db, 0)
   }
 }

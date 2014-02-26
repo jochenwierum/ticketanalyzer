@@ -1,20 +1,19 @@
 package de.jowisoftware.mining.analyzers.workflow
 
 import java.io.File
+
 import scala.annotation.tailrec
-import scala.collection.SortedMap
 import scala.collection.mutable
 import scala.swing.Frame
-import org.neo4j.graphdb.Direction
+
+import org.neo4j.graphdb.{ Direction, Node => NeoNode }
+
 import de.jowisoftware.mining.external.dot.{ DotWrapper, ImageDialog }
 import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.model.nodes.{ Person, RootNode, Status, Ticket }
+import de.jowisoftware.mining.model.nodes.{ Person, Status, Ticket, TicketRepository }
 import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
-import de.jowisoftware.neo4j.Database
-import org.neo4j.cypher.ExecutionEngine
-import org.neo4j.graphdb.{ Node => NeoNode }
+import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 import de.jowisoftware.neo4j.content.{ Node => CNode }
-import de.jowisoftware.mining.model.nodes.TicketRepository
 
 object WorkflowTreeAnalyzer {
   private def status(ticket: Ticket): String =
@@ -59,12 +58,15 @@ class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: F
       findNode(tail).children.map(_.to).find(_.label == head).get
   }
 
-  def run() {
-    waitDialog.max = getTickets.size
+  def run(): Unit = {
+    db.inTransaction { transaction =>
+      val tickets = getTickets(transaction)
+      waitDialog.max = tickets.size
 
-    getTickets.foreach { t =>
-      waitDialog.tick()
-      processVersions(t)
+      tickets.foreach { t =>
+        waitDialog.tick()
+        processVersions(t)
+      }
     }
 
     updateStats
@@ -78,18 +80,14 @@ class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: F
     resultDialog.visible = true
   }
 
-  private def getTickets = {
-    val executionEngine = new ExecutionEngine(db.service)
+  private def getTickets(transaction: DBWithTransaction): Seq[Ticket] =
+    transaction.cypher(s"""
+          MATCH ${TicketRepository.cypherForAll("n")} -[:contains]-> ticket
+          WHERE NOT (ticket) -[:updates]-> ()
+          RETURN ticket""").map(ticketMap =>
+      CNode.wrapNeoNode(ticketMap("ticket").asInstanceOf[NeoNode], db, Ticket)).toSeq
 
-    for {
-      repositoryMap <- executionEngine.execute("START n = node:ticketRepository('*:*') RETURN n")
-      repository = CNode.wrapNeoNode(repositoryMap("n").asInstanceOf[NeoNode], db, TicketRepository)
-      ticket <- repository.tickets
-      if (ticket.isRootVersion)
-    } yield ticket
-  }
-
-  private def processVersions(baseTicket: Ticket) {
+  private def processVersions(baseTicket: Ticket): Unit = {
     @tailrec
     def processVersion(ticket: Ticket, oldStatus: List[String], oldOwner: String) {
       val currentStatus = status(ticket)

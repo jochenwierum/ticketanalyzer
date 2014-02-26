@@ -16,6 +16,11 @@ import sun.awt.EmbeddedFrame
 import org.neo4j.graphdb.DynamicLabel
 import org.neo4j.helpers.TimeUtil
 import java.util.concurrent.TimeUnit
+import de.jowisoftware.neo4j.content.IndexedNodeCompanion
+import de.jowisoftware.neo4j.content.IndexedNodeInfo
+import scala.collection.mutable.TreeSet
+import IndexedNodeInfo.Labels.Label
+import de.jowisoftware.neo4j.DBWithTransaction
 
 object UpdateDB {
   def main(args: Array[String]) {
@@ -23,18 +28,19 @@ object UpdateDB {
     val db = new EmbeddedDatabase(dbPath)
 
     if (db.inTransaction(_.rootNode(RootNode).graphVersion()) < 4) {
+      println("Updating index...")
       updateIndizes(db);
     }
 
     println("Updating nodes...")
     performUpgrade[NeoNode](db,
       GlobalGraphOperations.at(db.service).getAllNodes,
-      n => Node.wrapNeoNode(n, db))
+      (n, t) => Node.wrapNeoNode(n, t))
 
     println("Updating relationships...")
     performUpgrade[NeoRelationship](db,
       GlobalGraphOperations.at(db.service).getAllRelationships,
-      r => Relationship.wrapNeoRelationship(r, db))
+      (r, t) => Relationship.wrapNeoRelationship(r, t))
 
     println("Updating schema version")
     db.inTransaction { t =>
@@ -47,30 +53,43 @@ object UpdateDB {
   }
 
   private def performUpgrade[A](db: EmbeddedDatabase,
-    collector: => Iterable[A], updateAction: A => Unit): Unit = {
+    collector: => Iterable[A], updateAction: (A, DBWithTransaction) => Unit): Unit = {
 
-    val count = collector.size
     var i = 0L
-    var transaction = db.service.beginTx
+    var transaction = db.startTransaction
+    val count = collector.size
     for (obj <- collector) {
-      updateAction(obj)
+      updateAction(obj, transaction)
 
       i = i + 1
       if (i % 1000 == 0) {
         println((100.0 * i / count).formatted("%.2f")+" %: "+i+" of "+count+" Objects...")
         transaction.success
-        transaction.close
-        transaction = db.service.beginTx
+        transaction = db.startTransaction
       }
     }
     transaction.success
-    transaction.close
   }
 
   def updateIndizes(embeddedDb: EmbeddedDatabase) {
+    val indices = embeddedDb.inTransaction { db =>
+      val result = IndexedNodeInfo.Labels.labels flatMap { label =>
+        if (db.service.schema().getIndexes(label.label).iterator().hasNext()) {
+          None
+        } else {
+          println(s"Creating index: ${label.label.name()} on ${label.indexProperty}")
+          Some(db.service.schema.indexFor(label.label).on(label.indexProperty).create())
+        }
+      }
+      db.success()
+      result
+    }
+
     embeddedDb.inTransaction { db =>
-      val index = db.service.schema.indexFor(DynamicLabel.label("function")).on("_function").create()
-      db.service.schema().awaitIndexOnline(index, 4, TimeUnit.HOURS)
+      indices foreach { index =>
+        println(s"Waiting for index: ${index.getLabel().name()}")
+        db.service.schema().awaitIndexOnline(index, 10, TimeUnit.MINUTES)
+      }
     }
   }
 }

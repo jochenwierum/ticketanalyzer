@@ -7,7 +7,7 @@ import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
 object Tag extends IndexedNodeCompanion[Tag] {
   def apply = new Tag
-  val indexInfo = IndexedNodeInfo("tag")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.tag)
 }
 
 class Tag extends MiningNode with EmptyNode with HasName

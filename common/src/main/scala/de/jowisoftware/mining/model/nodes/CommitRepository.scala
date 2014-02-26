@@ -10,7 +10,7 @@ import de.jowisoftware.neo4j.content.Node
 
 object CommitRepository extends IndexedNodeCompanion[CommitRepository] {
   def apply = new CommitRepository
-  val indexInfo = IndexedNodeInfo("commitRepository")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.commitRepository)
 }
 
 class CommitRepository extends MiningNode with HasName with Logging {
@@ -20,12 +20,13 @@ class CommitRepository extends MiningNode with HasName with Logging {
     if (version < 2) {
       val toDeleteRel = content.getRelationships(Direction.OUTGOING, ContainsFile).iterator().next()
       val toDeleteNode = toDeleteRel.getEndNode()
-      toDeleteRel.getEndNode().getRelationships(Direction.OUTGOING) foreach { rel =>
-        add(Node.wrapNeoNode(rel.getEndNode(), writableDb, File), ContainsFile)
+      toDeleteNode.getRelationships(Direction.OUTGOING) foreach { rel =>
+        val file = Node.wrapNeoNode(rel.getEndNode(), writableDb, File)
+        add(file, ContainsFile)
         rel.delete()
       }
-      toDeleteNode.delete()
       toDeleteRel.delete()
+      toDeleteNode.delete()
     }
   }
 

@@ -6,7 +6,7 @@ import helper._
 
 object Reproducability extends IndexedNodeCompanion[Reproducability] {
   def apply = new Reproducability
-  val indexInfo = IndexedNodeInfo("reproducability")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.reproducability)
 }
 
 class Reproducability extends MiningNode with EmptyNode with HasName

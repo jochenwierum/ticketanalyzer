@@ -57,12 +57,11 @@ class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
 
   private def createCriticalKeywordsWindow: Dialog =
     db.inTransaction { transaction =>
-      val engine = new ExecutionEngine(transaction.service)
       val limit = options("limit").toInt
-      val activePersons = getActivePersons(engine)
+      val activePersons = getActivePersons(transaction)
       val filters = createFilters(options)
 
-      val groupedRows = findOccurrences(engine, activePersons, filters.accept, transaction)
+      val groupedRows = findOccurrences(activePersons, filters.accept, transaction)
       val result = formatResult(groupedRows, limit)
 
       if (options("output") == "raw")
@@ -96,9 +95,9 @@ class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
     filter
   }
 
-  private def getActivePersons(engine: ExecutionEngine): Set[String] = {
+  private def getActivePersons(transaction: DBWithTransaction): Set[String] = {
     val members = options("members").trim.split("""\s*,\s*""")
-    val namesView = engine.execute("START n = node:person('*:*') RETURN n.name")
+    val namesView = transaction.cypher(s"MATCH ${Person.cypherForAll("node")} RETURN node.name AS name")
       .map(_.getOrElse("name", "").asInstanceOf[String])
       .filterNot(_ == "")
 
@@ -110,17 +109,17 @@ class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
     filteredView.toSet
   }
 
-  private def findOccurrences(engine: ExecutionEngine,
+  private def findOccurrences(
     activePersons: Set[String],
     accept: (Keyword, Ticket, Person) => Boolean,
     db: DBWithTransaction): Seq[Map[String, Any]] = {
 
     waitDialog.status = "Counting keywords"
-    waitDialog.max = engine.execute("START n = node:keyword('*:*') RETURN count(*)").next()("count").asInstanceOf[Long]
+    waitDialog.max = db.cypher(s"MATCH ${Keyword.cypherForAll("node")} RETURN count(*) AS count").next()("count").asInstanceOf[Long]
     waitDialog.status = "Searching keyword occurrences"
 
-    (engine.execute("START n = node:keyword('*:*') RETURN n").map { result =>
-      val keyword = Node.wrapNeoNode(result("n").asInstanceOf[NeoNode], db, Keyword)
+    (db.cypher(s"MATCH ${Keyword.cypherForAll("node")} RETURN node").map { result =>
+      val keyword = Node.wrapNeoNode(result("node").asInstanceOf[NeoNode], db, Keyword)
       waitDialog.tick()
 
       val occurrences = findKeywordOccurrences(activePersons, accept, keyword)

@@ -24,7 +24,8 @@ class RootNode extends MiningNode {
 
       for (relationship <- content.getRelationships()) {
         val node = relationship.getEndNode()
-        relationship.delete()
+        node.getRelationships().foreach(_.delete)
+        println("Delete: "+node.getId()+": "+node.getProperty("_class"))
         node.delete()
       }
     }

@@ -6,7 +6,7 @@ import helper._
 
 object Priority extends IndexedNodeCompanion[Priority] {
   def apply = new Priority
-  val indexInfo = IndexedNodeInfo("priority")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.priority)
 }
 
 class Priority extends MiningNode with EmptyNode with HasName

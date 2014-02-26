@@ -1,14 +1,15 @@
 package de.jowisoftware.neo4j.database
 
 import org.neo4j.graphdb.{ DynamicLabel, NotFoundException, Transaction => NeoTransaction, Node => NeoNode }
-
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database, DatabaseCollection }
 import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
 import de.jowisoftware.util.ScalaUtil.withClosable
+import de.jowisoftware.neo4j.CypherService
 
 private[neo4j] class DefaultTransaction(
     db: Database,
-    tx: NeoTransaction) extends DBWithTransaction {
+    tx: NeoTransaction,
+    protected val cypherService: CypherService) extends DBWithTransaction {
 
   val service = db.service
   var rootNode: Option[NeoNode] = None
@@ -25,7 +26,7 @@ private[neo4j] class DefaultTransaction(
   def getUnknownNode(id: Long): Node =
     Node.wrapNeoNode(db.service.getNodeById(id), this).get
 
-  val collections: DatabaseCollection = new DefaultDatabaseCollection(db)
+  val collections: DatabaseCollection = new DefaultDatabaseCollection(db, cypherService)
 
   def rootNode[A <: Node](rootCompanion: NodeCompanion[A]): A = rootNode match {
     case Some(node) => Node.wrapNeoNode(node, this, rootCompanion)

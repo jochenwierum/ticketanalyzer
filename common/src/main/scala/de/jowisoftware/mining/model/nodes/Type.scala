@@ -6,7 +6,7 @@ import helper._
 
 object Type extends IndexedNodeCompanion[Type] {
   def apply = new Type
-  val indexInfo = IndexedNodeInfo("type")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.`type`)
 }
 
 class Type extends MiningNode with HasName with EmptyNode

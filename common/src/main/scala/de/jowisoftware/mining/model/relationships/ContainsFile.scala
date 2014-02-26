@@ -8,7 +8,7 @@ import de.jowisoftware.mining.model.nodes.File
 object ContainsFile extends RelationshipCompanion[ContainsFile] {
   def apply = new ContainsFile
 
-  val relationType = RelTypes.contains
+  val relationType = RelTypes.containsFiles
 
   type sourceType = CommitRepository
   type sinkType = File

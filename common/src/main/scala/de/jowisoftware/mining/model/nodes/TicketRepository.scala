@@ -10,7 +10,7 @@ import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
 object TicketRepository extends IndexedNodeCompanion[TicketRepository] {
   def apply = new TicketRepository
-  val indexInfo = IndexedNodeInfo("ticketRepository")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.ticketRepository)
 }
 
 class TicketRepository extends MiningNode with HasName with EmptyNode {

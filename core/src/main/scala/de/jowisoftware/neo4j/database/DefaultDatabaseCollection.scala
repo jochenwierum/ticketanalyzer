@@ -6,9 +6,9 @@ import de.jowisoftware.neo4j.{ Database, DatabaseCollection }
 import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, Node }
 import de.jowisoftware.util.ScalaUtil.withClosable
 import org.neo4j.graphdb.ResourceIterator
+import de.jowisoftware.neo4j.CypherService
 
-class DefaultDatabaseCollection(db: Database) extends DatabaseCollection {
-  private val executionEngine = new ExecutionEngine(db.service)
+class DefaultDatabaseCollection(db: Database, cypherService: CypherService) extends DatabaseCollection {
 
   def find[A <: Node](companion: IndexedNodeCompanion[A], name: String): Option[A] = {
     val nodes = db.service.findNodesByLabelAndProperty(companion.indexInfo.label, companion.indexInfo.indexProperty, name)
@@ -29,8 +29,8 @@ class DefaultDatabaseCollection(db: Database) extends DatabaseCollection {
   }
 
   def findAll[A <: Node](companion: IndexedNodeCompanion[A]): Iterator[A] = {
-    val query = "START n = node:"+companion.indexInfo.label.name()+"('*:*') RETURN n"
-    executionEngine.execute(query).map(result =>
-      Node.wrapNeoNode(result.get("n").asInstanceOf[NeoNode], db, companion))
+    val query = s"MATCH ${companion.cypherForAll("node")} RETURN node"
+    cypherService.execute(query).map(result =>
+      Node.wrapNeoNode(result("node").asInstanceOf[NeoNode], db, companion))
   }
 }

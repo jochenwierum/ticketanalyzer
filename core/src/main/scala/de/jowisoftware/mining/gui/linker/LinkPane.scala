@@ -95,15 +95,15 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     val result = collectNames(transaction.collections.findAll(CommitRepository))
     transaction.success
     result
-  }.toSeq)
+  })
 
   private def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
     val result = collectNames(transaction.collections.findAll(TicketRepository))
     transaction.success
     result
-  }.toSeq)
+  })
 
-  private def collectNames(result: Iterator[_ <: HasName]) = result.map(_.name())
+  private def collectNames(result: Iterator[_ <: HasName]) = result.map(_.name()).toSeq
 
   private def updateComboBoxes() {
     scmList = makeSCMList

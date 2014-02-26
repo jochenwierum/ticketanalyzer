@@ -10,13 +10,15 @@ import de.jowisoftware.neo4j.Database
 import de.jowisoftware.mining.linker.StatusType
 import scala.collection.mutable
 import de.jowisoftware.mining.analyzer.data.TextMatrix
+import de.jowisoftware.neo4j.DBWithTransaction
+import org.neo4j.shell.kernel.apps.Dbinfo
+import de.jowisoftware.mining.model.nodes.Person
 
 class RolesAnalyzer extends Analyzer {
   def userOptions() = new RolesOptions()
 
   def analyze(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) = {
-    val engine = new ExecutionEngine(db.service)
-    val stateMap = buildStateMap(engine)
+    val stateMap = buildStateMap(db)
 
     val matrix = new TextMatrix(
       StatusType.values.filter(_ != StatusType.ignore).map(StatusType.roleName).toSeq.sorted,
@@ -34,31 +36,27 @@ class RolesAnalyzer extends Analyzer {
     new ResultDialog(matrix, parent).visible = true
   }
 
-  private def findStateCountByName(engine: ExecutionEngine): ExecutionResult = {
-    val query = """
-      START person=node:persons('*:*')
-      MATCH person -[:owns]-> ticket -[:has_status]-> status
+  private def findStateCountByName(transaction: DBWithTransaction): ExecutionResult = {
+    val query = s"""
+      MATCH ${Person.cypherForAll("person")} -[:owns]-> ticket -[:has_status]-> status
       WHERE person.name <> ""
       RETURN person.name AS name, status.logicalType AS status, count(distinct ticket.id) AS count
       """
 
-    val result = engine.execute(query)
-    result
+    transaction.cypher(query)
   }
 
-  private def findReporterCountByName(engine: ExecutionEngine): ExecutionResult = {
-    val query = """
-        START person=node:persons('*:*')
-        MATCH person -[:created]-> ticket
-        WHERE person.name <> ""
-        RETURN person.name AS name, count(distinct ticket.id) AS count
-        """
+  private def findReporterCountByName(transaction: DBWithTransaction): ExecutionResult = {
+    val query = s"""
+      MATCH ${Person.cypherForAll("person")} -[:created]-> ticket
+      WHERE person.name <> ""
+      RETURN person.name AS name, count(distinct ticket.id) AS count
+      """
 
-    val result = engine.execute(query)
-    result
+    transaction.cypher(query)
   }
 
-  private def buildStateMap(engine: ExecutionEngine): Map[String, mutable.Map[StatusType.Value, Long]] = {
+  private def buildStateMap(db: Database): Map[String, mutable.Map[StatusType.Value, Long]] = db.inTransaction { transaction =>
     var personStateCounter: Map[String, mutable.Map[StatusType.Value, Long]] = Map()
 
     def addCount(name: String, state: StatusType.Value, count: Long) {
@@ -68,14 +66,14 @@ class RolesAnalyzer extends Analyzer {
       stateMap(state) = (stateMap.getOrElse(state, 0L) + count)
     }
 
-    for (stateWithName <- findStateCountByName(engine)) {
+    for (stateWithName <- findStateCountByName(transaction)) {
       val person = stateWithName("name").asInstanceOf[String]
       val state = StatusType(stateWithName("status").asInstanceOf[Int])
       val count = stateWithName("count").asInstanceOf[Long]
       addCount(person, state, count)
     }
 
-    for (reporterWithCount <- findReporterCountByName(engine)) {
+    for (reporterWithCount <- findReporterCountByName(transaction)) {
       val person = reporterWithCount("name").asInstanceOf[String]
       val count = reporterWithCount("count").asInstanceOf[Long]
 

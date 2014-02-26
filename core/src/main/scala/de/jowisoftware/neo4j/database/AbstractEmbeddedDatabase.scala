@@ -9,6 +9,7 @@ import de.jowisoftware.util.FileUtils
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder
 import de.jowisoftware.neo4j.content.NodeCompanion
 import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.CypherService
 
 object AbstractEmbeddedDatabase {
   val defaultSettings: List[(org.neo4j.graphdb.config.Setting[_], String)] =
@@ -18,9 +19,15 @@ object AbstractEmbeddedDatabase {
 
 private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extends Database {
   protected var databaseService: GraphDatabaseService = _
+  private var cypherService: CypherService = _
 
   addShutdownHook()
-  databaseService = init()
+  internalInit()
+
+  private def internalInit(): Unit = {
+    databaseService = init()
+    cypherService = new Cypher(databaseService)
+  }
 
   def service = databaseService
 
@@ -29,7 +36,7 @@ private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extend
 
   def inTransaction[S](body: DBWithTransaction => S): S = {
     val tx = service.beginTx()
-    val wrapper = new DefaultTransaction(this, tx)
+    val wrapper = new DefaultTransaction(this, tx, cypherService)
 
     try {
       body(wrapper)
@@ -40,13 +47,13 @@ private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extend
 
   def startTransaction: DBWithTransaction = {
     val tx = service.beginTx()
-    new AutonomousTransaction(this, tx)
+    new AutonomousTransaction(this, tx, cypherService)
   }
 
   def deleteContent = {
     shutdown()
     FileUtils.delTree(filepath)
-    databaseService = init()
+    internalInit()
   }
 
   private def addShutdownHook() {

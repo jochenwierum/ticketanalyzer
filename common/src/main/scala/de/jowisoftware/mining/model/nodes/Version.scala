@@ -6,7 +6,7 @@ import helper._
 
 object Version extends IndexedNodeCompanion[Version] {
   def apply = new Version
-  val indexInfo = IndexedNodeInfo("version")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.version)
 }
 
 class Version extends MiningNode with HasName with EmptyNode

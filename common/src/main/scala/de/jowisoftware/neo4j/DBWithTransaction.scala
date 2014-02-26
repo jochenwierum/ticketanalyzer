@@ -10,6 +10,8 @@ import de.jowisoftware.neo4j.content.NodeCompanion
   * A transaction which allows access to the database.
   */
 trait DBWithTransaction extends ReadWriteDatabase {
+  protected val cypherService: CypherService
+
   /**
     * Mark this transaction as successful.
     * After calling this method, no other methods of this object must be called.
@@ -23,4 +25,7 @@ trait DBWithTransaction extends ReadWriteDatabase {
   def failure()
 
   def rootNode[A <: Node](companion: NodeCompanion[A]): A
+
+  def cypher(query: String) = cypherService.execute(query)
+  def cypher(query: String, variables: Map[String, Any]) = cypherService.execute(query, variables)
 }

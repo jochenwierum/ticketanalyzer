@@ -8,7 +8,7 @@ import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
 object Keyword extends IndexedNodeCompanion[Keyword] with IndexAccess[Keyword] {
   def apply = new Keyword
-  val indexInfo = IndexedNodeInfo("keyword")
+  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.keyword)
 
   private[model] def find(db: ReadOnlyDatabase, name: String) =
     findInIndex(db, "name", IndexAccess.mask(name), this)
