@@ -1,20 +1,15 @@
 package de.jowisoftware.mining.model.nodes
 
-import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasIndexedName }
-import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.content.{ NodeCompanion, IndexAccess }
-import de.jowisoftware.neo4j.content.IndexedNodeCompanion
-import de.jowisoftware.neo4j.content.IndexedNodeInfo
+import de.jowisoftware.mining.model.nodes.helper.{ HasName, MiningNode }
+import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, RegexIndexAccess }
 
-object Keyword extends IndexedNodeCompanion[Keyword] with IndexAccess[Keyword] {
+object Keyword extends IndexedNodeCompanion[Keyword] {
   def apply = new Keyword
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.keyword)
-
-  private[model] def find(db: ReadOnlyDatabase, name: String) =
-    findInIndex(db, "name", IndexAccess.mask(name), this)
+  protected val primaryProperty = HasName.properties.name
 }
 
-class Keyword extends MiningNode with HasIndexedName {
+class Keyword extends MiningNode with HasName {
   def version() = 0
   def updateFrom(oldVersion: Int) = {}
 }

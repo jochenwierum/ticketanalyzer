@@ -6,7 +6,7 @@ import helper._
 
 object Resolution extends IndexedNodeCompanion[Resolution] {
   def apply = new Resolution
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.resolution)
+  protected val primaryProperty = HasName.properties.name
 }
 
 class Resolution extends MiningNode with EmptyNode with HasName

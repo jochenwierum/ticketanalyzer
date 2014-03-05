@@ -28,5 +28,5 @@ trait AutoTransactions {
   }
 
   def find[A <: Node](repositoryCompanion: IndexedNodeCompanion[A], name: String): A =
-    transaction().collections.findOrCreate(repositoryCompanion, name)
+    repositoryCompanion.findOrCreate(transaction, name)
 }

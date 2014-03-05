@@ -7,7 +7,7 @@ import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
 object Component extends IndexedNodeCompanion[Component] {
   def apply = new Component
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.component)
+  val primaryProperty = HasName.properties.name
 }
 
 class Component extends MiningNode with HasName with EmptyNode

@@ -179,16 +179,16 @@ private[importer] trait TicketImportHandler extends ImportEvents with Logging { 
       newMap
   }
 
-  private def getMilestone(name: String) = transaction().collections.findOrCreate(Milestone, name)
-  private def getVersion(name: String) = transaction().collections.findOrCreate(Version, name)
-  private def getType(name: String) = transaction().collections.findOrCreate(Type, name)
-  private def getTag(name: String) = transaction().collections.findOrCreate(Tag, name)
-  private def getComponent(name: String) =  transaction().collections.findOrCreate(Component, name)
-  private def getStatus(name: String) = transaction().collections.findOrCreate(Status, name)
-  private def getResolution(name: String) = transaction().collections.findOrCreate(Resolution, name)
-  private def getPriority(name: String) = transaction().collections.findOrCreate(Priority, name)
-  private def getSeverity(name: String) = transaction().collections.findOrCreate(Severity, name)
-  private def getReproducability(name: String) = transaction().collections.findOrCreate(Reproducability, name)
+  private def getMilestone(name: String) = Milestone.findOrCreate(transaction, name)
+  private def getVersion(name: String) = Version.findOrCreate(transaction, name)
+  private def getType(name: String) = Type.findOrCreate(transaction, name)
+  private def getTag(name: String) = Tag.findOrCreate(transaction, name)
+  private def getComponent(name: String) = Component.findOrCreate(transaction, name)
+  private def getStatus(name: String) = Status.findOrCreate(transaction, name)
+  private def getResolution(name: String) = Resolution.findOrCreate(transaction, name)
+  private def getPriority(name: String) = Priority.findOrCreate(transaction, name)
+  private def getSeverity(name: String) = Severity.findOrCreate(transaction, name)
+  private def getReproducability(name: String) = Reproducability.findOrCreate(transaction, name)
 
   private def findTicket(repository: TicketRepository, id: Int) =
     repository.findRecentVersionOf(id)

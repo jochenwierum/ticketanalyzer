@@ -31,11 +31,15 @@ trait Versionable {
     }
   }
 
-  protected def toString(id: Long, content: PropertyContainer): String =
+  protected def toString(id: Long, content: PropertyContainer): String = {
+    if(content.hasProperty("uid") && content.getProperty("uid").isInstanceOf[Set[_]])
+        println(content.getProperty("uid"))
+
     content.getPropertyKeys()
       .filter(!_.startsWith("_"))
       .map(key => key+"="+shorten(content.getProperty(key)))
       .mkString("["+getClass.getSimpleName+" "+id+": ", ", ", "]")
+    }
 
   private def shorten(o: Object) = o match {
     case s: String if s.length > 32 => '"' + s.substring(0, 29)+"...\""

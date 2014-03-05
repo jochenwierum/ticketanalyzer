@@ -10,7 +10,7 @@ import de.jowisoftware.neo4j.content.Node
 
 object CommitRepository extends IndexedNodeCompanion[CommitRepository] {
   def apply = new CommitRepository
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.commitRepository)
+  val primaryProperty = HasName.properties.name
 }
 
 class CommitRepository extends MiningNode with HasName with Logging {
@@ -32,7 +32,7 @@ class CommitRepository extends MiningNode with HasName with Logging {
 
   def obtainCommit(id: String): Commit = {
     val uid = name()+"-"+id
-    Commit.find(readableDb, uid) match {
+    readableDb.inTransaction(t => Commit.find(t, uid)) match {
       case Some(commit) => commit
       case None =>
         val commit = writableDb.createNode(Commit)
@@ -44,7 +44,7 @@ class CommitRepository extends MiningNode with HasName with Logging {
   }
 
   def obtainFile(fileName: String): File = {
-    File.find(readableDb, name(), fileName) match {
+    readableDb.inTransaction(t => File.find(t, name(), fileName)) match {
       case Some(file) => file
       case None =>
         val file = writableDb.createNode(File)
@@ -56,14 +56,16 @@ class CommitRepository extends MiningNode with HasName with Logging {
   }
 
   def findCommits(id: String) =
-    if (supportsAbbrev())
-      Commit.findAbbrev(readableDb, name()+"-"+id).toList
-    else
-      Commit.find(readableDb, name()+"-"+id).toList
+    readableDb.inTransaction(t =>
+      if (supportsAbbrev())
+        Commit.findAbbrev(t, name()+"-"+id).toList
+      else
+        Commit.find(t, name()+"-"+id).toList)
 
   def findSingleCommit(id: String) =
-    if (supportsAbbrev())
-      Commit.findAbbrev(readableDb, name()+"-"+id).toList match {
+    readableDb.inTransaction(t =>
+      if (supportsAbbrev())
+        Commit.findAbbrev(t, name()+"-"+id).toList match {
         case Nil => None
         case commit :: Nil => Option(commit)
         case commit :: tail if tail.length < 5 =>
@@ -74,8 +76,8 @@ class CommitRepository extends MiningNode with HasName with Logging {
             " results, ignoring this reference")
           None
       }
-    else
-      Commit.find(readableDb, name()+"-"+id)
+      else
+        Commit.find(t, name()+"-"+id))
 
   def commits =
     for {

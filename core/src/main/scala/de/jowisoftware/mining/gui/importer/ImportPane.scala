@@ -134,12 +134,12 @@ class ImportPane(
   }
 
   private def updateDBState() = {
-    db.inTransaction { transaction: DBWithTransaction =>
-      def hasContent(it: Iterator[_ <: Node]): Boolean = it.hasNext
+    db.inTransaction { transaction =>
+      def hasContent(s: Seq[_ <: Node]): Boolean = !s.isEmpty
 
       val root = transaction.rootNode(RootNode)
-      val hasCommits = hasContent(transaction.collections.findAll(CommitRepository))
-      val hasTickets = hasContent(transaction.collections.findAll(TicketRepository))
+      val hasCommits = hasContent(CommitRepository.findAll(transaction))
+      val hasTickets = hasContent(TicketRepository.findAll(transaction))
       if (hasCommits && hasTickets && root.state() < 1) {
         root.state(1)
       }

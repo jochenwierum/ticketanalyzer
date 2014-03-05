@@ -6,7 +6,7 @@ import helper._
 
 object Status extends IndexedNodeCompanion[Status] {
   def apply = new Status
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.status)
+  protected val primaryProperty = HasName.properties.name
 }
 
 class Status extends MiningNode with HasName {

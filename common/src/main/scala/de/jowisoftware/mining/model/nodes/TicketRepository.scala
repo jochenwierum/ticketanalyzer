@@ -10,22 +10,23 @@ import de.jowisoftware.neo4j.content.IndexedNodeInfo
 
 object TicketRepository extends IndexedNodeCompanion[TicketRepository] {
   def apply = new TicketRepository
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.ticketRepository)
+  protected val primaryProperty = HasName.properties.name
 }
 
 class TicketRepository extends MiningNode with HasName with EmptyNode {
-  def obtainTicket(id: Int, version: Int): Ticket = {
-    val uid = name()+"-"+id+"-"+version
-    Ticket.find(readableDb, uid) match {
-      case Some(ticket) => ticket
-      case None =>
-        val ticket = writableDb.createNode(Ticket)
-        ticket.ticketId(id)
-        ticket.uid(uid)
-        this.add(ticket, Contains)
-        ticket
+  def obtainTicket(id: Int, version: Int): Ticket =
+    readableDb.inTransaction { t =>
+      val uid = name()+"-"+id+"-"+version
+      Ticket.find(t, uid) match {
+        case Some(ticket) => ticket
+        case None =>
+          val ticket = writableDb.createNode(Ticket)
+          ticket.ticketId(id)
+          ticket.uid(uid)
+          this.add(ticket, Contains)
+          ticket
+      }
     }
-  }
 
   def findRecentVersionOf(tId: Long): Option[Ticket] =
     findAllVersionsOf(tId).reduceOption {
@@ -36,7 +37,9 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
     }
 
   def findAllVersionsOf(tId: Long) =
-    Ticket.findAll(readableDb, name()+"-"+tId+"-*")
+    readableDb.inTransaction { t =>
+      Ticket.findAll(t, name()+"-"+tId+"-*")
+    }
 
   def tickets =
     for {

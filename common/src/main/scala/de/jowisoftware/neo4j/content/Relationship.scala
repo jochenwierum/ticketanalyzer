@@ -4,7 +4,6 @@ import scala.language.implicitConversions
 
 import org.neo4j.graphdb.{ RelationshipType, Relationship => NeoRelationship }
 import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase, Database, DBWithTransaction }
-import de.jowisoftware.neo4j.content.index.RelationshipIndexCreator
 import properties.Versionable
 import org.xml.sax.helpers.NewInstance
 
@@ -36,7 +35,6 @@ object Relationship extends ClassCache[RelationshipCompanion[_ <: Relationship]]
 
 trait Relationship extends Versionable with Properties[NeoRelationship] {
   private[neo4j]type companion <: RelationshipCompanion[Relationship]
-  private[neo4j] val indexCreator = RelationshipIndexCreator
 
   private[neo4j] var cachedSourceNode: Option[companion#sourceType] = None
   private[neo4j] var cachedSinkNode: Option[companion#sinkType] = None

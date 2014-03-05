@@ -1,26 +1,19 @@
 package de.jowisoftware.mining
 
 import java.io.File
+import scala.collection.JavaConversions._
+import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
+import org.neo4j.tooling.GlobalGraphOperations
+import de.jowisoftware.mining.model.nodes.{ File => MiningFile, _ }
+import de.jowisoftware.mining.settings.Settings
+import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.content.{ Node, Relationship }
+import de.jowisoftware.neo4j.content.IndexedNodeCompanion
 import de.jowisoftware.neo4j.database.EmbeddedDatabase
 import de.jowisoftware.util.AppUtil
-import de.jowisoftware.mining.settings.Settings
-import de.jowisoftware.mining.model.nodes.RootNode
-import org.neo4j.tooling.GlobalGraphOperations
-import scala.collection.JavaConversions._
-import de.jowisoftware.neo4j.content.Node
-import org.neo4j.jmx.Kernel
-import org.neo4j.graphdb.Direction
-import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
-import de.jowisoftware.neo4j.content.Relationship
-import sun.awt.EmbeddedFrame
-import org.neo4j.graphdb.DynamicLabel
-import org.neo4j.helpers.TimeUtil
 import java.util.concurrent.TimeUnit
-import de.jowisoftware.neo4j.content.IndexedNodeCompanion
-import de.jowisoftware.neo4j.content.IndexedNodeInfo
-import scala.collection.mutable.TreeSet
-import IndexedNodeInfo.Labels.Label
-import de.jowisoftware.neo4j.DBWithTransaction
+import org.neo4j.graphdb.Label
+import org.neo4j.graphdb.DynamicLabel
 
 object UpdateDB {
   def main(args: Array[String]) {
@@ -72,13 +65,19 @@ object UpdateDB {
   }
 
   def updateIndizes(embeddedDb: EmbeddedDatabase) {
+    val companions: List[_ <: IndexedNodeCompanion[_]] =
+      Commit :: CommitRepository :: Component :: MiningFile ::
+        Keyword :: Milestone :: Person :: Priority :: Reproducability :: Resolution ::
+        Severity :: Status :: Tag :: Ticket :: TicketComment :: TicketRepository ::
+        Type :: Version :: Nil
+
     val indices = embeddedDb.inTransaction { db =>
-      val result = IndexedNodeInfo.Labels.labels flatMap { label =>
-        if (db.service.schema().getIndexes(label.label).iterator().hasNext()) {
-          None
-        } else {
-          println(s"Creating index: ${label.label.name()} on ${label.indexProperty}")
-          Some(db.service.schema.indexFor(label.label).on(label.indexProperty).create())
+      val result = companions flatMap { companion =>
+        companion.indexInfo.properties match {
+          case head :: tail =>
+            (createIndex(db, companion.indexInfo.label, true, head) ::
+              tail.map(createIndex(db, companion.indexInfo.label, false, _))).flatten
+          case Nil => Nil
         }
       }
       db.success()
@@ -90,6 +89,16 @@ object UpdateDB {
         println(s"Waiting for index: ${index.getLabel().name()}")
         db.service.schema().awaitIndexOnline(index, 10, TimeUnit.MINUTES)
       }
+    }
+  }
+
+  private def createIndex(db: DBWithTransaction, label: Label, primary: Boolean, property: String) = {
+    val propertyLabel = if (primary) label else DynamicLabel.label(s"${label.name()}-$property")
+    if (db.service.schema().getIndexes(propertyLabel).iterator().hasNext()) {
+      None
+    } else {
+      println(s"Creating index: ${propertyLabel.name()} on $property")
+      Some(db.service.schema.indexFor(propertyLabel).on(property).create())
     }
   }
 }

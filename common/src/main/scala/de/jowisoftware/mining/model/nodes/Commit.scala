@@ -6,14 +6,13 @@ import helper._
 import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.model.relationships.ChildOf
 
-object Commit extends NodeCompanion[Commit] with IndexAccess[Commit] {
+object Commit extends IndexedNodeCompanion[Commit] with RegexIndexAccess[Commit] {
   def apply = new Commit
 
-  private[model] def find(db: ReadOnlyDatabase, uid: String) =
-    findInIndex(db, "uid", uid, this)
+  protected val primaryProperty = "uid"
 
-  private[model] def findAbbrev(db: ReadOnlyDatabase, uid: String) =
-    findMultipleInIndex(db, "uid:"+uid+"*", this)
+  private[model] def findAbbrev(db: DBWithTransaction, uid: String) =
+    findByPatternInIndex(db, "uid", uid+".*")
 }
 
 class Commit extends MiningNode {
@@ -21,7 +20,7 @@ class Commit extends MiningNode {
   def updateFrom(version: Int) = {}
 
   lazy val commitId = stringProperty("id")
-  lazy val uid = stringProperty("uid", "", true)
+  lazy val uid = stringProperty("uid", "")
   lazy val message = stringProperty("message")
   lazy val date = dateProperty("date")
 

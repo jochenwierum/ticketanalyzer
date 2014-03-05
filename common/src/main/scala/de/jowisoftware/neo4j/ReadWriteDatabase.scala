@@ -5,5 +5,4 @@ import de.jowisoftware.neo4j.content.Node
 
 trait ReadWriteDatabase extends ReadOnlyDatabase {
   def createNode[A <: Node](companion: NodeCompanion[A]): A
-  def collections: DatabaseCollection
 }

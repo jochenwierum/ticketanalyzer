@@ -5,6 +5,8 @@ import org.neo4j.kernel.AbstractGraphDatabase
 import org.neo4j.graphdb.index.Index
 import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
 import de.jowisoftware.neo4j.content.NodeCompanion
+import org.neo4j.graphdb.ResourceIterable
+import org.neo4j.graphdb.Label
 
 /**
   * A transaction which allows access to the database.
@@ -28,4 +30,6 @@ trait DBWithTransaction extends ReadWriteDatabase {
 
   def cypher(query: String) = cypherService.execute(query)
   def cypher(query: String, variables: Map[String, Any]) = cypherService.execute(query, variables)
+
+  def findNodesByLabelAndProperty(label: Label, key: String, value: AnyRef): ResourceIterable[NeoNode]
 }

@@ -24,50 +24,43 @@ class ScmScannerTest extends MiningTest {
     info("testing: '"+text+"'")
 
     val scanner = new ScmScanner(generator)
-    val repository = database.collections.findOrCreate(CommitRepository, repositoryName)
+    val repository = CommitRepository.findOrCreate(database, repositoryName)
     val result = scanner.scan(text, repository)
 
     (result) should equal(expected)
   }
 
-  private def check(text: String, expected: Set[ScmLink], ranges: List[(String, String)] = Nil) {
-    withMocks { implicit context =>
-      val builder = new DBMockBuilder
-      val repository = builder.addCommitRepository(repositoryName, false)
-      val index = builder.addNodeIndex("Commit")
+  private def check(text: String, expected: Set[ScmLink], ranges: List[(String, String)] = Nil) = withMocks { implicit context =>
+    val builder = new DBMockBuilder
+    val repository = builder.forCommitRepository(repositoryName, false)
 
-      expected.foreach { link =>
-        val commit = repository.addCommit(link.ref)
-        index.add("uid", repositoryName+"-"+link.ref, commit)
-      }
-
-      val database = builder.finishMock
-      val generator = setupRangeMock(ranges, context, database)
-
-      realCheck(text, expected, database, generator)
+    expected.foreach { link =>
+      repository.addCommit(link.ref)
     }
+
+    val database = builder.finishMock
+    val generator = setupRangeMock(ranges, context, database)
+
+    realCheck(text, expected, database, generator)
   }
 
   private def checkWithStarLookups(text: String, expected: Set[ScmLink],
-    lookups: Map[String, String],
-    ranges: List[(String, String)] = Nil) {
-    withMocks { implicit context =>
-      val builder = new DBMockBuilder
-      val repository = builder.addCommitRepository(repositoryName, true)
-      val index = builder.addNodeIndex("Commit")
-      lookups.foreach {
-        case (lookup, result) =>
-          if (result != null)
-            index.add(lookup, repository.addCommit(result))
-          else
-            index.add(lookup, null.asInstanceOf[Node])
-      }
+      lookups: Map[String, Boolean],
+      ranges: List[(String, String)] = Nil) = withMocks { implicit context =>
+    val builder = new DBMockBuilder
+    val repository = builder.forCommitRepository(repositoryName, true)
 
-      val database = builder.finishMock
-      val generator = setupRangeMock(ranges, context, database)
-
-      realCheck(text, expected, database, generator)
+    for ((id, exists) <- lookups) {
+      if (exists)
+        repository.addCommit(id)
+      else
+        repository.addNoCommit(id)
     }
+
+    val database = builder.finishMock
+    val generator = setupRangeMock(ranges, context, database)
+
+    realCheck(text, expected, database, generator)
   }
 
   private def setupRangeMock(ranges: List[(String, String)], context: MockContext, dbMock: DBWithTransaction): RangeGenerator = {
@@ -76,12 +69,10 @@ class ScmScannerTest extends MiningTest {
       (commitId1, commitId2) <- ranges
     } {
 
-      val collections = dbMock.collections
-      val commitCollection = collections.findOrCreate(CommitRepository, repositoryName)
+      val commitCollection = CommitRepository.findOrCreate(dbMock, repositoryName)
       val commit1 = commitCollection.findSingleCommit(commitId1).get
       val commit2 = commitCollection.findSingleCommit(commitId2).get
-      when(generator.findRange(commit1, commit2))
-        .thenReturn(Set(commit1, commit2))
+      when(generator.findRange(commit1, commit2)).thenReturn(Set(commit1, commit2))
     }
     generator
   }
@@ -121,12 +112,12 @@ class ScmScannerTest extends MiningTest {
       ("1", "3") :: ("11", "12") :: Nil)
   }
 
-  it should "sould work with alpha numerical commit ids" in {
-    val lookups: Map[String, String] = Map("uid:git-123abc*" -> "123abc123",
-      "uid:git-abc1234*" -> "abc1234f", "uid:git-abc123*" -> null)
+  it should "sould work with alphanumerical commit ids" in {
+    val lookups: Map[String, Boolean] = Map("123abc" -> true,
+      "abc1234" -> true, "abc123" -> false)
 
     checkWithStarLookups("Changeset:123abc, changeset:abc123 and [abc1234] are broken",
-      Set(link("123abc123"), link("abc1234f")), lookups, Nil)
+      Set(link("123abc"), link("abc1234")), lookups, Nil)
   }
 
   it should "not identify ranges with text as a link" in {

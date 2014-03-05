@@ -57,7 +57,7 @@ class DatabaseLinkerHandler(protected val db: Database,
   }
 
   def ticketRepository: TicketRepository =
-    transaction.collections.findOrCreate(TicketRepository, ticketRepositoryName)
+    TicketRepository.findOrCreate(transaction, ticketRepositoryName)
   def commitRepository: CommitRepository =
-    transaction.collections.findOrCreate(CommitRepository, commitRepositoryName)
+    CommitRepository.findOrCreate(transaction, commitRepositoryName)
 }

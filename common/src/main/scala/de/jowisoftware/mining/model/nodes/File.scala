@@ -4,11 +4,13 @@ import de.jowisoftware.neo4j.content._
 import de.jowisoftware.neo4j._
 import helper._
 
-object File extends NodeCompanion[File] with IndexAccess[File] {
+object File extends IndexedNodeCompanion[File] {
   def apply = new File
 
-  private[model] def find(db: ReadOnlyDatabase, repository: String, name: String): Option[File] =
-    findInIndex(db, "uid", uid(repository, name), this)
+  protected val primaryProperty = "uim"
+
+  private[model] def find(db: DBWithTransaction, repository: String, name: String): Option[File] =
+    find(db, "uid", uid(repository, name))
 
   def uid(repository: String, name: String): String =
     repository+"-"+name
@@ -17,6 +19,5 @@ object File extends NodeCompanion[File] with IndexAccess[File] {
 class File extends MiningNode with HasName {
   def updateFrom(version: Int) {}
   val version = 1
-
-  lazy val uid = stringProperty("uid", "", true)
+  val uid = stringProperty("uid", "")
 }

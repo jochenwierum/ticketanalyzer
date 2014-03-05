@@ -1,23 +1,20 @@
 package de.jowisoftware.mining.model.nodes
 
 import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.{ Updates, HasTag, HasComment }
-import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.content.{ NodeCompanion, IndexAccess }
-import helper.MiningNode
-import de.jowisoftware.neo4j.content.Node
-import de.jowisoftware.mining.model.relationships.RootOf
-import de.jowisoftware.mining.model.relationships.ChangedTicket
-import de.jowisoftware.mining.model.relationships.HasStatus
 
-object Ticket extends NodeCompanion[Ticket] with IndexAccess[Ticket] {
+import de.jowisoftware.mining.model.relationships.{ ChangedTicket, HasComment, HasStatus, HasTag, Updates }
+import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, RegexIndexAccess }
+import de.jowisoftware.neo4j.content.Relationship.relationship2RelationshipType
+import helper.MiningNode
+
+object Ticket extends IndexedNodeCompanion[Ticket] with RegexIndexAccess[Ticket] {
   def apply = new Ticket
 
-  def find(db: ReadOnlyDatabase, uid: String) =
-    findInIndex(db, "uid", uid, this)
+  protected val primaryProperty = "uid"
 
-  def findAll(db: ReadOnlyDatabase, uidQuery: String) =
-    findMultipleInIndex(db, "uid", uidQuery, this)
+  def findAll(db: DBWithTransaction, uidQuery: String) =
+    findMultipleByPatternInIndex(db, "uid", uidQuery)
 }
 
 class Ticket extends MiningNode with TicketUpdates {
@@ -28,7 +25,7 @@ class Ticket extends MiningNode with TicketUpdates {
     if (oldVersion < 4) updateToV4()
   }
 
-  lazy val uid = stringProperty("uid", "", true)
+  lazy val uid = stringProperty("uid", "")
   lazy val ticketId = intProperty("id")
   lazy val text = stringProperty("text")
   lazy val title = stringProperty("title")
@@ -46,7 +43,7 @@ class Ticket extends MiningNode with TicketUpdates {
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
   def isRootVersion = neighbors(Direction.OUTGOING, Seq(Updates.relationType)).size == 0
 
-  def findComment(id: Int) = TicketComment.find(readableDb, createCommentUid(id))
+  def findComment(id: Int) = readableDb.inTransaction { t => TicketComment.find(t, createCommentUid(id)) }
 
   def createComment(id: Int) = {
     val node = writableDb.createNode(TicketComment)

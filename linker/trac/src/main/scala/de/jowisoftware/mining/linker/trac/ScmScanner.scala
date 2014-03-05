@@ -50,7 +50,6 @@ private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
 
   private def makeRange(rangeSpec: String, path: Option[String], repository: CommitRepository): Seq[ScmLink] = {
     val rangeParts = rangeSpec.split(":")
-
     val commitRange = for {
       start <- repository.findSingleCommit(rangeParts(0))
       end <- repository.findSingleCommit(rangeParts(1))

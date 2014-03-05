@@ -21,9 +21,11 @@ class StatusTypeLinker extends Linker with Logging {
   def link(db: Database, tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
     val statusMap = readStatusProperties
 
-    db.inTransaction(_.collections.findAll(Status) foreach { status =>
-      events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
-    })
+    db.inTransaction { t =>
+      Status.findAll(t) foreach { status =>
+        events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
+      }
+    }
 
     events.finish
   }

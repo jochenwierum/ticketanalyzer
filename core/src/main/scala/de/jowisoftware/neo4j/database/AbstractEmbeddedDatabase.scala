@@ -10,6 +10,8 @@ import org.neo4j.graphdb.factory.GraphDatabaseBuilder
 import de.jowisoftware.neo4j.content.NodeCompanion
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.neo4j.CypherService
+import org.neo4j.graphdb.ResourceIterable
+import org.neo4j.graphdb.Label
 
 object AbstractEmbeddedDatabase {
   val defaultSettings: List[(org.neo4j.graphdb.config.Setting[_], String)] =

@@ -6,7 +6,7 @@ import helper._
 
 object Severity extends IndexedNodeCompanion[Severity] {
   def apply = new Severity
-  val indexInfo = IndexedNodeInfo(IndexedNodeInfo.Labels.severity)
+  protected val primaryProperty = HasName.properties.name
 }
 
 class Severity extends MiningNode with EmptyNode with HasName

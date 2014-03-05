@@ -7,20 +7,20 @@ import de.jowisoftware.neo4j.traversing.Traverser
 import helper._
 import de.jowisoftware.mining.model.relationships.Created
 
-object TicketComment extends NodeCompanion[TicketComment] with IndexAccess[TicketComment] {
+object TicketComment extends IndexedNodeCompanion[TicketComment] {
   def apply = new TicketComment
 
-  private[nodes] def find(db: ReadOnlyDatabase, uid: String) =
-    findInIndex(db, "uid", uid, this)
+  override protected val indexedProperties = "name" :: Nil
+  protected val primaryProperty = "uid"
 }
 
 class TicketComment extends MiningNode {
   val version = 1
   def updateFrom(version: Int) {}
 
-  lazy val uid = stringProperty("uid", "", true)
+  lazy val uid = stringProperty("uid", "")
   lazy val commentId = intProperty("id")
-  lazy val text = stringProperty("text", "", true)
+  lazy val text = stringProperty("text", "")
   lazy val created = dateProperty("created")
   lazy val modified = dateProperty("modified")
 

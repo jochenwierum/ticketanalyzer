@@ -91,19 +91,13 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
   private def makePluginList =
     pluginManager.getFor(PluginType.Linker)
 
-  private def makeSCMList = new ComboBox[String](db.inTransaction { transaction =>
-    val result = collectNames(transaction.collections.findAll(CommitRepository))
-    transaction.success
-    result
-  })
+  private def makeSCMList = new ComboBox[String](
+    db.inTransaction(t => collectNames(CommitRepository.findAll(t))))
 
-  private def makeTicketList = new ComboBox[String](db.inTransaction { transaction =>
-    val result = collectNames(transaction.collections.findAll(TicketRepository))
-    transaction.success
-    result
-  })
+  private def makeTicketList = new ComboBox[String](
+    db.inTransaction(t => collectNames(TicketRepository.findAll(t))))
 
-  private def collectNames(result: Iterator[_ <: HasName]) = result.map(_.name()).toSeq
+  private def collectNames(result: Seq[_ <: HasName]) = result.map(_.name())
 
   private def updateComboBoxes() {
     scmList = makeSCMList
@@ -197,10 +191,10 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
   }
 
   private def getSelectedTicketRepository =
-    db.inTransaction(_.collections.find(TicketRepository, ticketList.selection.item)).get
+    db.inTransaction(t => TicketRepository.find(t, ticketList.selection.item).get)
 
   private def getSelectedCommitRepository =
-    db.inTransaction(_.collections.find(CommitRepository, ticketList.selection.item)).get
+    db.inTransaction(t => CommitRepository.find(t, ticketList.selection.item).get)
 
   def align = dividerLocation = .75
 }

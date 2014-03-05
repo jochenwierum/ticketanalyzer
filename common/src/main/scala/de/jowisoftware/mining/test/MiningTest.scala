@@ -5,7 +5,8 @@ import org.scalatest.{ FlatSpec, Matchers }
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpecLike
+import org.scalatest.fixture.TestDataFixture
+import org.scalatest.fixture.Suite
 
-// This class cannot be a trait! Traits seem to be ignored by the runner
 @RunWith(classOf[JUnitRunner])
-class MiningTest extends FlatSpec with Matchers with MockHelper
+class MiningTest extends FlatSpec with MockHelper with Matchers

@@ -3,7 +3,6 @@ package de.jowisoftware.neo4j.content
 import scala.collection.JavaConversions.iterableAsScalaIterable
 import org.neo4j.graphdb.{ Direction, Node => NeoNode, Relationship => NeoRelationship, RelationshipType }
 import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.content.index.NodeIndexCreator
 import properties.Versionable
 import grizzled.slf4j.Logging
 
@@ -34,7 +33,6 @@ object Node extends ClassCache[NodeCompanion[_ <: Node]] with Logging {
 trait Node extends Versionable with Properties[NeoNode] with Logging {
   private[neo4j] var innerNode: NeoNode = _
 
-  private[neo4j] val indexCreator = NodeIndexCreator
   def content: NeoNode = innerNode
 
   protected final def getIndex = readableDb.service.index.forNodes(getClass().getName)

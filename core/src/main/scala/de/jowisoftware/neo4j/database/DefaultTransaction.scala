@@ -1,10 +1,11 @@
 package de.jowisoftware.neo4j.database
 
-import org.neo4j.graphdb.{ DynamicLabel, NotFoundException, Transaction => NeoTransaction, Node => NeoNode }
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database, DatabaseCollection }
+import org.neo4j.graphdb.{ DynamicLabel, Label, Node => NeoNode, NotFoundException, Transaction => NeoTransaction }
+import de.jowisoftware.neo4j.{ CypherService, DBWithTransaction, Database }
 import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
 import de.jowisoftware.util.ScalaUtil.withClosable
-import de.jowisoftware.neo4j.CypherService
+import org.neo4j.graphdb.ResourceIterable
+import org.neo4j.shell.kernel.apps.Dbinfo
 
 private[neo4j] class DefaultTransaction(
     db: Database,
@@ -26,13 +27,11 @@ private[neo4j] class DefaultTransaction(
   def getUnknownNode(id: Long): Node =
     Node.wrapNeoNode(db.service.getNodeById(id), this).get
 
-  val collections: DatabaseCollection = new DefaultDatabaseCollection(db, cypherService)
-
   def rootNode[A <: Node](rootCompanion: NodeCompanion[A]): A = rootNode match {
     case Some(node) => Node.wrapNeoNode(node, this, rootCompanion)
     case None =>
       val optionalNode = withClosable(service.findNodesByLabelAndProperty(
-        DynamicLabel.label("function"), "_function", "config").iterator()) execute { nodes =>
+        DynamicLabel.label("function"), "_function", "config").iterator()) { nodes =>
         if (nodes.hasNext()) {
           Some(nodes.next())
         } else {
@@ -53,4 +52,9 @@ private[neo4j] class DefaultTransaction(
       rootNode = Some(result.content)
       result
   }
+
+  def findNodesByLabelAndProperty(label: Label, key: String, value: AnyRef): ResourceIterable[NeoNode] =
+    service.findNodesByLabelAndProperty(label, key, value)
+
+  def inTransaction[A](body: DBWithTransaction => A) = db.inTransaction(body)
 }
