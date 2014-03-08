@@ -5,6 +5,6 @@ dependencies {
 
 eclipse {
   project {
-    name = 'analyzer-HistoryGenerator'
+    name = 'analyzer-history-generator'
   }
 }

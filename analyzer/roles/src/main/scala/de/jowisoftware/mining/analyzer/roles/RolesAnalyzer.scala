@@ -1,28 +1,25 @@
 package de.jowisoftware.mining.analyzer.roles
 
 import scala.collection.immutable.Map
-import scala.swing.Frame
-import org.neo4j.cypher.{ ExecutionEngine, ExecutionResult }
-import de.jowisoftware.mining.analyzer.Analyzer
-import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.linker.StatusType
 import scala.collection.mutable
-import de.jowisoftware.mining.analyzer.data.TextMatrix
-import de.jowisoftware.neo4j.DBWithTransaction
-import org.neo4j.shell.kernel.apps.Dbinfo
+
+import org.neo4j.cypher.ExecutionResult
+
+import de.jowisoftware.mining.analyzer.{Analyzer, MatrixResult}
+import de.jowisoftware.mining.gui.ProgressMonitor
+import de.jowisoftware.mining.linker.StatusType
 import de.jowisoftware.mining.model.nodes.Person
+import de.jowisoftware.neo4j.DBWithTransaction
 
 class RolesAnalyzer extends Analyzer {
   def userOptions() = new RolesOptions()
 
-  def analyze(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) = {
+  def analyze(db: DBWithTransaction, options: Map[String, String], waitDialog: ProgressMonitor) = {
     val stateMap = buildStateMap(db)
 
-    val matrix = new TextMatrix(
+    val matrix = new MatrixResult(
       StatusType.values.filter(_ != StatusType.ignore).map(StatusType.roleName).toSeq.sorted,
-      stateMap.keys.toSeq.sorted)
+      stateMap.keys.toSeq.sorted, true, "Project Roles")
 
     for {
       (person, sumMap) <- stateMap
@@ -32,8 +29,7 @@ class RolesAnalyzer extends Analyzer {
       matrix.set(StatusType.roleName(role), person, count)
     }
 
-    waitDialog.hide()
-    new ResultDialog(matrix, parent).visible = true
+    matrix
   }
 
   private def findStateCountByName(transaction: DBWithTransaction): ExecutionResult = {
@@ -56,7 +52,7 @@ class RolesAnalyzer extends Analyzer {
     transaction.cypher(query)
   }
 
-  private def buildStateMap(db: Database): Map[String, mutable.Map[StatusType.Value, Long]] = db.inTransaction { transaction =>
+  private def buildStateMap(transaction: DBWithTransaction): Map[String, mutable.Map[StatusType.Value, Long]] = {
     var personStateCounter: Map[String, mutable.Map[StatusType.Value, Long]] = Map()
 
     def addCount(name: String, state: StatusType.Value, count: Long) {

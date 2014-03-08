@@ -1,16 +1,14 @@
-package de.jowisoftware.mining.analyzer.data
+package de.jowisoftware.mining.gui.results
 
 import scala.swing.Table
 import javax.swing.table.DefaultTableModel
 import scala.swing.ScrollPane
-import javax.swing.table.DefaultTableColumnModel
-import javax.swing.table.TableColumn
 import java.awt.Dimension
-import javax.swing.JTable
 import javax.swing.JViewport
+import de.jowisoftware.mining.analyzer.MatrixResult
 
-class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) extends ScrollPane {
-  private val normalizedRows = matrix.normalizedRows
+class MatrixPane(matrixResult: MatrixResult) extends ScrollPane {
+  private val normalizedRows = matrixResult.normalizedRows
   private val maxCols = normalizedRows.map(_.max)
   private val minCols = normalizedRows.map(_.min)
 
@@ -18,8 +16,8 @@ class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) exten
     case (row, i) => row map { cell =>
       val text = (if (cell.isNaN) 0f else cell * 100).formatted("%.2f %%")
 
-      if (cell == minCols(i) && highlight) "<html><font color=\"blue\">"+text+"</font></html>"
-      else if (cell == maxCols(i) && highlight) "<html><font color=\"red\">"+text+"</font></html>"
+      if (cell == minCols(i) && matrixResult.highlight) "<html><font color=\"blue\">"+text+"</font></html>"
+      else if (cell == maxCols(i) && matrixResult.highlight) "<html><font color=\"red\">"+text+"</font></html>"
       else text
     }
   }
@@ -28,7 +26,7 @@ class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) exten
     override def isCellEditable(x: Int, y: Int) = false
     override def getColumnName(column: Int) = headers(column)
 
-    private val headers = matrix.columnTitles
+    private val headers = matrixResult.columnTitles
 
     for ((rowData, row) <- values.zipWithIndex) {
       this.addRow(rowData.toArray[Object])
@@ -38,7 +36,7 @@ class TextMatrixSwingTable(matrix: TextMatrix, highlight: Boolean = false) exten
   private val rowHeaderColumnModel = new DefaultTableModel(0, 1) {
     override def isCellEditable(x: Int, y: Int) = false
 
-    private val rowHeaders = matrix.rowTitles
+    private val rowHeaders = matrixResult.rowTitles
     for (i <- 0 until tableModel.getRowCount()) {
       this.addRow(Array[Object](rowHeaders(i)))
     }

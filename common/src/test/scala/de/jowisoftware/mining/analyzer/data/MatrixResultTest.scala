@@ -3,31 +3,32 @@ package de.jowisoftware.mining.analyzer.data
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import de.jowisoftware.mining.test.MiningTest
+import de.jowisoftware.mining.analyzer.MatrixResult
 
-class TextMatrixTest extends MiningTest {
-  """A TextMatrix""" should "return the column names in the initial order" in {
-    val matrix = new TextMatrix(Seq("a", "c", "b"), Seq())
+class MatrixResultTest extends MiningTest {
+  """A MatrixResult""" should "return the column names in the initial order" in {
+    val matrix = new MatrixResult(Seq("a", "c", "b"), Seq(), false, "")
     (matrix.columnTitles) should equal(Array("a", "c", "b"))
 
-    val matrix2 = new TextMatrix(Seq("test", "test2"), Seq())
+    val matrix2 = new MatrixResult(Seq("test", "test2"), Seq(), false, "")
     (matrix2.columnTitles) should equal(Array("test", "test2"))
   }
 
   it should "also return the row names in the initial order" in {
-    val matrix = new TextMatrix(Seq(), Seq("a", "c", "b"))
+    val matrix = new MatrixResult(Seq(), Seq("a", "c", "b"), false, "")
     (matrix.rowTitles) should equal(Array("a", "c", "b"))
 
-    val matrix2 = new TextMatrix(Seq(), Seq("test", "test2"))
+    val matrix2 = new MatrixResult(Seq(), Seq("test", "test2"), false, "")
     (matrix2.rowTitles) should equal(Array("test", "test2"))
   }
 
   it should "return 0 as the default value for all cells" in {
-    val matrix = new TextMatrix(Seq("a", "b"), Seq("x", "y"))
+    val matrix = new MatrixResult(Seq("a", "b"), Seq("x", "y"), false, "")
     matrix.rows.forall(_.forall(_ == 0)) should equal(true)
   }
 
   it should "save values at the given position" in {
-    val matrix = new TextMatrix(Seq("b", "a"), Seq("x", "y", "z"))
+    val matrix = new MatrixResult(Seq("b", "a"), Seq("x", "y", "z"), false, "")
     matrix.set("b", "x", 2)
     matrix.set("a", "x", 7)
     matrix.set("a", "y", -2)
@@ -44,7 +45,7 @@ class TextMatrixTest extends MiningTest {
   }
 
   it should "be able to normalize the values" in {
-    val matrix = new TextMatrix(Seq("a", "b"), Seq("a", "b"))
+    val matrix = new MatrixResult(Seq("a", "b"), Seq("a", "b"), false, "")
     matrix.set("a", "a", 2.0)
     matrix.set("b", "a", 2.0)
     matrix.set("a", "b", 75)
@@ -59,15 +60,15 @@ class TextMatrixTest extends MiningTest {
 
   it should "throw errors if the referenced column or row does not exist" in {
     intercept[IllegalArgumentException] {
-      new TextMatrix(Seq("x"), Seq("b")).set("a", "b", 2.0)
+      new MatrixResult(Seq("x"), Seq("b"), false, "").set("a", "b", 2.0)
     }
     intercept[IllegalArgumentException] {
-      new TextMatrix(Seq("c"), Seq("y")).set("c", "x", 3.0)
+      new MatrixResult(Seq("c"), Seq("y"), false, "").set("c", "x", 3.0)
     }
   }
 
   it should "be able to add numbers" in {
-    val matrix = new TextMatrix(Seq("a", "b"), Seq("x"))
+    val matrix = new MatrixResult(Seq("a", "b"), Seq("x"), false, "")
     matrix.set("a", "x", 3)
     matrix.add("a", "x", 1)
     matrix.set("b", "x", 2)

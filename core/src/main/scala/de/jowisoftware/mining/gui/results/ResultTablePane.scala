@@ -9,7 +9,11 @@ import org.neo4j.graphdb.Node
 import org.neo4j.graphdb.PropertyContainer
 import scala.swing.Swing
 import scala.collection.Map
+import de.jowisoftware.mining.gui.results.nodeTablePane.CellFormatter
+import de.jowisoftware.mining.gui.results.nodeTablePane.CellData
+import de.jowisoftware.mining.gui.results.nodeTablePane.ResultTable
 
+@deprecated("", "")
 class ResultTablePane(result: Iterator[_ <: Map[String, Any]], columnOrder: Seq[String]) extends ScrollPane {
   def this() = this(null, null)
   def this(result: ExecutionResult) = this(result, result.columns)
@@ -50,5 +54,4 @@ class ResultTablePane(result: Iterator[_ <: Map[String, Any]], columnOrder: Seq[
       def getValueAt(row: Int, column: Int) = tableData(row)(column)
     }
   }
-
 }

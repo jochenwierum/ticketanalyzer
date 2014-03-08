@@ -4,17 +4,18 @@ import scala.collection.mutable
 import scala.swing.Frame
 import org.neo4j.cypher.ExecutionEngine
 import de.jowisoftware.mining.analyzer.Analyzer
-import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.linker.StatusType
 import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.Database
 import org.neo4j.cypher.ExecutionResult
 import scala.swing.Swing
 import de.jowisoftware.util.HTMLUtil
-import de.jowisoftware.mining.analyzer.data.TextMatrix
 import de.jowisoftware.neo4j.DBWithTransaction
 import de.jowisoftware.mining.model.nodes.TicketRepository
 import de.jowisoftware.mining.model.nodes.Person
+import de.jowisoftware.mining.gui.ProgressMonitor
+import de.jowisoftware.mining.analyzer.MatrixResult
+import de.jowisoftware.mining.analyzer.AnalyzerResult
 
 object ReviewAnalyzer {
   private val personQuery = s"MATCH ${Person.cypherForAll("p")} RETURN p.name AS name"
@@ -32,8 +33,8 @@ object ReviewAnalyzer {
 class ReviewAnalyzer extends Analyzer {
   def userOptions = new ReviewOptions
 
-  def analyze(db: Database, options: Map[String, String], parent: Frame,
-    waitDialog: ProgressDialog): Unit = db.inTransaction { transaction =>
+  def analyze(transaction: DBWithTransaction, options: Map[String, String],
+    waitDialog: ProgressMonitor): AnalyzerResult = {
 
     val result = collectData(transaction)
     val nonDevs = options("nonDevs").trim.split("""\s*,\s*""")
@@ -42,7 +43,8 @@ class ReviewAnalyzer extends Analyzer {
 
     val names = findPersons(transaction) -- nonDevs -- ignored
     val sortedNames = names.toSeq.sorted
-    val matrix = new TextMatrix(sortedNames :+ other, sortedNames :+ other)
+    val matrix = new MatrixResult(sortedNames :+ other, sortedNames :+ other,
+      false, "Reviewing Distribution")
 
     for (row <- result) {
       val from = row("from").asInstanceOf[String]
@@ -57,14 +59,11 @@ class ReviewAnalyzer extends Analyzer {
       }
     }
 
-    Swing.onEDT {
-      waitDialog.hide()
-      new ResultDialog(matrix, parent).visible = true
-    }
+    matrix
   }
 
   private def findPersons(transaction: DBWithTransaction): Set[String] = {
-    transaction.cypher(ReviewAnalyzer.personQuery).map(_.getOrElse("name", "").asInstanceOf[String]).toSet
+    transaction.cypher(ReviewAnalyzer.personQuery).map(_("name").asInstanceOf[String]).toSet
   }
 
   private def collectData(transaction: DBWithTransaction): ExecutionResult = {

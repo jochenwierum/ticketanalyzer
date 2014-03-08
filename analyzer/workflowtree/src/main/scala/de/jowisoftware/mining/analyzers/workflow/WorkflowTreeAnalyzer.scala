@@ -1,19 +1,17 @@
 package de.jowisoftware.mining.analyzers.workflow
 
 import java.io.File
-
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.swing.Frame
-
 import org.neo4j.graphdb.{ Direction, Node => NeoNode }
-
+import de.jowisoftware.mining.analyzer.ImageResult
 import de.jowisoftware.mining.external.dot.{ DotWrapper, ImageDialog }
-import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.gui.ProgressMonitor
 import de.jowisoftware.mining.model.nodes.{ Person, Status, Ticket, TicketRepository }
 import de.jowisoftware.mining.model.relationships.{ HasStatus, Owns, Updates }
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 import de.jowisoftware.neo4j.content.{ Node => CNode }
+import de.jowisoftware.mining.analyzer.AnalyzerResult
 
 object WorkflowTreeAnalyzer {
   private def status(ticket: Ticket): String =
@@ -30,7 +28,7 @@ object WorkflowTreeAnalyzer {
 
 }
 
-class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
+class WorkflowTreeAnalyzer(transaction: DBWithTransaction, options: Map[String, String], waitDialog: ProgressMonitor) {
   import WorkflowTreeAnalyzer._
 
   require(options contains "dot")
@@ -58,15 +56,13 @@ class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: F
       findNode(tail).children.map(_.to).find(_.label == head).get
   }
 
-  def run(): Unit = {
-    db.inTransaction { transaction =>
-      val tickets = getTickets(transaction)
-      waitDialog.max = tickets.size
+  def run(): AnalyzerResult = {
+    val tickets = getTickets
+    waitDialog.max = tickets.size
 
-      tickets.foreach { t =>
-        waitDialog.tick()
-        processVersions(t)
-      }
+    tickets.foreach { t =>
+      waitDialog.tick()
+      processVersions(t)
     }
 
     updateStats
@@ -74,18 +70,15 @@ class WorkflowTreeAnalyzer(db: Database, options: Map[String, String], parent: F
     val dotWrapper = new DotWrapper(dotFile)
     val image = dotWrapper.run(generateDotCode)
 
-    waitDialog.hide
-    val resultDialog = new ImageDialog(image, parent,
-      "Ticket state workflow tree structure")
-    resultDialog.visible = true
+    new ImageResult(image, "Ticket state workflow tree structure")
   }
 
-  private def getTickets(transaction: DBWithTransaction): Seq[Ticket] =
+  private def getTickets: Seq[Ticket] =
     transaction.cypher(s"""
           MATCH ${TicketRepository.cypherForAll("n")} -[:contains]-> ticket
           WHERE NOT (ticket) -[:updates]-> ()
           RETURN ticket""").map(ticketMap =>
-      CNode.wrapNeoNode(ticketMap("ticket").asInstanceOf[NeoNode], db, Ticket)).toSeq
+      CNode.wrapNeoNode(ticketMap("ticket").asInstanceOf[NeoNode], transaction, Ticket)).toSeq
 
   private def processVersions(baseTicket: Ticket): Unit = {
     @tailrec

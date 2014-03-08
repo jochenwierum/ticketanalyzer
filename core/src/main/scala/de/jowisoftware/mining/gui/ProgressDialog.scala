@@ -1,15 +1,13 @@
 package de.jowisoftware.mining.gui
 
 import java.awt.Dimension
-
 import scala.swing.{ Dialog, Frame, Label, ProgressBar, Swing }
 import scala.swing.BorderPanel
 import scala.swing.BorderPanel.Position
-
 import grizzled.slf4j.Logging
 import javax.swing.WindowConstants
 
-class ProgressDialog(p: Frame) extends Logging {
+class ProgressDialog(p: Frame) extends ProgressMonitor with Logging {
   private object window extends Dialog(p) {
     title = "Progress"
     peer.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE)

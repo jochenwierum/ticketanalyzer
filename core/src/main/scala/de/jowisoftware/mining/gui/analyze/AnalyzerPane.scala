@@ -13,6 +13,7 @@ import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
 import javax.swing.JLabel
 import scala.swing.Label
+import de.jowisoftware.mining.gui.results.ResultWindow
 
 class AnalyzerPane(db: Database, pluginManager: PluginManager, parent: Frame)
     extends BorderPanel with GuiTab with Logging { that =>
@@ -65,16 +66,26 @@ class AnalyzerPane(db: Database, pluginManager: PluginManager, parent: Frame)
     val dialog = new ProgressDialog(parent)
     new Thread("analyzer-thread") {
       override def run() {
-        val options = analyzerOptions.getUserInput
-        try {
-          selectedPlugin.analyze(db, options, parent, dialog)
-        } catch {
-          case e: Exception =>
-            error("Caught exception while running analyzer "+selectedPlugin.getClass.getName, e)
-            Dialog.showMessage(that, "Error in analyzer: "+e.getClass.getName+": "+
-              e.getMessage, "Error", Dialog.Message.Error)
-        } finally {
-          dialog.hide()
+        db.inTransaction { transaction =>
+          val options = analyzerOptions.getUserInput
+          val resultOption = try {
+            Some(selectedPlugin.analyze(transaction, options, dialog))
+          } catch {
+            case e: Exception =>
+              error("Caught exception while running analyzer "+selectedPlugin.getClass.getName, e)
+              Dialog.showMessage(that, "Error in analyzer: "+e.getClass.getName+": "+
+                e.getMessage, "Error", Dialog.Message.Error)
+              None
+          } finally {
+            dialog.hide()
+          }
+
+          for (result <- resultOption) {
+            Swing.onEDTWait {
+              val resultWindow = new ResultWindow(parent, result)
+              resultWindow.visible = true
+            }
+          }
         }
       }
     }.start()

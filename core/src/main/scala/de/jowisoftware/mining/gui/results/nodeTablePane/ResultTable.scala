@@ -1,10 +1,9 @@
-package de.jowisoftware.mining.gui.results
+package de.jowisoftware.mining.gui.results.nodeTablePane
 import scala.swing.{ Table, Label, Component, Alignment }
 import javax.swing.UIManager
 import javax.swing.table.TableModel
 import java.awt.Graphics2D
 import java.awt.FontMetrics
-import org.neo4j.cypher.ExecutionResult
 
 class ResultTable extends Table { that =>
   private var sizeSet = false
@@ -39,8 +38,8 @@ class ResultTable extends Table { that =>
   override protected def rendererComponent(isSelected: Boolean,
     hasFocus: Boolean, row: Int, column: Int): Component = {
     val value = model.getValueAt(row, column).asInstanceOf[CellData]
-    new Label("<html>"+value.shortText+"</html>") {
-      tooltip = "<html>"+value.longText+"</html>"
+    new Label(s"<html><body>${value.shortText}</body></html>") {
+      tooltip = s"<html><body>${value.longText}</body></html>"
 
       opaque = true
 

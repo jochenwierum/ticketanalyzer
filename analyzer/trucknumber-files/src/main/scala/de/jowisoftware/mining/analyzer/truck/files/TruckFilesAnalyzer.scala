@@ -1,38 +1,22 @@
 package de.jowisoftware.mining.analyzer.truck.files
 
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.mining.analyzer.Analyzer
-import scala.swing.Frame
-import de.jowisoftware.mining.model.nodes.RootNode
-import org.neo4j.cypher.ExecutionEngine
-import de.jowisoftware.mining.gui.ProgressDialog
-import scala.swing.Swing
-import de.jowisoftware.neo4j.DBWithTransaction
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.model.nodes.CommitRepository
-import scala.swing.Dialog
-import de.jowisoftware.mining.model.nodes.Person
+import scala.collection.SortedSet
+
+import de.jowisoftware.mining.analyzer.{ Analyzer, AnalyzerResult, NodeResult }
+import de.jowisoftware.mining.gui.ProgressMonitor
+import de.jowisoftware.mining.model.nodes.{ CommitRepository, Person }
+import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 
 class TruckFilesAnalyzer extends Analyzer {
   def userOptions() = new TruckFilesAnalyzerOptions()
 
-  def analyze(db: Database, options: Map[String, String],
-    parent: Frame, waitDialog: ProgressDialog) {
+  def analyze(db: DBWithTransaction, options: Map[String, String],
+    waitDialog: ProgressMonitor) =
+    createCiriticalFilesResult(db, options)
 
-    val resultWindow = createCiriticalFilesWindow(db, options, parent)
-
-    Swing.onEDTWait {
-      waitDialog.hide()
-      resultWindow.visible = true
-    }
-  }
-
-  private def createCiriticalFilesWindow(db: Database,
-    options: Map[String, String], parent: Frame): Dialog =
-    db.inTransaction { transaction =>
-      val query = s"""
+  private def createCiriticalFilesResult(transaction: DBWithTransaction,
+    options: Map[String, String]): AnalyzerResult = {
+    val query = s"""
       MATCH ${CommitRepository.cypherForAll("n")}-[:contains_files]->file<-[:changed_file]-commit<-[:owns]-person
       WHERE NOT (person.name in ({ignored}))
       RETURN
@@ -44,15 +28,33 @@ class TruckFilesAnalyzer extends Analyzer {
       ORDER BY ratio DESC
       LIMIT {limit};"""
 
-      val result = transaction.cypher(query,
-        Map("limit" -> options("limit").toInt, "ignored" -> options("inactive").split("""\s*,\s*""").toArray))
+    val result = transaction.cypher(query,
+      Map("limit" -> options("limit").toInt,
+        "ignored" -> options("inactive").split("""\s*,\s*""").toArray))
 
-      if (options("output") == "raw")
-        new ResultWindow(parent, result)
-      else
-        new KeywordResultWindow(parent, result, getActivePersons(transaction,
-          options("inactive").split("""\s*,\s*""")).toSet, "File")
+    if (options("output") == "raw")
+      new NodeResult(result, "Truck Number by files: raw result")
+    else {
+      val persons = getActivePersons(transaction,
+        options("inactive").split("""\s*,\s*""")).toSet
+      val titles = Array("File", "Ratio", "Persons with knowledge", "Persons without knowledge")
+      val fields = Array("file", "ratio", "personsWithKnowledge", "missingPersons")
+      new NodeResult(transformToInterpreted(result, persons), fields, titles, "Truck Number by Tickets")
     }
+  }
+
+  def transformToInterpreted(result: Iterator[Map[String, Any]], activePersons: Set[String]) = {
+    val sortedActive: Set[String] = SortedSet.empty[String] ++ activePersons
+
+    for (row <- result) yield {
+      val persons = row("persons").asInstanceOf[List[String]].toSet
+      val missingPersons = sortedActive -- persons
+      Map("file" -> row("file").asInstanceOf[String],
+        "ratio" -> row("ratio").asInstanceOf[Double].toString,
+        "personsWithKnowledge" -> persons.toSeq.sorted.mkString(", "),
+        "missingPersons" -> missingPersons.toSeq.mkString(", "))
+    }
+  }
 
   private def getActivePersons(transaction: DBWithTransaction, ignoredList: Array[String]): Seq[String] =
     transaction.cypher(s"""MATCH ${Person.cypherForAll("n")} WHERE NOT n.name IN ({ignored}) RETURN n.name""",

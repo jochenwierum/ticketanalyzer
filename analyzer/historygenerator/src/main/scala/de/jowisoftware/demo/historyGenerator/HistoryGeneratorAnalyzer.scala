@@ -1,34 +1,26 @@
 package de.jowisoftware.demo.historyGenerator
 
-import scala.swing.Frame
-import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.Database
-import org.neo4j.cypher.ExecutionEngine
-import org.neo4j.cypher.ExecutionResult
 import scala.collection.SortedMap
-import scala.swing.Swing
+
+import org.neo4j.cypher.ExecutionResult
+
+import de.jowisoftware.mining.analyzer.{ AnalyzerResult, TextResult }
+import de.jowisoftware.mining.gui.ProgressMonitor
 import de.jowisoftware.mining.model.nodes.Version
-import de.jowisoftware.neo4j.DBWithTransaction
+import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 
 object HistoryGeneratorAnalyzer {
   private val versionMatcher = """(\d+\.\d+(?:\.\d+)*)""".r
 }
 
-class HistoryGeneratorAnalyzer(db: Database, options: Map[String, String],
-    parent: Frame, waitDialog: ProgressDialog) {
+class HistoryGeneratorAnalyzer(t: DBWithTransaction, options: Map[String, String],
+    waitDialog: ProgressMonitor) {
 
-  def run() {
-    val tableMap = db.inTransaction { t =>
-      val executionResult = getResults(t)
-      transformToTable(executionResult)
-    }
+  def run(): AnalyzerResult = {
+    val executionResult = getResults(t)
+    val tableMap = transformToTable(executionResult)
     val table = transformToString(tableMap)
-
-    Swing.onEDT {
-      waitDialog.hide
-      new ResultWindow(parent, table).visible = true
-    }
+    new TextResult(table, "History Generator")
   }
 
   private def getResults(transaction: DBWithTransaction): ExecutionResult = {

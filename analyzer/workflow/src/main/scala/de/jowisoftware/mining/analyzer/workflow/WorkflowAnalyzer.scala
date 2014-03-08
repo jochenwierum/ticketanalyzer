@@ -4,18 +4,17 @@ import java.io.File
 import java.util.Locale
 
 import scala.collection.immutable.Map
-import scala.swing.{ Dialog, Frame, Swing }
 
 import org.neo4j.cypher.ExecutionResult
 
-import de.jowisoftware.mining.analyzer.data.TextMatrix
-import de.jowisoftware.mining.external.dot.{ DotWrapper, ImageDialog }
-import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.analyzer.{AnalyzerResult, ImageResult, MatrixResult}
+import de.jowisoftware.mining.external.dot.{DotWrapper, ImageDialog}
+import de.jowisoftware.mining.gui.ProgressMonitor
 import de.jowisoftware.mining.model.nodes.TicketRepository
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
+import de.jowisoftware.neo4j.{DBWithTransaction, Database}
 
-class WorkflowAnalyzer(db: Database,
-    options: Map[String, String], parent: Frame, waitDialog: ProgressDialog) {
+class WorkflowAnalyzer(transaction: DBWithTransaction,
+    options: Map[String, String], waitDialog: ProgressMonitor) {
 
   require(options contains "visualization")
   require(options contains "dpi")
@@ -25,24 +24,17 @@ class WorkflowAnalyzer(db: Database,
   if (options("visualization") == "Graph")
     require(new File(options("dot")).exists)
 
-  def run(): Unit = {
-    val resultWindow: Dialog = db.inTransaction { transaction =>
-      val result = findStateChanges(transaction)
-      val deadEnds = createDeadEndMap(findDeadEnds(transaction))
+  def run(): AnalyzerResult = {
+    val result = findStateChanges
+    val deadEnds = createDeadEndMap(findDeadEnds)
 
-      options("visualization") match {
-        case "Graph" => createDotWindow(result, deadEnds, parent)
-        case "Matrix" => createMatrixWindow(result, deadEnds, parent)
-      }
-    }
-
-    Swing.onEDTWait {
-      waitDialog.hide()
-      resultWindow.visible = true
+    options("visualization") match {
+      case "Graph" => createImageResult(result, deadEnds)
+      case "Matrix" => createMatrixResult(result, deadEnds)
     }
   }
 
-  private def findStateChanges(transaction: DBWithTransaction): ExecutionResult =
+  private def findStateChanges: ExecutionResult =
     transaction.cypher(s"""
       MATCH ${TicketRepository.cypherForAll("node")} --> ticket1 -[:has_status]-> status1,
         status2 <-[:has_status]- ticket2 -[:updates]-> ticket1,
@@ -52,7 +44,7 @@ class WorkflowAnalyzer(db: Database,
       ORDER BY from, count DESC;
       """)
 
-  private def findDeadEnds(transaction: DBWithTransaction): ExecutionResult =
+  private def findDeadEnds: ExecutionResult =
     transaction.cypher(s"""
       MATCH
         ${TicketRepository.cypherForAll("node")} --> ticket -[:has_status]-> status
@@ -68,7 +60,7 @@ class WorkflowAnalyzer(db: Database,
     mapIterator.toMap
   }
 
-  private def createMatrixWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
+  private def createMatrixResult(result: ExecutionResult, deadEnds: Map[String, Long]): MatrixResult = {
     val buffered = result.toSeq
     var namesSet: Set[String] = Set()
 
@@ -82,7 +74,11 @@ class WorkflowAnalyzer(db: Database,
     }
 
     val titles = namesSet.toSeq.sorted
-    val matrix = new TextMatrix(titles :+ "(final)", titles)
+    val matrix = new MatrixResult(titles :+ "(final)", titles, false, "Propability Matrix")
+    matrix.description = """<p>This window shows the possibility that
+      | a ticket changes its state (left) to another state (top). <br />The
+      | value &quot;(final)&quot; means, that the ticket will stay in the
+      | current state.</p>""".stripMargin
 
     for (status <- deadEnds) {
       matrix.set("(final)", status._1, status._2)
@@ -92,10 +88,10 @@ class WorkflowAnalyzer(db: Database,
       matrix.set(row("to").asInstanceOf[String], row("from").asInstanceOf[String], row("count").asInstanceOf[Long])
     }
 
-    new MatrixDialog(matrix, parent)
+    matrix
   }
 
-  private def createDotWindow(result: ExecutionResult, deadEnds: Map[String, Long], parent: Frame): Dialog = {
+  private def createImageResult(result: ExecutionResult, deadEnds: Map[String, Long]): ImageResult = {
     val (lines, nodeNames) = formatResultToDotNodes(result)
     val graphText = "digraph {"+
       "concentrate=true;\n"+
@@ -106,7 +102,7 @@ class WorkflowAnalyzer(db: Database,
 
     val graph = new DotWrapper(new File(options("dot"))).run(graphText)
 
-    new ImageDialog(graph, parent, "Ticket state workflow structure")
+    new ImageResult(graph, "Ticket state workflow structure")
   }
 
   private def getNodesStrings(names: Map[String, String], deadEnds: Map[String, Long]): Iterable[String] =

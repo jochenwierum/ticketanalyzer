@@ -4,11 +4,14 @@ import scala.swing._
 import org.neo4j.cypher.ExecutionEngine
 import org.neo4j.graphdb.{ Direction, Node => NeoNode }
 import de.jowisoftware.mining.analyzer.truck.tickets.filters._
-import de.jowisoftware.mining.gui.ProgressDialog
 import de.jowisoftware.mining.model.nodes._
 import de.jowisoftware.mining.model.relationships.{ Links, Owns }
 import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
 import de.jowisoftware.neo4j.content.Node
+import de.jowisoftware.mining.gui.ProgressMonitor
+import de.jowisoftware.mining.analyzer.AnalyzerResult
+import de.jowisoftware.mining.analyzer.NodeResult
+import scala.collection.SortedSet
 
 object TruckTicketsAnalyzer {
   private def mkLinearFunc(factor: Double)(value: Int, max: Int): Double =
@@ -26,10 +29,10 @@ object TruckTicketsAnalyzer {
       else -math.log(value.doubleValue() / max) / math.log(max)))
 }
 
-class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
-    parent: Frame, waitDialog: ProgressDialog) {
+class TruckTicketsAnalyzer(transaction: DBWithTransaction, options: Map[String, String],
+    waitDialog: ProgressMonitor) {
 
-  def run() {
+  def run(): AnalyzerResult = {
     require(options contains "limit")
     require(options("limit").matches("""\d+"""), "Limit is not numeric")
     require(options contains "algorithm")
@@ -47,29 +50,41 @@ class TruckTicketsAnalyzer(db: Database, options: Map[String, String],
     require(options("min-comments2").matches("""\d+"""))
     require(options("min-state-changes").matches("""\d+"""))
 
-    val resultWindow = createCriticalKeywordsWindow
+    createCriticalKeywordsWindow
+  }
 
-    Swing.onEDTWait {
-      waitDialog.hide()
-      resultWindow.visible = true
+  private def createCriticalKeywordsWindow: AnalyzerResult = {
+    val limit = options("limit").toInt
+    val activePersons = getActivePersons(transaction)
+    val filters = createFilters(options)
+
+    val groupedRows = findOccurrences(activePersons, filters.accept, transaction)
+    val result = formatResult(groupedRows, limit)
+
+    if (options("output") == "raw") {
+      val titles = Array("Keyword", "Ratio", "Ticket Count", "Person Count", "Tickets", "Persons")
+      val fields = Array("keyword", "ratio", "ticketCount", "personCount", "tickets", "persons")
+      new NodeResult(result.iterator, fields, titles, "Truck Number by tickets: raw result")
+    } else {
+      val titles = Array("Keyword", "Ratio", "Persons with knowledge", "Persons without knowledge")
+      val fields = Array("keyword", "ratio", "personsWithKnowledge", "missingPersons")
+      new NodeResult(transformToInterpreted(result.iterator, activePersons),
+        fields, titles, "Truck Number by tickets")
     }
   }
 
-  private def createCriticalKeywordsWindow: Dialog =
-    db.inTransaction { transaction =>
-      val limit = options("limit").toInt
-      val activePersons = getActivePersons(transaction)
-      val filters = createFilters(options)
+  def transformToInterpreted(result: Iterator[Map[String, Any]], activePersons: Set[String]) = {
+    val sortedActive: Set[String] = SortedSet.empty[String] ++ activePersons
 
-      val groupedRows = findOccurrences(activePersons, filters.accept, transaction)
-      val result = formatResult(groupedRows, limit)
-
-      if (options("output") == "raw")
-        new ResultWindow(parent, result.iterator, Seq("keyword", "ratio",
-          "ticketCount", "personCount", "tickets", "persons"))
-      else
-        new KeywordResultWindow(parent, result.iterator, activePersons)
+    for (row <- result) yield {
+      val persons = row("persons").asInstanceOf[Set[String]].toSet
+      val missingPersons = sortedActive -- persons
+      Map("keyword" -> row("keyword").asInstanceOf[String],
+        "ratio" -> row("ratio").asInstanceOf[Double].toString,
+        "personsWithKnowledge" -> persons.toSeq.sorted.mkString(", "),
+        "missingPersons" -> missingPersons.toSeq.mkString(", "))
     }
+  }
 
   private def createFilters(options: Map[String, String]) = {
     def isSet(name: String) = options(name).toLowerCase() == "true"
