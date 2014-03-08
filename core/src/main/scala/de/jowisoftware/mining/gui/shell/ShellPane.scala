@@ -1,21 +1,22 @@
 package de.jowisoftware.mining.gui.shell
 
 import java.net.URI
-import scala.swing.{ BorderPanel, Button, Dialog, ScrollPane, SplitPane, TextArea }
+import scala.swing._
 import scala.swing.BorderPanel.Position
-import scala.swing.Dialog.Message
-import scala.swing.Swing
 import scala.swing.event.ButtonClicked
+
+import grizzled.slf4j.Logging
 import org.neo4j.cypher.ExecutionEngine
-import org.neo4j.kernel.AbstractGraphDatabase
+
 import de.jowisoftware.mining.{ Main => MainApp }
+import de.jowisoftware.mining.analyzer.NodeResult
 import de.jowisoftware.mining.gui.{ GuiTab, ProgressDialog }
 import de.jowisoftware.mining.gui.components.Link
-import de.jowisoftware.mining.gui.results.ResultTablePane
-import grizzled.slf4j.Logging
-import scala.swing.Frame
+import de.jowisoftware.mining.gui.results.NodeTablePane
+import de.jowisoftware.mining.model.nodes._
+import de.jowisoftware.mining.model.nodes.{ Component => MiningComponent }
 import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.model.nodes.RootNode
+import de.jowisoftware.neo4j.content.IndexedNodeCompanion
 
 class ShellPane(db: Database, parent: Frame) extends SplitPane with GuiTab with Logging {
   private val textInput = new TextArea
@@ -30,10 +31,9 @@ class ShellPane(db: Database, parent: Frame) extends SplitPane with GuiTab with 
       layout(link) = Position.South
     }
   }
-  private val resultTable = new ResultTablePane
 
   leftComponent = textPanel
-  rightComponent = resultTable
+  rightComponent = new Label("Please submit a query")
 
   listenTo(startButton)
   reactions += {
@@ -48,24 +48,28 @@ class ShellPane(db: Database, parent: Frame) extends SplitPane with GuiTab with 
 
     val dialog = new ProgressDialog(parent)
     new Thread("query-thread") {
-      override def run() {
-        val start = System.currentTimeMillis
-        try {
-          val engine = new ExecutionEngine(db.service)
-          info("Executing: "+text)
-          val result = engine.execute(text)
-          resultTable.processResult(result)
-          warn("Query finished in "+(System.currentTimeMillis - start)+" ms")
-        } catch {
-          case e: Exception =>
-            Swing.onEDT {
-              Dialog.showMessage(resultTable, "<html>Could not execute query: <br /><pre>"+
-                maskHTML(e.getMessage)+"</pre></html>", "Error", Message.Error)
-            }
-        } finally {
+      override def run() = {
+        db.inTransaction { transaction =>
+          val start = System.currentTimeMillis
+
+          val component = try {
+            info("Executing: "+text)
+            val result = transaction.cypher(text)
+            new NodeTablePane(new NodeResult(result, ""))
+          } catch {
+            case e: Exception =>
+              warn("Error while executing user query", e)
+              new Label("<html>Could not execute query: <br /><pre>"+
+                maskHTML(e.getMessage)+"</pre></html>")
+          }
+
           Swing.onEDT {
             dialog.hide()
+            val oldLocation = dividerLocation
+            rightComponent = component
+            dividerLocation = oldLocation
           }
+          warn("Query finished in "+(System.currentTimeMillis - start)+" ms")
         }
       }
     }.start()
@@ -85,26 +89,21 @@ class ShellPane(db: Database, parent: Frame) extends SplitPane with GuiTab with 
   private var lastState = Integer.MAX_VALUE
   def newViewState(state: Int) =
     if (state < lastState) db.inTransaction { transaction =>
-      val rootNode = transaction.rootNode(RootNode)
-      val text = """START root=node(%d)
-      |MATCH root-[:contains]->collection
-      |RETURN root, collection
-      |LIMIT 20;
+      val text = """|MATCH (repository:CommitRepository) --> commit
+      |RETURN repository, commit
+      |LIMIT 20
       |
-      |// Important indizes:
-      |// %s"""
+      |// Important indizes:""".stripMargin
 
-      val nodes = ("RootNode: nodes:function(name=rootNode)") ::
-        ("Commits: nodes:commitRepository(name=repositoryName)") ::
-        ("Tickets: nodes:ticketRepository(name=repositoryName)") ::
-        //rootNode.commitRepositoryCollection.children.map(col => "Commits in "+col.name+": "+col.id).toList :::
-        //rootNode.ticketRepositoryCollection.children.map(col => "Tickets in "+col.name+": "+col.id).toList :::
-        ("Persons: nodes:person(name=personName)") ::
-        ("Status: nodes:status(name=statusName)") ::
-        ("Keywords: nodes:keywords(name=keyword)") ::
-        Nil
+      val companions: List[_ <: IndexedNodeCompanion[_]] =
+        Commit :: CommitRepository :: MiningComponent :: File ::
+          Keyword :: Milestone :: Person :: Priority :: Reproducability :: Resolution ::
+          Severity :: Status :: Tag :: Ticket :: TicketComment :: TicketRepository ::
+          Type :: Version :: Nil
+
+      val nodes = companions.map { _.cypherForAll("nodes") }
 
       lastState = state
-      textInput.text = text.format(rootNode.id, nodes.mkString("\n|// ")).stripMargin
+      textInput.text = nodes.mkString(text, "\n// ", "\n")
     }
 }
