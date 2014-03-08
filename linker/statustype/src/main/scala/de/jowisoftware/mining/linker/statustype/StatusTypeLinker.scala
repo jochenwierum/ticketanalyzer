@@ -14,17 +14,16 @@ import de.jowisoftware.mining.model.nodes.Status
 import de.jowisoftware.util.AppUtil
 import de.jowisoftware.util.AppUtil
 import de.jowisoftware.neo4j.Database
+import de.jowisoftware.neo4j.DBWithTransaction
 
 class StatusTypeLinker extends Linker with Logging {
   def userOptions() = new StatusTypeOptions
 
-  def link(db: Database, tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
+  def link(transaction: DBWithTransaction, tickets: TicketRepository, commits: CommitRepository, options: Map[String, String], events: LinkEvents) {
     val statusMap = readStatusProperties
 
-    db.inTransaction { t =>
-      Status.findAll(t) foreach { status =>
-        events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
-      }
+    Status.findAll(transaction) foreach { status =>
+      events.foundStatusMap(status, statusMap.getOrElse(status.name().toLowerCase, warnIgnore(status)))
     }
 
     events.finish

@@ -25,6 +25,7 @@ import org.neo4j.graphdb.ResourceIterable
 import de.jowisoftware.util.ScalaUtil._
 import scala.collection.JavaConversions._
 import de.jowisoftware.mining.model.nodes.TicketRepository
+import de.jowisoftware.neo4j.DBWithTransaction
 
 class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     extends SplitPane(Orientation.Vertical) with GuiTab with Logging { that =>
@@ -172,12 +173,12 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
 
   private def runTask(task: Task, dialog: ProgressDialog): Unit = {
     val options = task.data
-    task.importer.link(db, getSelectedTicketRepository,
-      getSelectedCommitRepository, options,
-      new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
-
-        val progressDialog = dialog
-      })
+    db.inTransaction(t =>
+      task.importer.link(t, getSelectedTicketRepository(t),
+        getSelectedCommitRepository(t), options,
+        new DatabaseLinkerHandler(db, ticketList.selection.item, scmList.selection.item) with ConsoleProgressReporter with LinkerEventGui {
+          val progressDialog = dialog
+        }))
   }
 
   private def updateDBState: Unit = {
@@ -190,11 +191,11 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     }
   }
 
-  private def getSelectedTicketRepository =
-    db.inTransaction(t => TicketRepository.find(t, ticketList.selection.item).get)
+  private def getSelectedTicketRepository(transaction: DBWithTransaction) =
+    TicketRepository.find(transaction, ticketList.selection.item).get
 
-  private def getSelectedCommitRepository =
-    db.inTransaction(t => CommitRepository.find(t, ticketList.selection.item).get)
+  private def getSelectedCommitRepository(transaction: DBWithTransaction) =
+    CommitRepository.find(transaction, ticketList.selection.item).get
 
   def align = dividerLocation = .75
 }
