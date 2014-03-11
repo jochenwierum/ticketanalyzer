@@ -4,8 +4,12 @@ import javax.swing.table.AbstractTableModel
 import de.jowisoftware.mining.analyzer._
 import scala.swing._
 import de.jowisoftware.mining.gui.results.nodeTablePane._
+import java.io.OutputStream
+import au.com.bytecode.opencsv.CSVWriter
+import java.io.OutputStreamWriter
+import de.jowisoftware.util.HTMLUtil
 
-class NodeTablePane(result: NodeResult) extends ScrollPane {
+class NodeTablePane(result: NodeResult) extends ScrollPane with ResultPane {
   private val table = new ResultTable()
   contents = table
 
@@ -30,5 +34,25 @@ class NodeTablePane(result: NodeResult) extends ScrollPane {
       def getRowCount = tableData.length
       def getValueAt(row: Int, column: Int) = tableData(row)(column)
     }
+  }
+
+  val saveDescription = ResultPane.SaveDescription("csv", "Table (*.csv)")
+  def saveToStream(stream: OutputStream) = {
+    val writer = new CSVWriter(new OutputStreamWriter(stream, "UTF-8"))
+
+    writer.writeNext(result.titles.toArray)
+    tableData.foreach { row =>
+      val stringRow = row.map { cell =>
+        if (cell.shortText != cell.longText)
+          s"${cell.shortText} (${cell.longText})"
+        else
+          cell.shortText
+      } map {
+        HTMLUtil.stripHTML
+      }
+      writer.writeNext(stringRow)
+    }
+
+    writer.close()
   }
 }

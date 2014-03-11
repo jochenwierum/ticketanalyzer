@@ -6,4 +6,11 @@ object HTMLUtil {
       .replace("<", "&lt;")
       .replace(">", "&gt;")
       .replace("\"", "&quot;")
+
+  def stripHTML(s: String) =
+    s.replaceAll("<[^>]+>", "")
+      .replace("&lt;", "<")
+      .replace("&gt;", ">")
+      .replace("&quot;", "\"")
+      .replace("&amp;", "&")
 }

@@ -7,6 +7,8 @@ configurations {
 }
 
 dependencies {
+  compile group: "org.scala-lang", name: "scala-swing", version: scala_version
+
   if (project.hasProperty("compact") && project.property("compact") == "true") {
     compile group: "org.neo4j", name: "neo4j", version: neo4j_version
   } else {
@@ -14,8 +16,9 @@ dependencies {
   }
 
   provided group: "org.scalatest", name: "scalatest_" + scala_version_short, version: scalatest_version
-  provided group: "org.mockito", name: "mockito-all", version: mockito_version
   provided group: "junit", name: "junit", version: "4.11"
+  
+  provided group: "org.mockito", name: "mockito-all", version: mockito_version
 }
 
 copyDistFiles << {

@@ -17,6 +17,7 @@ class PluginScanner(basePath: File, pluginDirs: String*) extends Logging {
     debug("Possible plugin files: "+jarFiles.mkString(", "))
     val classLoader = createClassLoader(jarFiles)
     getPluginInfos(classLoader).foreach(manager.addPlugin)
+    info("Plugin scan finished")
   }
 
   private def createClassLoader(files: Seq[File]): ClassLoader =

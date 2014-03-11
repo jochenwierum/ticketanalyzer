@@ -6,8 +6,10 @@ import scala.swing.event._
 import javax.imageio.ImageIO
 import java.io.ByteArrayInputStream
 import de.jowisoftware.mining.analyzer.ImageResult
+import org.apache.lucene.util.fst.Outputs
+import java.io.OutputStream
 
-class PicturePane(image: ImageResult) extends ScrollPane {
+class ImagePane(image: ImageResult) extends ScrollPane with ResultPane {
   listenTo(mouse.clicks)
   listenTo(mouse.moves)
   listenTo(mouse.wheel)
@@ -53,4 +55,10 @@ class PicturePane(image: ImageResult) extends ScrollPane {
   }
 
   contents = imagePanel
+
+  val saveDescription = ResultPane.SaveDescription("png", "PNG Image (*.png)")
+  def saveToStream(stream: OutputStream) = {
+    ImageIO.write(image.image, "PNG", stream)
+    stream.close()
+  }
 }

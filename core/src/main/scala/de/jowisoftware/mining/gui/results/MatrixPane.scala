@@ -6,8 +6,11 @@ import scala.swing.ScrollPane
 import java.awt.Dimension
 import javax.swing.JViewport
 import de.jowisoftware.mining.analyzer.MatrixResult
+import java.io.OutputStream
+import au.com.bytecode.opencsv.CSVWriter
+import java.io.OutputStreamWriter
 
-class MatrixPane(matrixResult: MatrixResult) extends ScrollPane {
+class MatrixPane(matrixResult: MatrixResult) extends ScrollPane with ResultPane {
   private val normalizedRows = matrixResult.normalizedRows
   private val maxCols = normalizedRows.map(_.max)
   private val minCols = normalizedRows.map(_.min)
@@ -63,4 +66,18 @@ class MatrixPane(matrixResult: MatrixResult) extends ScrollPane {
 
   contents = table
   peer.setRowHeader(viewport)
+
+  val saveDescription = ResultPane.SaveDescription("csv", "Table (*.csv)")
+  def saveToStream(stream: OutputStream) = {
+    val writer = new CSVWriter(new OutputStreamWriter(stream, "UTF-8"))
+
+    writer.writeNext("" +: matrixResult.columnTitles)
+    matrixResult.normalizedRows.zipWithIndex.foreach {
+      case (row, idx) =>
+        val title = matrixResult.rowTitles(idx)
+        writer.writeNext(title +: row.map(v => (if (v.isNaN) 0f else v * 100).formatted("%.2f")))
+    }
+
+    writer.close()
+  }
 }
