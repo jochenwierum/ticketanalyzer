@@ -82,11 +82,15 @@ subprojects {
     classpath {
       file {
         whenMerged { cp ->
-          cp.entries.findAll { it instanceof SourceFolder }*.output = "build/eclipse"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/scala") }*.output = "build/classes/test"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/resources") }*.output = "build/resources/main"
+          cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
             entry.path.matches(Pattern.compile('scala-(library|reflect|actors)-[.\\d](-M[\\d]+)?.jar')) ||
-            entry.path.endsWith('.pom') ||
-            (entry instanceof SourceFolder && entry.path.startsWith("src/main/resources"))
+            entry.path.endsWith('.pom')
           })
         }
       }
