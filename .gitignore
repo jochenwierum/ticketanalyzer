@@ -2,6 +2,10 @@
 build/
 gradle-app.setting
 
+.idea
+*.iml
+*.ipr
+
 .classpath
 .project
 .settings
