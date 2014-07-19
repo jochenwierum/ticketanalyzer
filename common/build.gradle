@@ -1,11 +1,5 @@
 description = "The shared API for all plugins"
 
-configurations {
-  provided {
-    extendsFrom compile
-  }
-}
-
 dependencies {
   compile group: "org.scala-lang", name: "scala-swing", version: scala_version
 
@@ -31,5 +25,3 @@ copyDistFiles << {
     from configurations.archives.allArtifacts.files
   }
 }
-
-sourceSets.main.compileClasspath = configurations.provided

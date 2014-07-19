@@ -1,22 +1,25 @@
 package de.jowisoftware.mining.settings
 
-import scala.io.Source
+import java.io.{FileInputStream, File, InputStream}
 import java.util.Properties
-import java.io.InputStream
+
 import scala.collection.JavaConversions._
-import java.io.File
-import java.io.FileInputStream
 
 object Settings {
+  def apply(file: File) = fromStream(new FileInputStream(file))
   def apply(stream: InputStream) = new Settings(stream)
-  def apply(fileName: String): Settings = apply(fileName, getClass().getClassLoader)
+  def apply(fileName: String): Settings = {
+    try {
+      fromStream(getClass.getClassLoader.getResourceAsStream(fileName))
+    }
+  }
 
-  def apply(file: String, classLoader: ClassLoader): Settings = {
-    val stream = classLoader.getResourceAsStream(file)
+  private def fromStream(stream: InputStream): Settings =
+  {
     try {
       new Settings(stream)
     } finally {
-      stream.close
+      stream.close()
     }
   }
 

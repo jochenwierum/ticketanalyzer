@@ -1,15 +1,23 @@
 defaultTasks 'help'
 
+buildscript {
+    repositories {
+        maven { url 'http://repo.spring.io/plugins-release' }
+    }
+    dependencies {
+        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.7'
+    }
+}
+
 apply plugin: 'scala'
 apply plugin: 'application'
-apply plugin: 'build-dashboard'
 
 import org.gradle.plugins.ide.eclipse.model.SourceFolder 
 import java.util.regex.Pattern
 
 ext {
-  scala_version = "2.10.3"
-  scala_xml_version = "2.10.3"
+  scala_version = "2.10.4"
+  scala_xml_version = "2.10.4"
   scalatest_version = "2.0"
   neo4j_version = "2.0.1"
   mockito_version = "1.9.0"
@@ -17,10 +25,28 @@ ext {
 }
 
 
+def leafs = subprojects.findAll{it.subprojects.isEmpty()}
+configure(leafs) {
+  apply plugin: 'propdeps'
+  apply plugin: 'propdeps-maven'
+  apply plugin: 'propdeps-idea'
+  apply plugin: 'propdeps-eclipse'
+}
+
 allprojects {
   apply plugin: 'eclipse'
   apply plugin: 'idea'
   apply plugin: 'scala'
+
+  idea {
+    module {
+      iml {
+        inheritOutputDirs=false
+		outputDir = file('build/classes/main')
+	    testOutputDir = file('build/classes/test')
+      }
+    }
+  }
 
   repositories {
     mavenCentral()
@@ -85,6 +111,7 @@ subprojects {
     classpath {
       file {
         whenMerged { cp ->
+          def pattern = Pattern.compile('.*[/\\\\]scala[-_](library|reflect|actors)[-_][.\\d]*(-M[\\d]+)?.jar')
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/java") }*.output = "build/classes/main"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/java") }*.output = "build/classes/test"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/scala") }*.output = "build/classes/main"
@@ -92,8 +119,7 @@ subprojects {
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/main/resources") }*.output = "build/resources/main"
           cp.entries.findAll { it instanceof SourceFolder && it.path.startsWith("src/test/resources") }*.output = "build/resources/test"
           cp.entries.removeAll(cp.entries.findAll { entry ->
-            entry.path.matches(Pattern.compile('scala-(library|reflect|actors)-[.\\d](-M[\\d]+)?.jar')) ||
-            entry.path.endsWith('.pom')
+            entry.path.matches(pattern) || entry.path.endsWith('.pom')
           })
         }
       }
@@ -131,9 +157,8 @@ subprojects {
   }
 }
 
-def leafs = subprojects.findAll{it.subprojects.isEmpty()}
 
-task dist(dependsOn: leafs.copyDistFiles, type: org.gradle.api.tasks.application.CreateStartScripts) {
+task dist(dependsOn: leafs.copyDistFiles, type: CreateStartScripts) {
   File out = new File("$buildDir/dist")
   def cp = fileTree(dir: new File(out, 'lib'), include: '*.jar')
 
@@ -168,7 +193,7 @@ task help() << {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.11'
+  gradleVersion = '2.0'
 
   def jvmOpts = "-Xmx512m"
   inputs.property("jvmOpts", jvmOpts)

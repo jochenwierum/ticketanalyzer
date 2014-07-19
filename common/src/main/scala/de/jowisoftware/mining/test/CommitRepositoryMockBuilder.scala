@@ -1,12 +1,8 @@
 package de.jowisoftware.mining.test
 
-import org.mockito.Mockito._
-import de.jowisoftware.mining.model.nodes.CommitRepository
-import de.jowisoftware.mining.model.nodes.CommitRepository
-import de.jowisoftware.mining.model.nodes.Commit
+import de.jowisoftware.mining.model.nodes.{Commit, CommitRepository}
 import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.ReadWriteDatabase
+import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 
 class CommitRepositoryMockBuilder private[test] (withAbbrev: Boolean, val name: String = "", val mockName: String = "")

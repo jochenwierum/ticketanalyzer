@@ -21,7 +21,7 @@ object Main extends Logging {
 
   def main(args: Array[String]): Unit = {
     try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName)
     } catch {
       case e: Exception =>
     }
@@ -33,10 +33,10 @@ object Main extends Logging {
     Swing.onEDT(startApp)
   }
 
-  private def startApp {
+  private def startApp(): Unit = {
 
     val db = try {
-      openDatabase(false)
+      openDatabase(forceCompact = false)
     } catch {
       case e: Exception =>
         error("Failed to initialize the application", e)
@@ -69,9 +69,9 @@ object Main extends Logging {
   }
 
   private def performDBUpdate() {
-    warn("Cheking whether database upgrade is required")
+    warn("Checking whether database upgrade is required")
 
-    val db = openDatabase(true)
+    val db = openDatabase(forceCompact = true)
     val hasUpdates = try {
       db.inTransaction { _.rootNode(RootNode).updateRequired }
     } finally {

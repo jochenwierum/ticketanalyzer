@@ -4,12 +4,6 @@ ext {
 	neo4jserver_version = '2.0.1'
 }
 
-configurations {
-  provided {
-    extendsFrom compile
-  }
-}
-
 dependencies {
   compile group: "org.scala-lang", name: "scala-swing", version: scala_version
   compile group: 'com.typesafe.akka', name: 'akka-actor_' + scala_version_short, version: "2.2.1"
@@ -37,5 +31,3 @@ copyDistFiles << {
     from configurations.archives.allArtifacts.files
   }
 }
-
-sourceSets.main.compileClasspath = configurations.provided
