@@ -1,38 +1,48 @@
 package de.jowisoftware.mining.importer.async
 
-import de.jowisoftware.mining.gui.importer.ImporterEventGui
-import akka.actor.ActorSystem
-import de.jowisoftware.neo4j.Database
-import de.jowisoftware.mining.importer.Importer
-import akka.actor.Props
-import de.jowisoftware.mining.model.nodes.RootNode
+import akka.actor.{ActorSystem, Props}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.AkkaHelper
+import de.jowisoftware.mining.gui.importer.ImporterEventGui
+import de.jowisoftware.mining.importer.Importer
+import de.jowisoftware.neo4j.Database
+import grizzled.slf4j.Logging
 
 private case class RunWithUI(db: Database,
   dialog: ProgressDialog,
   importer: (Importer, Map[String, String])*) extends ImportEvent
 
-object AsyncDatabaseImportHandlerWithFeedback {
+object AsyncDatabaseImportHandlerWithFeedback extends Logging {
   def run(db: Database,
     dialog: ProgressDialog,
-    importer: (Importer, Map[String, String])*) {
+    importer: (Importer, Map[String, String])*): Unit = {
 
-    val importHandler = AkkaHelper.system.actorOf(Props[AsyncDatabaseImportHandler],
+    val config = ConfigFactory.empty()
+        .withValue("akka.jvm-exit-on-fatal-error", ConfigValueFactory.fromAnyRef(false))
+        .withValue("pinned.executor", ConfigValueFactory.fromAnyRef("thread-pool-executor"))
+        .withValue("pinned.type", ConfigValueFactory.fromAnyRef("PinnedDispatcher"))
+        .withValue("pinned.thread-pool-executor.allow-core-timeout", ConfigValueFactory.fromAnyRef("off"))
+    val system = ActorSystem("MiningSystem", config)
+
+    info(s"Starting import of ${importer.size} repositories using akka")
+    val importHandler = system.actorOf(Props[AsyncDatabaseImportHandlerWithFeedback].withDispatcher("pinned"),
       name = "asyncDatabaseImportHandler")
 
     importHandler ! RunWithUI(db, dialog, importer: _*)
+
+    system.awaitTermination()
+    info(s"Akka finished")
   }
 }
 
-class AsyncDatabaseImportHandlerWithFeedback extends ConsoleProgressReporter with ImporterEventGui {
+class AsyncDatabaseImportHandlerWithFeedback extends AsyncDatabaseImportHandler with ConsoleProgressReporter with ImporterEventGui {
   protected var dialog: ProgressDialog = _
 
   override def receive: PartialFunction[Any, Unit] = {
-    case RunWithUI(db, dialog, importer) =>
-      this.dialog = dialog
+    case RunWithUI(db, dialogObj, importer) =>
+      dialog = dialogObj
       self ! Run(db, importer)
-    case _: ImportEvent =>
-      super.receive
+    case e: ImportEvent =>
+      super.receive(e)
   }
 }

@@ -1,10 +1,10 @@
 package de.jowisoftware.mining.linker.trac
 
 import de.jowisoftware.mining.linker.ScmLink
-import scala.util.matching.Regex
 import de.jowisoftware.mining.model.nodes.CommitRepository
+
+import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
-import de.jowisoftware.mining.model.nodes.Commit
 
 private[trac] object ScmScanner {
   private val singleRegexes = List("""(?<![\w\d])r(\d{1,18}|[0-9a-fA-F]{5,32})(?=\W|$)""".r,
@@ -17,7 +17,7 @@ private[trac] object ScmScanner {
 }
 
 private[trac] class ScmScanner(rangeGenerator: RangeGenerator) {
-  import ScmScanner._
+  import de.jowisoftware.mining.linker.trac.ScmScanner._
 
   def scan(text: String, commitRepository: CommitRepository): Set[ScmLink] = {
     val singleMatches = singleRegexes.flatMap(_.findAllIn(text).matchData.flatMap { theMatch =>

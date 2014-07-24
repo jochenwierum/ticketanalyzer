@@ -1,7 +1,6 @@
 package de.jowisoftware.mining.linker.trac
 
 import de.jowisoftware.mining.linker.TicketLink
-import scala.util.matching.Regex
 
 private[trac] object TicketScanner {
   private def ticketRegexes =
@@ -14,7 +13,7 @@ private[trac] object TicketScanner {
 }
 
 private[trac] class TicketScanner {
-  import TicketScanner._
+  import de.jowisoftware.mining.linker.trac.TicketScanner._
 
   def scan(text: String) =
     ticketRegexes.flatMap(_.findAllIn(text).matchData.map { theMatch =>

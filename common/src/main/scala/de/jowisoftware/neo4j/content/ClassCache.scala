@@ -1,6 +1,5 @@
 package de.jowisoftware.neo4j.content
 
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 private[content] class ClassCache[T](implicit classTag: ClassTag[T]) {

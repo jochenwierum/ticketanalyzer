@@ -1,10 +1,11 @@
 package de.jowisoftware.neo4j.content.properties
 
 import org.neo4j.graphdb.PropertyContainer
+
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
 trait Versionable {
-  private[neo4j] final def sanityCheck(content: PropertyContainer) {
+  private[neo4j] final def sanityCheck(content: PropertyContainer): Unit = {
     if (content.hasProperty("_version")) {
       checkProperties(content)
     } else {
@@ -12,15 +13,15 @@ trait Versionable {
     }
   }
 
-  private def initPropertiesInternal(content: PropertyContainer) {
-    content.setProperty("_class", getClass.getName())
+  private def initPropertiesInternal(content: PropertyContainer): Unit = {
+    content.setProperty("_class", getClass.getName)
     content.setProperty("_version", version)
-    initProperties
+    initProperties()
   }
 
-  private def checkProperties(content: PropertyContainer) {
+  private def checkProperties(content: PropertyContainer): Unit = {
     val className = content.getProperty("_class")
-    require(className == getClass.getName(), "Expected node '"+getClass.getName+"' had type '"+
+    require(className == getClass.getName, "Expected node '"+getClass.getName+"' had type '"+
       className+"'")
 
     val nodeVersion = content.getProperty("_version").asInstanceOf[Int]
@@ -35,7 +36,7 @@ trait Versionable {
     if(content.hasProperty("uid") && content.getProperty("uid").isInstanceOf[Set[_]])
         println(content.getProperty("uid"))
 
-    content.getPropertyKeys()
+    content.getPropertyKeys
       .filter(!_.startsWith("_"))
       .map(key => key+"="+shorten(content.getProperty(key)))
       .mkString("["+getClass.getSimpleName+" "+id+": ", ", ", "]")
@@ -44,10 +45,10 @@ trait Versionable {
   private def shorten(o: Object) = o match {
     case s: String if s.length > 32 => '"' + s.substring(0, 29)+"...\""
     case s: String => '"' + s + '"'
-    case o => o.toString
+    case _ => o.toString
   }
 
   def version: Int
-  protected def initProperties = {}
+  protected def initProperties(): Unit = {}
   protected def updateFrom(oldVersion: Int)
 }

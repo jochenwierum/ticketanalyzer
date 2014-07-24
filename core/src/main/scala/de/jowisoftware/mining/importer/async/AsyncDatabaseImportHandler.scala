@@ -1,10 +1,8 @@
 package de.jowisoftware.mining.importer.async
 
 import akka.actor._
-
-import de.jowisoftware.mining.importer.{ TicketData, TicketCommentData, Importer, ImportEvents, DatabaseImportHandler, CommitData }
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.{ Database, DBWithTransaction }
+import de.jowisoftware.mining.importer.{CommitData, DatabaseImportHandler, ImportEvents, Importer, TicketCommentData, TicketData}
+import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
 
 private[async] abstract class ImportEvent
@@ -28,9 +26,9 @@ class AsyncDatabaseImportHandler extends Actor with ImportEvents with Logging {
   private var toFinish: Long = 0
   private var dbImporter: DatabaseImportHandler = _
 
-  def reportProgress(ticketsDone: Long, ticketsCount: Long, commitsDone: Long, commitsCount: Long) {}
+  def reportProgress(ticketsDone: Long, ticketsCount: Long, commitsDone: Long, commitsCount: Long): Unit = {}
 
-  private def reportProgress() {
+  private def reportProgress(): Unit = {
     reportProgress(ticketsDone, ticketsCount, commitsDone, commitsCount)
   }
 
@@ -50,27 +48,28 @@ class AsyncDatabaseImportHandler extends Actor with ImportEvents with Logging {
     case CountedCommits(c) =>
       dbImporter.countedCommits(c)
       commitsCount += c
-      reportProgress
+      reportProgress()
     case CountedTickets(t) =>
       dbImporter.countedTickets(t)
       ticketsCount += t
-      reportProgress
+      reportProgress()
     case LoadedTicket(repository, tickets, comments) =>
       ticketsDone += 1
       dbImporter.loadedTicket(repository, tickets, comments)
-      reportProgress
+      reportProgress()
     case LoadedCommit(repository, data) =>
       commitsDone += 1
       dbImporter.loadedCommit(repository, data)
-      reportProgress
+      reportProgress()
     case SetupCommits(supportsAbbrev) =>
       dbImporter.setupCommits(supportsAbbrev)
     case Finish =>
       toFinish = toFinish - 1
       if (toFinish == 0) {
-        dbImporter.finish
+        dbImporter.finish()
         context.stop(self)
       }
+      context.system.shutdown()
   }
 
   def countedTickets(count: Long) = target ! CountedTickets(count)

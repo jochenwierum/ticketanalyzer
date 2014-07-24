@@ -1,12 +1,11 @@
 package de.jowisoftware.neo4j
 
-import content.Node
 import org.neo4j.graphdb.GraphDatabaseService
 
-trait Database extends ReadOnlyDatabase {
-  def shutdown
+trait Database extends ReadOnlyDatabaseWithTransaction {
+  def shutdown()
   def startTransaction: DBWithTransaction
-  def deleteContent
+  def deleteContent()
 
   def service: GraphDatabaseService
 }

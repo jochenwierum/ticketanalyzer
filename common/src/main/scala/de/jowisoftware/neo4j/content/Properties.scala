@@ -1,12 +1,10 @@
 package de.jowisoftware.neo4j.content
 
 import java.util.Date
+
+import de.jowisoftware.neo4j.content.properties.{CastingObjectPersister, DateWrapper, NodeProperty, OptionalNodeProperty}
+import de.jowisoftware.neo4j.{DBWithTransaction, ReadOnlyDatabase}
 import org.neo4j.graphdb.PropertyContainer
-import de.jowisoftware.neo4j.{ ReadWriteDatabase, ReadOnlyDatabase }
-import de.jowisoftware.neo4j.content.properties.{ OptionalNodeProperty, NodeProperty, CastingObjectPersister }
-import properties.{ OptionalNodeProperty, NodeProperty, DateWrapper, CastingObjectPersister }
-import de.jowisoftware.neo4j.ReadOnlyDatabase
-import de.jowisoftware.neo4j.ReadWriteDatabase
 
 trait Properties[A <: PropertyContainer] {
   protected[neo4j] def content: PropertyContainer
@@ -14,9 +12,9 @@ trait Properties[A <: PropertyContainer] {
   private[neo4j] var innerDB: ReadOnlyDatabase = _
 
   protected def readableDb: ReadOnlyDatabase = innerDB
-  protected def writableDb: ReadWriteDatabase = innerDB match {
-    case e: ReadWriteDatabase => e
-    case _ => sys.error("A writeable database requires a transaction")
+  protected def writableDb: DBWithTransaction = innerDB match {
+    case e: DBWithTransaction => e
+    case _ => sys.error("A writable database requires a transaction")
   }
 
   protected def stringProperty(name: String, default: String = "") =

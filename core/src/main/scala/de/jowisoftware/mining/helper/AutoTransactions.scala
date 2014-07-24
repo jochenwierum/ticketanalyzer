@@ -1,27 +1,25 @@
 package de.jowisoftware.mining.helper
 
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
-import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, NodeCompanion }
-import de.jowisoftware.neo4j.content.Node
+import de.jowisoftware.neo4j.content.{IndexedNodeCompanion, Node}
+import de.jowisoftware.neo4j.{DBWithTransaction, Database}
 
 trait AutoTransactions {
   private var callCount = 0
   private var currentTransaction: Option[DBWithTransaction] = None
 
-  protected val transactionThreshould: Int
+  protected val transactionThreshold: Int
   protected val db: Database
 
-  protected def safePointReached {
+  protected def safePointReached():Unit = {
     callCount += 1
-    if (callCount > transactionThreshould) {
+    if (callCount > transactionThreshold) {
       callCount = 0
-      transaction().success
+      transaction.success()
       currentTransaction = Some(db.startTransaction)
     }
   }
 
-  protected def transaction(): DBWithTransaction = {
+  protected def transaction: DBWithTransaction = {
     if (!currentTransaction.isDefined)
       currentTransaction = Some(db.startTransaction)
     currentTransaction.get

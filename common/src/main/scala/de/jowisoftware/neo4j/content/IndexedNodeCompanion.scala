@@ -1,12 +1,10 @@
 package de.jowisoftware.neo4j.content
 
-import org.neo4j.graphdb.{ DynamicLabel, Label, Node => NeoNode }
-import de.jowisoftware.neo4j.{ ReadOnlyDatabase, ReadWriteDatabase }
-import de.jowisoftware.util.ScalaUtil
 import de.jowisoftware.neo4j.DBWithTransaction
+import org.neo4j.graphdb.{DynamicLabel, Node => NeoNode}
 
 trait IndexedNodeCompanion[A <: Node] extends NodeCompanion[A] {
-  private val indexName = getClass().getSimpleName().replace("$", "")
+  private val indexName = getClass.getSimpleName.replace("$", "")
   protected val indexedProperties: List[String] = Nil
   protected val primaryProperty: String
 
@@ -19,7 +17,7 @@ trait IndexedNodeCompanion[A <: Node] extends NodeCompanion[A] {
     cypherFor(nodeName, primaryProperty, value)
 
   def find(db: DBWithTransaction, name: String): Option[A] =
-    db.cypher(s"MATCH (n:${indexInfo.label.name()}) WHERE n.${primaryProperty} = {value} RETURN n LIMIT 1",
+    db.cypher(s"MATCH (n:${indexInfo.label.name()}) WHERE n.$primaryProperty = {value} RETURN n LIMIT 1",
       Map("value" -> name)).map(
         result => Node.wrapNeoNode(result("n").asInstanceOf[NeoNode], db, this)).toList match {
           case Nil => None
@@ -27,11 +25,9 @@ trait IndexedNodeCompanion[A <: Node] extends NodeCompanion[A] {
         }
 
   def findAll(db: DBWithTransaction): Seq[A] = {
-    db.inTransaction {
-      _.cypher(s"MATCH ${cypherForAll("n")} RETURN n").map {
+    db.cypher(s"MATCH ${cypherForAll("n")} RETURN n").map {
         n => Node.wrapNeoNode(n("n").asInstanceOf[NeoNode], db, this)
       }.toSeq
-    }
   }
 
   def findOrCreate(db: DBWithTransaction, name: String): A = {

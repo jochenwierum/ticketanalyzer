@@ -1,11 +1,9 @@
 package de.jowisoftware.neo4j.database
 
-import org.neo4j.graphdb.{ DynamicLabel, Label, Node => NeoNode, NotFoundException, Transaction => NeoTransaction }
-import de.jowisoftware.neo4j.{ CypherService, DBWithTransaction, Database }
-import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
+import de.jowisoftware.neo4j.content.{Node, NodeCompanion}
+import de.jowisoftware.neo4j.{CypherService, DBWithTransaction, Database}
 import de.jowisoftware.util.ScalaUtil.withClosable
-import org.neo4j.graphdb.ResourceIterable
-import org.neo4j.shell.kernel.apps.Dbinfo
+import org.neo4j.graphdb.{DynamicLabel, Label, NotFoundException, ResourceIterable, Node => NeoNode, Transaction => NeoTransaction}
 
 private[neo4j] class DefaultTransaction(
     db: Database,
@@ -15,8 +13,8 @@ private[neo4j] class DefaultTransaction(
   val service = db.service
   var rootNode: Option[NeoNode] = None
 
-  def success = tx.success()
-  def failure = tx.failure()
+  def success() = tx.success()
+  def failure() = tx.failure()
 
   def createNode[S <: Node](companion: NodeCompanion[S]): S =
     Node.wrapNeoNode(db.service.createNode(), this, companion)
@@ -31,8 +29,8 @@ private[neo4j] class DefaultTransaction(
     case Some(node) => Node.wrapNeoNode(node, this, rootCompanion)
     case None =>
       val optionalNode = withClosable(service.findNodesByLabelAndProperty(
-        DynamicLabel.label("function"), "_function", "config").iterator()) { nodes =>
-        if (nodes.hasNext()) {
+        DynamicLabel.label("function"), "function", "config").iterator()) { nodes =>
+        if (nodes.hasNext) {
           Some(nodes.next())
         } else {
           try {

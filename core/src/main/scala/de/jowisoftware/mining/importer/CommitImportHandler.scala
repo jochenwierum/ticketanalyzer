@@ -1,12 +1,12 @@
 package de.jowisoftware.mining.importer
 
+import de.jowisoftware.mining.importer.CommitDataFields.{author, date, files, id, message, parents}
+import de.jowisoftware.mining.model.nodes.{Commit, CommitRepository}
+import de.jowisoftware.mining.model.relationships.{ChangedFile, ChildOf, Owns}
+import grizzled.slf4j.Logging
+
 import scala.collection.immutable.Queue
 import scala.collection.mutable
-
-import CommitDataFields.{ parents, message, id, files, date, author }
-import de.jowisoftware.mining.model.nodes.{ File, CommitRepository, Commit }
-import de.jowisoftware.mining.model.relationships.{ Owns, Contains, ChildOf, ChangedFile }
-import grizzled.slf4j.Logging
 
 private[importer] trait CommitImportHandler extends ImportEvents with Logging { this: GeneralImportHelper =>
   /** Missing commit links in the format: repository -> (parentCommit -> childNodeIDs*) */
@@ -14,19 +14,19 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
   private var supportsAbbrev = false
   private var roots: Set[Commit] = Set()
 
-  def countedCommits(count: Long) {}
+  def countedCommits(count: Long): Unit = {}
 
   def setupCommits(supportsAbbrev: Boolean) = this.supportsAbbrev = supportsAbbrev
 
-  abstract override def finish() {
+  abstract override def finish(): Unit = {
     info("Ranking nodes")
     roots.foreach(rankNodes)
 
-    if (missingCommitLinks.exists(p => !p._2.isEmpty)) {
+    if (missingCommitLinks.exists(p => p._2.nonEmpty)) {
       error("There are unresolved commit parents which could not be imported:\n"+missingCommitLinks.toString)
     }
 
-    super.finish
+    super.finish()
   }
 
   def loadedCommit(repositoryName: String, commitData: CommitData) = {
@@ -49,7 +49,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
       roots += node
     }
 
-    safePointReached
+    safePointReached()
   }
 
   private def createCommit(commitData: CommitData, repository: CommitRepository) = {
@@ -80,7 +80,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
       }
     }
 
-  private def addMissingLink(repository: CommitRepository, parentId: String, childNodeId: Long) {
+  private def addMissingLink(repository: CommitRepository, parentId: String, childNodeId: Long): Unit = {
     trace("Commit "+parentId+" of node "+childNodeId+" is not known yet - queuing operation up")
     val repositoryMap = acquireMissingCommitLinksForRepository(repository)
     repositoryMap += parentId -> (childNodeId :: repositoryMap.getOrElse(parentId, Nil))
@@ -95,7 +95,7 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
         map
     }
 
-  def connectMissingCommits(recentCommit: Commit, repository: CommitRepository) {
+  def connectMissingCommits(recentCommit: Commit, repository: CommitRepository): Unit = {
     for {
       missingLinksByCommit <- missingCommitLinks.get(repository.name())
       missingLinks <- missingLinksByCommit.get(recentCommit.commitId())
@@ -108,16 +108,16 @@ private[importer] trait CommitImportHandler extends ImportEvents with Logging { 
     }
   }
 
-  private def rankNodes(root: Commit) {
+  private def rankNodes(root: Commit): Unit = {
     var todo: Queue[Commit] = Queue(root)
 
-    while (!todo.isEmpty) {
+    while (todo.nonEmpty) {
       val (commit, tail) = todo.dequeue
       val parents = commit.parents.toList
 
       todo = if (commit.rank() == 0 && parents.forall(_.rank() != 0)) {
         commit.rank((0 /: parents)(_ max _.rank()) + 1)
-        safePointReached
+        safePointReached()
 
         tail ++ commit.children
       } else {

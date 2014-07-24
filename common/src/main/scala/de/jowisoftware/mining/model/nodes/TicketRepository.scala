@@ -1,30 +1,26 @@
 package de.jowisoftware.mining.model.nodes
 
+import de.jowisoftware.mining.model.nodes.helper._
 import de.jowisoftware.mining.model.relationships.Contains
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.neo4j.content.NodeCompanion
-import helper._
-import com.sun.corba.se.spi.ior.Writeable
 import de.jowisoftware.neo4j.content.IndexedNodeCompanion
-import de.jowisoftware.neo4j.content.IndexedNodeInfo
+import org.neo4j.graphdb.Direction
 
 object TicketRepository extends IndexedNodeCompanion[TicketRepository] {
-  def apply = new TicketRepository
+  def apply() = new TicketRepository
   protected val primaryProperty = HasName.properties.name
 }
 
 class TicketRepository extends MiningNode with HasName with EmptyNode {
-  def obtainTicket(id: Int, version: Int): Ticket =
-    readableDb.inTransaction { t =>
-      val uid = name()+"-"+id+"-"+version
-      Ticket.find(t, uid) match {
-        case Some(ticket) => ticket
-        case None =>
-          val ticket = writableDb.createNode(Ticket)
-          ticket.ticketId(id)
-          ticket.uid(uid)
-          this.add(ticket, Contains)
-          ticket
+  def obtainTicket(id: Int, version: Int): Ticket = {
+    val uid = name()+"-"+id+"-"+version
+    Ticket.find(writableDb, uid) match {
+      case Some(ticket) => ticket
+      case None =>
+        val ticket = writableDb.createNode(Ticket)
+        ticket.ticketId(id)
+        ticket.uid(uid)
+        this.add(ticket, Contains)
+        ticket
       }
     }
 
@@ -37,14 +33,12 @@ class TicketRepository extends MiningNode with HasName with EmptyNode {
     }
 
   def findAllVersionsOf(tId: Long) =
-    readableDb.inTransaction { t =>
-      Ticket.findAll(t, name()+"-"+tId+"-*")
-    }
+      Ticket.findAll(writableDb, name()+"-"+tId+"-*")
 
   def tickets =
     for {
       potentialTicket <- neighbors(Direction.OUTGOING, Seq(Contains.relationType))
-      if (potentialTicket.isInstanceOf[Ticket])
+      if potentialTicket.isInstanceOf[Ticket]
       ticket = potentialTicket.asInstanceOf[Ticket]
     } yield ticket
 }

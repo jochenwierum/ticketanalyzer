@@ -1,8 +1,6 @@
 package de.jowisoftware.mining.linker.trac
 
 import de.jowisoftware.mining.UserOptions
-import scala.swing.GridPanel
-import scala.swing.Panel
 
 class LinkerOptions extends UserOptions("linker.tracstyle") {
   protected val defaultResult: Map[String, String] = Map()
@@ -27,5 +25,5 @@ class LinkerOptions extends UserOptions("linker.tracstyle") {
       </ul></li>
     </ul><p>Alpha numerical commit ids are also supported</p>"""
 
-  protected def fillPanel(panel: CustomizedGridBagPanel) {}
+  protected def fillPanel(panel: CustomizedGridBagPanel): Unit = {}
 }

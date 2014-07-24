@@ -1,14 +1,15 @@
 package de.jowisoftware.mining.importer.trac
 
 import java.io.OutputStreamWriter
-import java.net.{ URLConnection, URL, PasswordAuthentication, Authenticator }
+import java.net.{Authenticator, PasswordAuthentication, URL, URLConnection}
 import java.util.Date
-import scala.collection.SortedMap
-import scala.xml.{ XML, NodeSeq, Elem }
-import org.joda.time.format.DateTimeFormat
+
 import de.jowisoftware.mining.importer.TicketDataFields._
 import de.jowisoftware.mining.importer._
-import de.jowisoftware.util.XMLUtils
+import org.joda.time.format.DateTimeFormat
+
+import scala.collection.SortedMap
+import scala.xml.{Elem, NodeSeq, XML}
 
 object TracImporter {
   private val dateFormat = DateTimeFormat.forPattern("yyyyMMdd'T'HH:mm:ss")
@@ -22,7 +23,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
   require(config.contains("password"))
   require(config.contains("repositoryname"))
 
-  def run() {
+  def run(): Unit = {
     try {
       setupAuth()
       doImport()
@@ -31,7 +32,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     }
   }
 
-  private def doImport() {
+  private def doImport(): Unit = {
     val ticketlist = receiveTicketNumbers()
     val valueNodes = ticketlist \ "params" \ "param" \ "value" \ "array" \ "data" \ "value"
     val ticketIds = valueNodes.map { node => (node \ "int").text.toInt }
@@ -42,10 +43,10 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     }
   }
 
-  private def setupAuth() {
+  private def setupAuth(): Unit = {
     Authenticator.setDefault(new Authenticator() {
       override def getPasswordAuthentication = new PasswordAuthentication(
-        config("username"), config("password").toCharArray())
+        config("username"), config("password").toCharArray)
     })
   }
 
@@ -96,8 +97,8 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     val changeParser = new ChangeParser
 
     var comments: Map[Int, TicketCommentData] = Map()
-    val changes = entries.zipWithIndex.flatMap {
-      case (entry, id) =>
+    val changes = entries.flatMap {
+      entry =>
         val value = entry \ "value"
 
         val time = getNodeAsDate(value(0))
@@ -135,7 +136,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     }
 
     ticket(updateDate) = ticket(creationDate)
-    if (!reversedChanges.isEmpty) {
+    if (reversedChanges.nonEmpty) {
       ticket(editor) = Some(reversedChanges.valuesIterator.next()(0).editor)
     }
     ticket
@@ -158,7 +159,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
   private def getNodeAsDate(parent: NodeSeq, default: Date = null) = {
     val value = getTypedContent(parent, "dateTime.iso8601", null)
     if (value != null)
-      TracImporter.dateFormat.parseDateTime(value).toDate()
+      TracImporter.dateFormat.parseDateTime(value).toDate
     else
       default
   }
@@ -174,7 +175,7 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
       default
     else {
       val node = parent \ expectedType
-      require(!node.isEmpty, "Node '"+parent+"' did not yield the expected type: "+expectedType)
+      require(node.nonEmpty, "Node '"+parent+"' did not yield the expected type: "+expectedType)
       node.text
     }
   }
@@ -196,20 +197,20 @@ class TracImporter(config: Map[String, String], events: ImportEvents) {
     </methodCall>
 
   def retrieveXML(request: Elem) = {
-    val baseUrl = (if (config("url") endsWith "/") config("url") else config("url")+"/")
+    val baseUrl = if (config("url") endsWith "/") config("url") else config("url") + "/"
     val rpcurl = new URL(baseUrl+"login/xmlrpc")
     val data = request.toString()
     val connection = rpcurl.openConnection()
 
     sendRequest(data, connection)
-    XML.load(connection.getInputStream())
+    XML.load(connection.getInputStream)
   }
 
-  private def sendRequest(data: String, connection: URLConnection) {
+  private def sendRequest(data: String, connection: URLConnection): Unit = {
     connection.setDoOutput(true)
     connection.setRequestProperty("Content-Type", "application/xml")
-    val writer = new OutputStreamWriter(connection.getOutputStream())
+    val writer = new OutputStreamWriter(connection.getOutputStream)
     writer.write(data)
-    writer.close
+    writer.close()
   }
 }

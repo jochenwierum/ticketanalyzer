@@ -1,17 +1,13 @@
 package de.jowisoftware.neo4j
 
-import content.{ Node, NodeCompanion }
-import org.neo4j.kernel.AbstractGraphDatabase
-import org.neo4j.graphdb.index.Index
-import org.neo4j.graphdb.{ Node => NeoNode, Relationship => NeoRelationship }
-import de.jowisoftware.neo4j.content.NodeCompanion
-import org.neo4j.graphdb.ResourceIterable
-import org.neo4j.graphdb.Label
+import de.jowisoftware.neo4j.content.{Node, NodeCompanion}
+import grizzled.slf4j.Logging
+import org.neo4j.graphdb.{Label, ResourceIterable, Node => NeoNode}
 
 /**
   * A transaction which allows access to the database.
   */
-trait DBWithTransaction extends ReadWriteDatabase {
+trait DBWithTransaction extends ReadOnlyDatabase with Logging {
   protected val cypherService: CypherService
 
   /**
@@ -25,6 +21,8 @@ trait DBWithTransaction extends ReadWriteDatabase {
     * After calling this method, no other methods of this object must be called.
     */
   def failure()
+
+  def createNode[A <: Node](companion: NodeCompanion[A]): A
 
   def rootNode[A <: Node](companion: NodeCompanion[A]): A
 

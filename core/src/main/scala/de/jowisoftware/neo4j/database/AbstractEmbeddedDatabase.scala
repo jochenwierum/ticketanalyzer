@@ -1,17 +1,14 @@
 package de.jowisoftware.neo4j.database
 
 import java.io.File
-import org.neo4j.graphdb.GraphDatabaseService
-import org.neo4j.graphdb.factory.{ GraphDatabaseFactory, GraphDatabaseSettings }
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
-import de.jowisoftware.neo4j.content.{ Node, NodeCompanion }
+
+import de.jowisoftware.mining.UpdateDB
+import de.jowisoftware.neo4j.content.{Node, NodeCompanion}
+import de.jowisoftware.neo4j.{CypherService, DBWithTransaction, Database}
 import de.jowisoftware.util.FileUtils
-import org.neo4j.graphdb.factory.GraphDatabaseBuilder
-import de.jowisoftware.neo4j.content.NodeCompanion
-import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.CypherService
-import org.neo4j.graphdb.ResourceIterable
-import org.neo4j.graphdb.Label
+import grizzled.slf4j.Logging
+import org.neo4j.graphdb.GraphDatabaseService
+import org.neo4j.graphdb.factory.GraphDatabaseSettings
 
 object AbstractEmbeddedDatabase {
   val defaultSettings: List[(org.neo4j.graphdb.config.Setting[_], String)] =
@@ -19,7 +16,7 @@ object AbstractEmbeddedDatabase {
       (GraphDatabaseSettings.allow_store_upgrade, "true") :: Nil
 }
 
-private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extends Database {
+private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extends Database with Logging {
   protected var databaseService: GraphDatabaseService = _
   private var cypherService: CypherService = _
 
@@ -43,7 +40,12 @@ private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extend
     try {
       body(wrapper)
     } finally {
-      tx.close()
+      try {
+        tx.close()
+      } catch {
+        case e: Exception =>
+          error("Could not close transaction", e)
+      }
     }
   }
 
@@ -52,14 +54,15 @@ private[database] abstract class AbstractEmbeddedDatabase(filepath: File) extend
     new AutonomousTransaction(this, tx, cypherService)
   }
 
-  def deleteContent = {
+  def deleteContent(): Unit = {
     shutdown()
     FileUtils.delTree(filepath)
+    UpdateDB.initDb()
     internalInit()
   }
 
-  private def addShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+  private def addShutdownHook(): Unit = {
+    Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run() =
         shutdown()
     })

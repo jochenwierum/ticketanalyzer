@@ -2,29 +2,28 @@ package de.jowisoftware.mining.importer.git
 
 import java.io.File
 import java.util.Date
+
+import de.jowisoftware.mining.importer.CommitDataFields._
+import de.jowisoftware.mining.importer.git.walker.DiffWalker
+import de.jowisoftware.mining.importer.{CommitData, ImportEvents, Importer}
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.{Constants, Repository, RepositoryBuilder}
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.TreeFilter
+
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.iterableAsScalaIterable
-import org.eclipse.jgit.api.Git
-import de.jowisoftware.mining.importer.CommitDataFields._
-import de.jowisoftware.mining.importer.{ Importer, ImportEvents, CommitData }
-import org.eclipse.jgit.lib.IndexDiff
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.lib.RepositoryBuilder
-import org.eclipse.jgit.treewalk.filter.TreeFilter
-import de.jowisoftware.mining.importer.git.walker.DiffWalker
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevCommit
 
 class GitImporter extends Importer {
   def userOptions = new GitOptions
 
-  def importAll(config: Map[String, String], events: ImportEvents) {
+  def importAll(config: Map[String, String], events: ImportEvents): Unit = {
     val repository = new RepositoryBuilder().setGitDir(new File(config("gitdir"))).build()
     val git = new Git(repository)
 
     val countLogs = collectLogs(git)
-    events.setupCommits(true)
+    events.setupCommits(supportsAbbrev = true)
     events.countedCommits(countLogs.size)
 
     val commits = collectLogs(git)

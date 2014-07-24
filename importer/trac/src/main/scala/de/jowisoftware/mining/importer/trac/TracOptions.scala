@@ -1,7 +1,5 @@
 package de.jowisoftware.mining.importer.trac
 
-import scala.swing.{ Panel, GridPanel }
-
 import de.jowisoftware.mining.UserOptions
 
 class TracOptions extends UserOptions("importer.trac") {
@@ -20,7 +18,7 @@ class TracOptions extends UserOptions("importer.trac") {
         is recommendet</li>
     </ul>"""
 
-  protected def fillPanel(panel: CustomizedGridBagPanel) {
+  protected def fillPanel(panel: CustomizedGridBagPanel): Unit = {
     panel.add("Url", text("url"))
     panel.add("User", text("username"))
     panel.add("Password", password("password"))

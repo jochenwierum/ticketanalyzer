@@ -1,15 +1,15 @@
 package de.jowisoftware.neo4j.content
 
-import scala.collection.JavaConversions.iterableAsScalaIterable
-import org.neo4j.graphdb.{ Direction, Node => NeoNode, Relationship => NeoRelationship, RelationshipType }
 import de.jowisoftware.neo4j.ReadOnlyDatabase
-import properties.Versionable
+import de.jowisoftware.neo4j.content.properties.Versionable
 import grizzled.slf4j.Logging
+import org.neo4j.graphdb.{Direction, RelationshipType, Node => NeoNode, Relationship => NeoRelationship}
+
+import scala.collection.JavaConversions.iterableAsScalaIterable
 
 object Node extends ClassCache[NodeCompanion[_ <: Node]] with Logging {
   def wrapNeoNode[T <: Node](
-    neoNode: NeoNode,
-    db: ReadOnlyDatabase, companion: NodeCompanion[T]): T = {
+    neoNode: NeoNode, db: ReadOnlyDatabase, companion: NodeCompanion[T]): T = {
     val node = companion()
     node initWith (neoNode, db, companion)
     node
@@ -19,12 +19,12 @@ object Node extends ClassCache[NodeCompanion[_ <: Node]] with Logging {
     try {
       val className = node.getProperty("_class").asInstanceOf[String]
       val companion = getCompanion(className)
-      val obj = companion.apply()
+      val obj = companion()
       obj initWith (node, db, companion)
       Some(obj)
     } catch {
       case e: Exception =>
-        error(s"Could not wrap node ${node.getId()}", e)
+        error(s"Could not wrap node ${node.getId}", e)
         None
     }
   }
@@ -35,7 +35,7 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
 
   def content: NeoNode = innerNode
 
-  protected final def getIndex = readableDb.service.index.forNodes(getClass().getName)
+  protected final def getIndex = readableDb.service.index.forNodes(getClass.getName)
 
   /**
     * Initialize a Node with a backing Neo4j Node object.
@@ -47,11 +47,13 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
     this.innerDB = db
     sanityCheck(node)
 
-    if (companion.isInstanceOf[IndexedNodeCompanion[_]]) {
-      val indexInfo = companion.asInstanceOf[IndexedNodeCompanion[_]].indexInfo
-      if (!node.hasLabel(indexInfo.label)) {
-        node.addLabel(indexInfo.label)
-      }
+    companion match {
+      case companion: IndexedNodeCompanion[_] =>
+        val indexInfo = companion.indexInfo
+        if (!node.hasLabel(indexInfo.label)) {
+          node.addLabel(indexInfo.label)
+        }
+      case _ =>
     }
 
     this
@@ -102,7 +104,7 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
   def getFirstNeighbor[A <: Node](direction: Direction = Direction.BOTH,
     relType: RelationshipType, nodeType: NodeCompanion[A]): Option[A] = {
 
-    val targetClass = nodeType.apply().getClass().getName()
+    val targetClass = nodeType.apply().getClass.getName
     innerNode.getRelationships(relType, direction).find { rel =>
       val otherNode = rel.getOtherNode(innerNode)
       otherNode.hasProperty("_class") && otherNode.getProperty("_class") == targetClass
@@ -114,7 +116,7 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
   def getFirstRelationship[A <: Relationship](direction: Direction = Direction.BOTH,
     relCompanion: RelationshipCompanion[A]): Option[A] = {
 
-    val targetClass = relCompanion.apply().getClass().getName()
+    val targetClass = relCompanion.apply().getClass.getName
     innerNode.getRelationships(relCompanion.relationType, direction).find { rel =>
       rel.hasProperty("_class") && rel.getProperty("_class") == targetClass
     } map {
@@ -136,13 +138,13 @@ trait Node extends Versionable with Properties[NeoNode] with Logging {
     }
   }
 
-  def delete = innerNode.delete()
-  def forceDelete = {
-    innerNode.getRelationships().foreach(_.delete())
-    delete
+  def delete() = innerNode.delete()
+  def forceDelete() = {
+    innerNode.getRelationships.foreach(_.delete())
+    delete()
   }
 
-  override def toString() = toString(innerNode.getId(), innerNode)
+  override def toString = toString(innerNode.getId, innerNode)
   override def hashCode = innerNode.hashCode
   override def equals(other: Any) = other match {
     case n: Node => innerNode.equals(n.innerNode)

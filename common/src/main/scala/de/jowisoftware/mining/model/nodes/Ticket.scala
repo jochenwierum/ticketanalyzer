@@ -1,12 +1,11 @@
 package de.jowisoftware.mining.model.nodes
 
-import org.neo4j.graphdb.Direction
-
-import de.jowisoftware.mining.model.relationships.{ ChangedTicket, HasComment, HasStatus, HasTag, Updates }
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
+import de.jowisoftware.mining.model.relationships.{ChangedTicket, HasComment, HasStatus, HasTag, Updates}
 import de.jowisoftware.neo4j.DBWithTransaction
-import de.jowisoftware.neo4j.content.{ IndexedNodeCompanion, RegexIndexAccess }
 import de.jowisoftware.neo4j.content.Relationship.relationship2RelationshipType
-import helper.MiningNode
+import de.jowisoftware.neo4j.content.{IndexedNodeCompanion, RegexIndexAccess}
+import org.neo4j.graphdb.Direction
 
 object Ticket extends IndexedNodeCompanion[Ticket] with RegexIndexAccess[Ticket] {
   def apply = new Ticket
@@ -43,7 +42,7 @@ class Ticket extends MiningNode with TicketUpdates {
   def isRecentVersion = neighbors(Direction.INCOMING, Seq(Updates.relationType)).size == 0
   def isRootVersion = neighbors(Direction.OUTGOING, Seq(Updates.relationType)).size == 0
 
-  def findComment(id: Int) = readableDb.inTransaction { t => TicketComment.find(t, createCommentUid(id)) }
+  def findComment(id: Int) = TicketComment.find(writableDb, createCommentUid(id))
 
   def createComment(id: Int) = {
     val node = writableDb.createNode(TicketComment)

@@ -1,11 +1,10 @@
 package de.jowisoftware.mining.gui
 
-import scala.swing.{ Orientation, Label, Frame, Button, BoxPanel, Alignment }
-import scala.swing.event.ButtonClicked
-
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.model.nodes.RootNode
 import de.jowisoftware.neo4j.Database
+
+import scala.swing.event.ButtonClicked
+import scala.swing.{Alignment, BoxPanel, Button, Frame, Label, Orientation}
 
 class DeletePane(val db: Database, parent: Frame)
     extends BoxPanel(Orientation.Vertical) with GuiTab {
@@ -30,8 +29,8 @@ class DeletePane(val db: Database, parent: Frame)
     case ButtonClicked(`button`) => dropDB()
   }
 
-  def dropDB() {
-    db.deleteContent
+  def dropDB(): Unit = {
+    db.deleteContent()
     parent.publish(DatabaseUpdated)
   }
 

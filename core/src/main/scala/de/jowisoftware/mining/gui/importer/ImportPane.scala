@@ -1,25 +1,19 @@
 package de.jowisoftware.mining.gui.importer
 
-import scala.swing.{ BorderPanel, Button, ComboBox, Frame, GridPanel, ListView, Orientation, ScrollPane, SplitPane }
-import scala.swing.BorderPanel.Position
-import scala.swing.BoxPanel
-import scala.swing.Swing
-import scala.swing.event.{ ButtonClicked, SelectionChanged }
-import org.neo4j.graphdb.ResourceIterator
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.mining.gui.GuiTab
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.ProgressDialog
+import de.jowisoftware.mining.gui.{GuiTab, ProgressDialog}
 import de.jowisoftware.mining.importer.Importer
 import de.jowisoftware.mining.importer.async.AsyncDatabaseImportHandlerWithFeedback
-import de.jowisoftware.mining.model.nodes.{ CommitRepository, RootNode, TicketRepository }
-import de.jowisoftware.mining.model.nodes.helper.MiningNode
-import de.jowisoftware.mining.plugins.{ Plugin, PluginManager, PluginType }
-import de.jowisoftware.neo4j.{ DBWithTransaction, Database }
-import de.jowisoftware.util.ScalaUtil._
-import grizzled.slf4j.Logging
+import de.jowisoftware.mining.model.nodes.{CommitRepository, RootNode, TicketRepository}
+import de.jowisoftware.mining.plugins.{PluginManager, PluginType}
+import de.jowisoftware.neo4j.Database
 import de.jowisoftware.neo4j.content.Node
-import org.neo4j.graphdb.ResourceIterable
+import grizzled.slf4j.Logging
+
+import scala.swing.BorderPanel.Position
+import scala.swing.event.{ButtonClicked, SelectionChanged}
+import scala.swing.{BorderPanel, BoxPanel, Button, ComboBox, Frame, GridPanel, ListView, Orientation, ScrollPane, SplitPane, Swing}
 
 class ImportPane(
     db: Database,
@@ -76,25 +70,25 @@ class ImportPane(
   def makePluginList =
     pluginManager.getFor(PluginType.SCM) ++ pluginManager.getFor(PluginType.ITS)
 
-  def queueTask() {
+  def queueTask(): Unit = {
     tasks = new Task(selectedPlugin, importerOptions.getUserInput,
       pluginList.selection.item.toString) :: tasks
     updateTaskList()
   }
 
-  def deleteTask() {
+  def deleteTask(): Unit = {
     val toDelete = taskList.selection.items
     tasks = tasks.filterNot(item => toDelete contains item)
     updateTaskList()
   }
 
-  def updateTaskList() {
+  def updateTaskList(): Unit = {
     taskList.listData = tasks
     deleteButton.enabled = tasks.length > 0
     importButton.enabled = tasks.length > 0
   }
 
-  def updateSelection() {
+  def updateSelection(): Unit = {
     val plugin = pluginList.selection.item
     selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Importer]
     importerOptions = selectedPlugin.userOptions
@@ -106,11 +100,11 @@ class ImportPane(
     pluginDetails.revalidate()
   }
 
-  def runImport() {
+  def runImport(): Unit = {
     val progress = new ProgressDialog(parent)
 
     new Thread("importer-thread") {
-      override def run = {
+      override def run(): Unit = {
         val start = System.currentTimeMillis
         try {
           AsyncDatabaseImportHandlerWithFeedback.run(
@@ -118,8 +112,8 @@ class ImportPane(
             progress,
             tasks.map { t => (t.importer, t.data) }.toArray: _*)
 
-          warn("Import process took "+(System.currentTimeMillis - start)+" ms")
-          updateDBState
+          warn(s"Import process took ${System.currentTimeMillis - start} ms")
+          updateDBState()
           tasks = Nil
         } finally {
           Swing.onEDT {
@@ -135,7 +129,7 @@ class ImportPane(
 
   private def updateDBState() = {
     db.inTransaction { transaction =>
-      def hasContent(s: Seq[_ <: Node]): Boolean = !s.isEmpty
+      def hasContent(s: Seq[_ <: Node]): Boolean = s.nonEmpty
 
       val root = transaction.rootNode(RootNode)
       val hasCommits = hasContent(CommitRepository.findAll(transaction))
@@ -144,7 +138,7 @@ class ImportPane(
         root.state(1)
       }
 
-      transaction.success
+      transaction.success()
     }
   }
 

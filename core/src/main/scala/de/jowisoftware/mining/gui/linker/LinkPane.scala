@@ -1,31 +1,18 @@
 package de.jowisoftware.mining.gui.linker
 
-import scala.swing.{ Swing, ScrollPane, Orientation, GridPanel, Frame, ComboBox, Button, BoxPanel }
-import scala.swing.BorderPanel
-import scala.swing.BorderPanel.Position
-import scala.swing.event.{ SelectionChanged, ButtonClicked }
-import org.neo4j.graphdb.Direction
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.mining.gui.{ LeftAlignedLabel, GuiTab }
 import de.jowisoftware.mining.gui.MainWindow.DatabaseUpdated
-import de.jowisoftware.mining.gui.ProgressDialog
-import de.jowisoftware.mining.linker.{ Linker, DatabaseLinkerHandler, ConsoleProgressReporter }
-import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.model.nodes.helper.{ MiningNode, HasName }
-import de.jowisoftware.mining.model.relationships.Contains
-import de.jowisoftware.mining.plugins.{ PluginType, PluginManager, Plugin }
-import de.jowisoftware.neo4j.{ ReadOnlyDatabase, Database }
-import scala.swing.ListView
-import scala.swing.SplitPane
+import de.jowisoftware.mining.gui.{GuiTab, LeftAlignedLabel, ProgressDialog}
+import de.jowisoftware.mining.linker.{ConsoleProgressReporter, DatabaseLinkerHandler, Linker}
+import de.jowisoftware.mining.model.nodes.helper.HasName
+import de.jowisoftware.mining.model.nodes.{CommitRepository, RootNode, TicketRepository}
+import de.jowisoftware.mining.plugins.{Plugin, PluginManager, PluginType}
+import de.jowisoftware.neo4j.{DBWithTransaction, Database}
 import grizzled.slf4j.Logging
-import scala.swing.Dialog
-import scala.swing.Label
-import de.jowisoftware.mining.model.nodes.CommitRepository
-import org.neo4j.graphdb.ResourceIterable
-import de.jowisoftware.util.ScalaUtil._
-import scala.collection.JavaConversions._
-import de.jowisoftware.mining.model.nodes.TicketRepository
-import de.jowisoftware.neo4j.DBWithTransaction
+
+import scala.swing.BorderPanel.Position
+import scala.swing.event.{ButtonClicked, SelectionChanged}
+import scala.swing.{BorderPanel, BoxPanel, Button, ComboBox, Dialog, Frame, GridPanel, Label, ListView, Orientation, ScrollPane, SplitPane, Swing}
 
 class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     extends SplitPane(Orientation.Vertical) with GuiTab with Logging { that =>
@@ -79,35 +66,40 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
   listenTo(pluginList.selection)
 
   reactions += {
-    case DatabaseUpdated => updateComboBoxes
+    case DatabaseUpdated => updateComboBoxes()
     case SelectionChanged(`pluginList`) => updateSelection()
     case ButtonClicked(`linkButton`) => doLink()
     case ButtonClicked(`addButton`) => queueTask()
     case ButtonClicked(`deleteButton`) => deleteTask()
   }
 
-  updateTaskList
-  updateSelection
+  updateTaskList()
+  updateSelection()
 
   private def makePluginList =
     pluginManager.getFor(PluginType.Linker)
 
-  private def makeSCMList = new ComboBox[String](
-    db.inTransaction(t => collectNames(CommitRepository.findAll(t))))
+  private def makeSCMList: ComboBox[String] = {
+    new ComboBox[String](db.inTransaction(t => collectNames(CommitRepository.findAll(t))))
+  }
 
   private def makeTicketList = new ComboBox[String](
     db.inTransaction(t => collectNames(TicketRepository.findAll(t))))
 
-  private def collectNames(result: Seq[_ <: HasName]) = result.map(_.name())
+  private def collectNames(result: Seq[_ <: HasName]): Seq[String] =
+    result.map(_.name()) match {
+      case s: Stream[String] => s.force
+      case s: Seq[String] => s
+    }
 
-  private def updateComboBoxes() {
+  private def updateComboBoxes(): Unit = {
     scmList = makeSCMList
     selectionPanel.contents(3) = scmList
     ticketList = makeTicketList
     selectionPanel.contents(5) = ticketList
   }
 
-  private def updateSelection() {
+  private def updateSelection(): Unit = {
     try {
       val plugin = pluginList.selection.item
       selectedPlugin = plugin.clazz.newInstance.asInstanceOf[Linker]
@@ -121,39 +113,39 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
     } catch {
       case e: Exception =>
         pluginDetails.contents = new Label("<html><strong>"+e.getClass.getName+
-          "</strong>:<br />"+e.getMessage()+"</html>")
+          "</strong>:<br />"+e.getMessage+"</html>")
         linkButton.enabled = false
     }
     pluginDetails.revalidate()
   }
 
-  private def deleteTask() {
+  private def deleteTask(): Unit = {
     val toDelete = taskList.selection.items
     tasks = tasks.filterNot(item => toDelete contains item)
     updateTaskList()
   }
 
-  def queueTask() {
+  def queueTask(): Unit = {
     tasks = new Task(selectedPlugin, importerOptions.getUserInput,
       pluginList.selection.item.toString) :: tasks
     updateTaskList()
   }
 
-  def updateTaskList() {
+  def updateTaskList(): Unit = {
     taskList.listData = tasks
     deleteButton.enabled = tasks.length > 0
     linkButton.enabled = tasks.length > 0
   }
 
-  private def doLink() {
+  private def doLink(): Unit = {
     val dialog = new ProgressDialog(parent)
     new Thread("linker-thread") {
-      override def run() {
+      override def run(): Unit = {
         val start = System.currentTimeMillis
         try {
           tasks.foreach(runTask(_, dialog))
           warn("Linking process took "+(System.currentTimeMillis - start)+" ms")
-          updateDBState
+          updateDBState()
           tasks = Nil
         } catch {
           case e: Exception =>
@@ -181,7 +173,7 @@ class LinkPane(db: Database, pluginManager: PluginManager, parent: Frame)
         }))
   }
 
-  private def updateDBState: Unit = {
+  private def updateDBState(): Unit = {
     db.inTransaction { transaction =>
       val rootNode = transaction.rootNode(RootNode)
       if (rootNode.state() < 2) {

@@ -1,16 +1,15 @@
 package de.jowisoftware.mining.linker.trac
 
-import org.neo4j.graphdb.Direction
-import de.jowisoftware.mining.linker.{ Linker, LinkEvents }
-import de.jowisoftware.mining.model.nodes.{ TicketRepository, CommitRepository, Commit, Ticket }
-import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.mining.UserOptions
-import de.jowisoftware.neo4j.Database
+import de.jowisoftware.mining.linker.{LinkEvents, Linker}
+import de.jowisoftware.mining.model.nodes.{CommitRepository, TicketRepository}
+import de.jowisoftware.mining.model.relationships.Contains
 import de.jowisoftware.neo4j.DBWithTransaction
+import org.neo4j.graphdb.Direction
 
 class TracStyleLinker extends Linker {
   def link(transaction: DBWithTransaction, tickets: TicketRepository, commits: CommitRepository,
-    options: Map[String, String], events: LinkEvents) {
+    options: Map[String, String], events: LinkEvents): Unit = {
 
     val ticketsCount = tickets.neighbors(Direction.OUTGOING, Seq(Contains.relationType)).size
     val commitsCount = commits.neighbors(Direction.OUTGOING, Seq(Contains.relationType)).size
@@ -22,9 +21,9 @@ class TracStyleLinker extends Linker {
     for {
       ticket <- tickets.tickets
     } {
-      scanner.scan(ticket.text(), events, ticket, commits)
-      scanner.scan(ticket.title(), events, ticket, commits)
-      ticket.comments.foreach { c => scanner.scan(c.text(), events, ticket, commits) }
+      scanner.scan(transaction, ticket.text(), events, ticket, commits)
+      scanner.scan(transaction, ticket.title(), events, ticket, commits)
+      ticket.comments.foreach { c => scanner.scan(transaction, c.text(), events, ticket, commits) }
       progress += 1
       events.reportProgress(progress, total, "Processing tickets")
     }
@@ -32,7 +31,7 @@ class TracStyleLinker extends Linker {
     for {
       commit <- commits.commits
     } {
-      scanner.scan(commit.message(), events, commit, commits)
+      scanner.scan(transaction, commit.message(), events, commit, commits)
       progress += 1
       events.reportProgress(progress, total, "Processing commits")
     }
@@ -40,5 +39,5 @@ class TracStyleLinker extends Linker {
     events.finish()
   }
 
-  def userOptions(): UserOptions = new LinkerOptions
+  def userOptions: UserOptions = new LinkerOptions
 }

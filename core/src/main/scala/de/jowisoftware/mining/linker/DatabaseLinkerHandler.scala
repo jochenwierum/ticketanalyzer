@@ -1,17 +1,16 @@
 package de.jowisoftware.mining.linker
 
-import de.jowisoftware.mining.model.nodes.helper.MiningNode
-import de.jowisoftware.mining.model.nodes._
-import de.jowisoftware.neo4j.database.AutonomousTransaction
 import de.jowisoftware.mining.helper.AutoTransactions
-import de.jowisoftware.neo4j.Database
+import de.jowisoftware.mining.model.nodes._
+import de.jowisoftware.mining.model.nodes.helper.MiningNode
 import de.jowisoftware.mining.model.relationships.Links
+import de.jowisoftware.neo4j.Database
 import grizzled.slf4j.Logging
 
 class DatabaseLinkerHandler(protected val db: Database,
   ticketRepositoryName: String, commitRepositoryName: String)
     extends LinkEvents with AutoTransactions with Logging {
-  val transactionThreshould = 50
+  val transactionThreshold = 50
 
   def reportProgress(progress: Long, max: Long, message: String) {}
   def finish() {

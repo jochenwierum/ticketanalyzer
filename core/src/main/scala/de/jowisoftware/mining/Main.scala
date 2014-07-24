@@ -1,15 +1,17 @@
 package de.jowisoftware.mining
 
-import scala.swing.{ Dialog, Swing }
-import org.slf4j.bridge.SLF4JBridgeHandler
+import javax.swing.UIManager
+
+import de.jowisoftware.mining.gui.MainWindow
 import de.jowisoftware.mining.model.nodes.RootNode
-import de.jowisoftware.mining.plugins.{ PluginManager, PluginScanner, PluginType }
-import de.jowisoftware.neo4j.database.{ EmbeddedDatabase, EmbeddedDatabaseWithConsole }
+import de.jowisoftware.mining.plugins.{PluginManager, PluginScanner, PluginType}
+import de.jowisoftware.neo4j.Database
+import de.jowisoftware.neo4j.database.{EmbeddedDatabase, EmbeddedDatabaseWithConsole}
 import de.jowisoftware.util.AppUtil
 import grizzled.slf4j.Logging
-import gui.MainWindow
-import javax.swing.UIManager
-import de.jowisoftware.neo4j.Database
+import org.slf4j.bridge.SLF4JBridgeHandler
+
+import scala.swing.{Dialog, Swing}
 
 object Main extends Logging {
   lazy val compactMode = try {
@@ -30,7 +32,7 @@ object Main extends Logging {
     SLF4JBridgeHandler.install()
 
     performDBUpdate()
-    Swing.onEDT(startApp)
+    Swing.onEDT(startApp())
   }
 
   private def startApp(): Unit = {
@@ -59,8 +61,7 @@ object Main extends Logging {
   def quit(db: Database, status: Int): Nothing = {
     try {
       if (db != null)
-        db.shutdown
-      AkkaHelper.system.shutdown()
+        db.shutdown()
     } catch {
       case _: Exception =>
     }
@@ -68,19 +69,24 @@ object Main extends Logging {
     throw new Exception()
   }
 
-  private def performDBUpdate() {
+  private def performDBUpdate(): Unit = {
     warn("Checking whether database upgrade is required")
 
     val db = openDatabase(forceCompact = true)
-    val hasUpdates = try {
-      db.inTransaction { _.rootNode(RootNode).updateRequired }
+    val (hasUpdates, needsInit) = try {
+      db.inTransaction { t =>
+        val rootNode = t.rootNode(RootNode)
+        (rootNode.updateRequired, rootNode.initialized())
+      }
     } finally {
-      db.shutdown
+      db.shutdown()
     }
 
     if (hasUpdates) {
       warn("Performing update")
       UpdateDB.main(Array())
+    } else if(needsInit) {
+      UpdateDB.initDb()
     } else {
       warn("Database version is already up to date")
     }
@@ -94,7 +100,7 @@ object Main extends Logging {
     pluginManager
   }
 
-  private def checkPlugins(pluginManager: PluginManager) {
+  private def checkPlugins(pluginManager: PluginManager): Unit = {
     if (!PluginType.values.forall(pluginManager.getFor(_).size > 0)) {
       Dialog.showMessage(null, "No plugins found", "Critical Error", Dialog.Message.Error)
       System.exit(1)

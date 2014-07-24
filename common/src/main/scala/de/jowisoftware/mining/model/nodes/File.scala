@@ -1,16 +1,16 @@
 package de.jowisoftware.mining.model.nodes
 
-import de.jowisoftware.neo4j.content._
+import de.jowisoftware.mining.model.nodes.helper._
 import de.jowisoftware.neo4j._
-import helper._
+import de.jowisoftware.neo4j.content._
 
 object File extends IndexedNodeCompanion[File] {
   def apply = new File
 
-  protected val primaryProperty = "uim"
+  protected val primaryProperty = "uid"
 
   private[model] def find(db: DBWithTransaction, repository: String, name: String): Option[File] =
-    find(db, "uid", uid(repository, name))
+    find(db, uid(repository, name))
 
   def uid(repository: String, name: String): String =
     repository+"-"+name
